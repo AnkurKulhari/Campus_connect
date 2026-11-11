@@ -59,3 +59,57 @@ def change_password(
     db: Session = Depends(get_db)
 ):
     return change_password_service(change_data, current_user, db)
+
+
+@router.get("/test-email", tags=["Authentication"])
+def test_email():
+    """Diagnostic endpoint to test live SMTP email configuration on Railway."""
+    import smtplib
+    from email.message import EmailMessage
+    from app.core.config import settings
+
+    username = settings.SMTP_USERNAME.strip() if settings.SMTP_USERNAME else ""
+    password = settings.SMTP_PASSWORD.replace(" ", "").strip() if settings.SMTP_PASSWORD else ""
+
+    if not username or not password:
+        return {
+            "status": "error",
+            "message": "SMTP credentials are missing in Railway Variables.",
+            "smtp_host": settings.SMTP_HOST,
+            "smtp_port": settings.SMTP_PORT,
+            "username_set": bool(username),
+            "password_set": bool(password),
+        }
+
+    msg = EmailMessage()
+    msg["From"] = username
+    msg["To"] = username
+    msg["Subject"] = "CampusConnect SMTP Test"
+    msg.set_content("This is a diagnostic email from CampusConnect on Railway.")
+
+    try:
+        if settings.SMTP_PORT == 465:
+            with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as server:
+                server.login(username, password)
+                server.send_message(msg)
+        else:
+            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as server:
+                server.starttls()
+                server.login(username, password)
+                server.send_message(msg)
+
+        return {
+            "status": "success",
+            "message": f"Test email sent successfully to {username}! Your SMTP configuration is working perfectly.",
+            "smtp_user": username
+        }
+    except Exception as e:
+        return {
+            "status": "failed",
+            "error_type": type(e).__name__,
+            "error_detail": str(e),
+            "smtp_user": username,
+            "smtp_host": settings.SMTP_HOST,
+            "smtp_port": settings.SMTP_PORT,
+        }
+
