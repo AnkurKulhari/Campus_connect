@@ -54,5 +54,3 @@ def send_otp_email(to_email: str, otp: str):
             "❌ Failed to send verification email to %s via SMTP (%s:%s): %s",
             to_email, settings.SMTP_HOST, settings.SMTP_PORT, e, exc_info=True
         )
-            to_email, settings.SMTP_HOST, settings.SMTP_PORT, e, exc_info=True
-        )
