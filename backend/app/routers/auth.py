@@ -63,53 +63,39 @@ def change_password(
 
 @router.get("/test-email", tags=["Authentication"])
 def test_email():
-    """Diagnostic endpoint to test live SMTP email configuration on Railway."""
-    import smtplib
-    from email.message import EmailMessage
+    """Diagnostic endpoint to test live email delivery on Railway."""
+    from app.utils.email import send_via_resend, send_via_smtp
     from app.core.config import settings
 
     username = settings.SMTP_USERNAME.strip() if settings.SMTP_USERNAME else ""
-    password = settings.SMTP_PASSWORD.replace(" ", "").strip() if settings.SMTP_PASSWORD else ""
+    target_email = username or "test@example.com"
+    dummy_otp = "999888"
 
-    if not username or not password:
-        return {
-            "status": "error",
-            "message": "SMTP credentials are missing in Railway Variables.",
-            "smtp_host": settings.SMTP_HOST,
-            "smtp_port": settings.SMTP_PORT,
-            "username_set": bool(username),
-            "password_set": bool(password),
-        }
+    results = {}
 
-    msg = EmailMessage()
-    msg["From"] = username
-    msg["To"] = username
-    msg["Subject"] = "CampusConnect SMTP Test"
-    msg.set_content("This is a diagnostic email from CampusConnect on Railway.")
+    # Test Resend
+    if settings.RESEND_API_KEY:
+        try:
+            resend_ok = send_via_resend(target_email, dummy_otp)
+            results["resend"] = "success" if resend_ok else "failed (check logs)"
+        except Exception as e:
+            results["resend"] = f"error: {e}"
+    else:
+        results["resend"] = "not configured (RESEND_API_KEY empty)"
 
+    # Test IPv4 SMTP
     try:
-        if settings.SMTP_PORT == 465:
-            with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as server:
-                server.login(username, password)
-                server.send_message(msg)
-        else:
-            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as server:
-                server.starttls()
-                server.login(username, password)
-                server.send_message(msg)
-
-        return {
-            "status": "success",
-            "message": f"Test email sent successfully to {username}! Your SMTP configuration is working perfectly.",
-            "smtp_user": username
-        }
+        smtp_ok = send_via_smtp(target_email, dummy_otp)
+        results["smtp_ipv4"] = "success" if smtp_ok else "failed (all ports blocked or rejected)"
     except Exception as e:
-        return {
-            "status": "failed",
-            "error_type": type(e).__name__,
-            "error_detail": str(e),
-            "smtp_user": username,
-            "smtp_host": settings.SMTP_HOST,
-            "smtp_port": settings.SMTP_PORT,
-        }
+        results["smtp_ipv4"] = f"error: {e}"
+
+    success = results.get("resend") == "success" or results.get("smtp_ipv4") == "success"
+    return {
+        "status": "success" if success else "failed",
+        "results": results,
+        "target_email": target_email,
+        "smtp_user": username,
+        "smtp_host": settings.SMTP_HOST
+    }
 
