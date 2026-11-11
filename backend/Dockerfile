@@ -20,5 +20,8 @@ COPY . .
 ENV PORT=8000
 EXPOSE 8000
 
-# Run migrations and start server with uvicorn
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Make start script executable
+RUN chmod +x start.sh
+
+# Run migrations safely and start server with uvicorn
+CMD ["./start.sh"]

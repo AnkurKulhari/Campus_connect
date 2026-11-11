@@ -4,9 +4,7 @@ from sqlalchemy.orm import sessionmaker, DeclarativeBase, Session
 from app.core.config import settings
 
 # Handle database URL normalization for managed providers (Supabase, Neon, etc.)
-raw_db_url = settings.DATABASE_URL
-if raw_db_url.startswith("postgres://"):
-    raw_db_url = raw_db_url.replace("postgres://", "postgresql://", 1)
+raw_db_url = settings.normalized_database_url
 
 engine = create_engine(
     raw_db_url,
