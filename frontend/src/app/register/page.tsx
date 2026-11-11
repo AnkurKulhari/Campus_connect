@@ -30,6 +30,26 @@ export default function RegisterPage() {
     setLoading(true);
     setError(null);
 
+    const email = collegeEmail.trim().toLowerCase();
+    if (!email.endsWith("@ipec.org.in")) {
+      setError("College email must end with @ipec.org.in (e.g. 210030010001@ipec.org.in)");
+      setLoading(false);
+      return;
+    }
+
+    const localPart = email.split("@")[0];
+    if (!/^\d+$/.test(localPart)) {
+      setError("College email must start with your numeric roll number (e.g. 210030010001@ipec.org.in)");
+      setLoading(false);
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters long.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await api.auth.register({
         full_name: fullName.trim(),
@@ -41,6 +61,7 @@ export default function RegisterPage() {
       setStep("otp");
       setCooldown(60);
     } catch (err: unknown) {
+      console.error("[Register error]", err);
       setError(err instanceof Error ? err.message : "Registration failed.");
     } finally {
       setLoading(false);
@@ -173,6 +194,12 @@ export default function RegisterPage() {
               />
             </div>
 
+            {error && (
+              <div className="rounded-lg bg-red-50 p-3 text-xs text-red-600 dark:bg-red-950/40 dark:text-red-400">
+                {error}
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={loading}
@@ -210,6 +237,12 @@ export default function RegisterPage() {
                 OTP expires in 10 minutes. Max 5 attempts.
               </p>
             </div>
+
+            {error && (
+              <div className="rounded-lg bg-red-50 p-3 text-xs text-red-600 dark:bg-red-950/40 dark:text-red-400">
+                {error}
+              </div>
+            )}
 
             <button
               type="submit"

@@ -9,7 +9,8 @@ import {
   PaginatedNotifications,
 } from "@/types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const RAW_API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = RAW_API_BASE.replace(/\/+$/, "");
 
 export class ApiError extends Error {
   status: number;
@@ -43,6 +44,19 @@ async function request<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
+  // If running on a deployed website (e.g. Vercel) but NEXT_PUBLIC_API_URL was not configured
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname !== "localhost" &&
+    window.location.hostname !== "127.0.0.1" &&
+    API_BASE.includes("localhost")
+  ) {
+    throw new ApiError(
+      0,
+      "Backend URL not configured: NEXT_PUBLIC_API_URL is missing in Vercel environment variables. Please add NEXT_PUBLIC_API_URL with your Railway backend URL (e.g. https://xxx.up.railway.app) in Vercel Settings -> Environment Variables and redeploy."
+    );
+  }
+
   const token = getToken();
   const headers = new Headers(options.headers || {});
 
@@ -55,10 +69,20 @@ async function request<T>(
     headers.set("Content-Type", "application/json");
   }
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers,
+    });
+  } catch (networkError: unknown) {
+    console.error(`[API Network Error] calling ${API_BASE}${endpoint}:`, networkError);
+    const msg = networkError instanceof Error ? networkError.message : "Network request failed";
+    throw new ApiError(
+      0,
+      `Unable to reach backend at ${API_BASE} (${msg}). Please verify that Railway backend is running.`
+    );
+  }
 
   if (!response.ok) {
     let detail = "Something went wrong.";

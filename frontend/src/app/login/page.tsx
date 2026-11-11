@@ -86,6 +86,12 @@ export default function LoginPage() {
             />
           </div>
 
+          {error && (
+            <div className="rounded-lg bg-red-50 p-3 text-xs text-red-600 dark:bg-red-950/40 dark:text-red-400">
+              {error}
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={loading}
