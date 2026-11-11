@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, BackgroundTasks
+from fastapi import APIRouter, Depends, BackgroundTasks, UploadFile, File, HTTPException
 from app.database.session import get_db
 from sqlalchemy.orm import Session
 from app.schemas.auth import (
@@ -8,6 +8,7 @@ from app.schemas.auth import (
 from app.models.user import User
 from app.auth.jwt import get_current_user
 from fastapi.security import OAuth2PasswordRequestForm
+from app.utils.cloudinary import upload_media, ALLOWED_IMAGE_TYPES
 from app.services.auth_service import (
     register_user, login_user, verify_email_service,
     resend_otp_service, forgot_password_service,
@@ -15,6 +16,18 @@ from app.services.auth_service import (
 )
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+
+@router.post("/upload-id-card")
+def upload_id_card(file: UploadFile = File(...)):
+    """Upload college ID card image to Cloudinary during registration."""
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid image type '{file.content_type}'. Must be JPEG, PNG, WEBP, or GIF."
+        )
+    uploaded = upload_media(file, folder="campusconnect/id_cards")
+    return {"id_card_url": uploaded["url"]}
 
 
 @router.post("/register", response_model=MessageResponse)

@@ -7,6 +7,14 @@ class UserCreate(BaseModel):
     college_email: EmailStr
     username: str
     password: str
+    roll_number: str | None = None
+    course: str | None = None
+    branch: str | None = None
+    year: str | None = None
+    is_year_back: bool = False
+    is_alumni: bool = False
+    id_card_url: str | None = None
+    linkedin_url: str | None = None
 
 class UserResponse(BaseModel):
     id: int
@@ -17,6 +25,16 @@ class UserResponse(BaseModel):
     created_at: datetime
     bio: str | None = None
     profile_picture: str | None = None
+    roll_number: str | None = None
+    course: str | None = None
+    branch: str | None = None
+    year: str | None = None
+    is_year_back: bool = False
+    is_alumni: bool = False
+    id_card_url: str | None = None
+    is_id_verified: bool = False
+    linkedin_url: str | None = None
+    last_academic_verified_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

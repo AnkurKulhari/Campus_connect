@@ -5,7 +5,7 @@ import Image from "next/image";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { Post } from "@/types";
-import { Image as ImageIcon, X, Loader2, Sparkles } from "lucide-react";
+import { Image as ImageIcon, X, Loader2, Sparkles, GraduationCap } from "lucide-react";
 
 export function CreatePostBox({
   onPostCreated,
@@ -21,6 +21,35 @@ export function CreatePostBox({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!user) return null;
+
+  if (user.is_alumni || user.year === "Alumni") {
+    return (
+      <div className="rounded-xl border border-indigo-100 bg-gradient-to-r from-indigo-50/70 to-violet-50/70 p-4 dark:border-indigo-900/40 dark:bg-zinc-900 shadow-xs">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white shadow-sm">
+            <GraduationCap className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+              <span>Alumni Circle Mode</span>
+              <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                Read-Only
+              </span>
+            </h3>
+            <p className="mt-0.5 text-xs text-zinc-600 dark:text-zinc-400">
+              Welcome back, graduate! As an alumnus, your account has browse and networking access. Publishing new posts is reserved for currently enrolled students.
+            </p>
+          </div>
+          <a
+            href="/alumni"
+            className="hidden sm:inline-flex shrink-0 items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 transition shadow-xs"
+          >
+            Alumni Circle →
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;

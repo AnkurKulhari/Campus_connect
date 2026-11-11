@@ -6,6 +6,7 @@ import { UserProfile } from "@/types";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { X, Loader2, Camera, Upload } from "lucide-react";
+import { LinkedinIcon } from "@/components/icons/LinkedinIcon";
 
 export function EditProfileModal({
   profile,
@@ -21,6 +22,11 @@ export function EditProfileModal({
   const { refreshUser } = useAuth();
   const [fullName, setFullName] = useState(profile.full_name);
   const [bio, setBio] = useState(profile.bio || "");
+  const [linkedinUrl, setLinkedinUrl] = useState(profile.linkedin_url || "");
+  const [year, setYear] = useState(profile.year || "1st Year");
+  const [branch, setBranch] = useState(profile.branch || "Computer Science & Engineering (CSE)");
+  const [course, setCourse] = useState(profile.course || "B.Tech");
+  const [isYearBack, setIsYearBack] = useState(profile.is_year_back || false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(profile.profile_picture || null);
   const [saving, setSaving] = useState(false);
@@ -62,11 +68,16 @@ export function EditProfileModal({
         currentPicUrl = uploadRes.profile_picture;
       }
 
-      // 2. Update name and bio
+      // 2. Update profile fields
       const updated = await api.users.updateMeProfile({
         full_name: fullName.trim() || undefined,
         bio: bio.trim() || null,
         profile_picture: currentPicUrl,
+        linkedin_url: linkedinUrl.trim() || null,
+        course,
+        branch,
+        year,
+        is_year_back: isYearBack,
       });
 
       onUpdated(updated);
@@ -85,7 +96,7 @@ export function EditProfileModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-xl dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800">
           <h2 className="text-base font-bold text-zinc-900 dark:text-white">
             Edit Profile
@@ -172,6 +183,69 @@ export function EditProfileModal({
               placeholder="Tell other students about yourself, branch, interests..."
               className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white focus:outline-none focus:border-indigo-500"
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+              LinkedIn Profile URL
+            </label>
+            <div className="relative">
+              <LinkedinIcon className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
+              <input
+                type="url"
+                value={linkedinUrl}
+                onChange={(e) => setLinkedinUrl(e.target.value)}
+                placeholder="https://linkedin.com/in/yourprofile"
+                className="w-full rounded-lg border border-zinc-200 bg-white pl-9 pr-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                Course
+              </label>
+              <select
+                value={course}
+                onChange={(e) => setCourse(e.target.value)}
+                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white focus:outline-none focus:border-indigo-500"
+              >
+                <option value="B.Tech">B.Tech</option>
+                <option value="MCA">MCA</option>
+                <option value="MBA">MBA</option>
+                <option value="M.Tech">M.Tech</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                Year / Status
+              </label>
+              <select
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white focus:outline-none focus:border-indigo-500"
+              >
+                <option value="1st Year">1st Year</option>
+                <option value="2nd Year">2nd Year</option>
+                <option value="3rd Year">3rd Year</option>
+                <option value="4th Year">4th Year</option>
+                <option value="Alumni">Alumni</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3 dark:border-amber-900/30 dark:bg-amber-950/20">
+            <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-amber-900 dark:text-amber-200">
+              <input
+                type="checkbox"
+                checked={isYearBack}
+                onChange={(e) => setIsYearBack(e.target.checked)}
+                className="h-4 w-4 rounded border-amber-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span>Extended Course Duration (Year-Back Student)</span>
+            </label>
           </div>
 
           <div className="flex justify-end gap-2 pt-2">

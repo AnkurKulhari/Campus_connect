@@ -1,6 +1,6 @@
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_
 
 from app.models.user import User
 from app.models.post import Post
@@ -32,6 +32,15 @@ def _build_profile_response(user: User, current_user_id: int | None, db: Session
         "full_name": user.full_name,
         "bio": user.bio,
         "profile_picture": user.profile_picture,
+        "roll_number": user.roll_number,
+        "course": user.course,
+        "branch": user.branch,
+        "year": user.year,
+        "is_year_back": user.is_year_back,
+        "is_alumni": user.is_alumni,
+        "is_id_verified": user.is_id_verified,
+        "linkedin_url": user.linkedin_url,
+        "last_academic_verified_at": user.last_academic_verified_at,
         "followers_count": followers_count,
         "following_count": following_count,
         "posts_count": posts_count,
@@ -76,3 +85,52 @@ def get_user_profile(username: str, current_user_id: int | None, db: Session) ->
         raise HTTPException(status_code=404, detail="User not found.")
 
     return _build_profile_response(user, current_user_id, db)
+
+
+def get_alumni_circle(
+    search: str | None,
+    branch: str | None,
+    page: int,
+    page_size: int,
+    current_user_id: int | None,
+    db: Session,
+) -> dict:
+    """Retrieve verified and registered Alumni for the Alumni Circle tab."""
+    query = select(User).where(
+        or_(
+            User.is_alumni == True,
+            User.year == "Alumni"
+        )
+    )
+
+    if search:
+        search_filter = f"%{search.strip().lower()}%"
+        query = query.where(
+            or_(
+                func.lower(User.full_name).ilike(search_filter),
+                func.lower(User.username).ilike(search_filter),
+                func.lower(User.bio).ilike(search_filter),
+            )
+        )
+
+    if branch and branch != "All":
+        query = query.where(User.branch.ilike(f"%{branch.strip()}%"))
+
+    total = db.scalar(select(func.count()).select_from(query.subquery())) or 0
+    offset = (page - 1) * page_size
+    alumni_users = db.scalars(
+        query.order_by(User.created_at.desc()).offset(offset).limit(page_size)
+    ).all()
+
+    alumni_profiles = [
+        _build_profile_response(alumnus, current_user_id, db)
+        for alumnus in alumni_users
+    ]
+
+    return {
+        "alumni": alumni_profiles,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "has_next": (offset + len(alumni_users)) < total,
+    }

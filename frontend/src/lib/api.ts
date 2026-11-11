@@ -7,6 +7,7 @@ import {
   PaginatedComments,
   PaginatedFollowUsers,
   PaginatedNotifications,
+  PaginatedAlumni,
 } from "@/types";
 
 const RAW_API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -114,10 +115,27 @@ export const api = {
       college_email: string;
       username: string;
       password: string;
+      roll_number?: string;
+      course?: string;
+      branch?: string;
+      year?: string;
+      is_year_back?: boolean;
+      is_alumni?: boolean;
+      id_card_url?: string;
+      linkedin_url?: string;
     }) => request<{ message: string }>("/auth/register", {
       method: "POST",
       body: JSON.stringify(data),
     }),
+
+    uploadIdCard: (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      return request<{ id_card_url: string }>("/auth/upload-id-card", {
+        method: "POST",
+        body: formData,
+      });
+    },
 
     verifyEmail: (data: { college_email: string; otp: string }) =>
       request<{ message: string }>("/auth/verify-email", {
@@ -254,15 +272,38 @@ export const api = {
       });
     },
 
+    uploadIdCard: (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      return request<UserProfile>("/users/me/id-card", {
+        method: "POST",
+        body: formData,
+      });
+    },
+
     updateMeProfile: (data: {
       full_name?: string | null;
       bio?: string | null;
       profile_picture?: string | null;
+      course?: string | null;
+      branch?: string | null;
+      year?: string | null;
+      is_year_back?: boolean | null;
+      linkedin_url?: string | null;
     }) =>
       request<UserProfile>("/users/me", {
         method: "PATCH",
         body: JSON.stringify(data),
       }),
+
+    getAlumniCircle: (search = "", branch = "", page = 1, pageSize = 20) => {
+      const params = new URLSearchParams();
+      if (search) params.append("search", search);
+      if (branch && branch !== "All") params.append("branch", branch);
+      params.append("page", page.toString());
+      params.append("page_size", pageSize.toString());
+      return request<PaginatedAlumni>(`/users/alumni/circle?${params.toString()}`);
+    },
 
     getProfile: (username: string) =>
       request<UserProfile>(`/users/${username}`),

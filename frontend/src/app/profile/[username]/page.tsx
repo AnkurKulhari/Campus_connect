@@ -17,7 +17,11 @@ import {
   Grid,
   Loader2,
   Sparkles,
+  GraduationCap,
+  ShieldCheck,
+  AlertTriangle,
 } from "lucide-react";
+import { LinkedinIcon } from "@/components/icons/LinkedinIcon";
 
 export default function ProfilePage() {
   const params = useParams<{ username: string }>();
@@ -160,44 +164,94 @@ export default function ProfilePage() {
           <div className="flex-1 text-center sm:text-left">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h1 className="text-xl font-bold text-zinc-900 dark:text-white">
-                  {profile.full_name}
-                </h1>
+                <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
+                  <h1 className="text-xl font-bold text-zinc-900 dark:text-white">
+                    {profile.full_name}
+                  </h1>
+                  {profile.is_id_verified && (
+                    <span
+                      title="Verified Student ID"
+                      className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
+                    >
+                      <ShieldCheck className="h-3 w-3" />
+                      <span>Verified Student</span>
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-zinc-400">@{profile.username}</p>
+
+                {/* Academic Badges */}
+                <div className="mt-2 flex items-center justify-center sm:justify-start gap-2 flex-wrap">
+                  {profile.is_alumni || profile.year === "Alumni" ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-semibold text-violet-700 dark:bg-violet-950/60 dark:text-violet-300">
+                      <GraduationCap className="h-3.5 w-3.5" />
+                      <span>Alumni</span>
+                      {profile.branch && <span>• {profile.branch.replace(/\(.*?\)/g, "").trim()}</span>}
+                    </span>
+                  ) : profile.year ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+                      <GraduationCap className="h-3.5 w-3.5" />
+                      <span>{profile.year}</span>
+                      {profile.course && <span>({profile.course})</span>}
+                      {profile.branch && <span>• {profile.branch.replace(/\(.*?\)/g, "").trim()}</span>}
+                    </span>
+                  ) : null}
+
+                  {profile.is_year_back && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+                      <AlertTriangle className="h-3 w-3" />
+                      <span>Extended Course</span>
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Action Buttons */}
-              {profile.is_self ? (
-                <button
-                  onClick={() => setEditOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 shadow-xs transition"
-                >
-                  <Edit3 className="h-3.5 w-3.5" />
-                  <span>Edit Profile</span>
-                </button>
-              ) : (
-                <button
-                  onClick={handleToggleFollow}
-                  disabled={isFollowLoading}
-                  className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold transition ${
-                    profile.is_following
-                      ? "border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-                      : "bg-indigo-600 text-white hover:bg-indigo-500 shadow-xs"
-                  }`}
-                >
-                  {profile.is_following ? (
-                    <>
-                      <UserCheck className="h-3.5 w-3.5" />
-                      <span>Following</span>
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="h-3.5 w-3.5" />
-                      <span>Follow</span>
-                    </>
-                  )}
-                </button>
-              )}
+              <div className="flex items-center justify-center sm:justify-end gap-2 flex-wrap">
+                {profile.linkedin_url && (
+                  <a
+                    href={profile.linkedin_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600/10 px-3.5 py-1.5 text-xs font-semibold text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 hover:bg-blue-600 hover:text-white shadow-xs transition"
+                  >
+                    <LinkedinIcon className="h-3.5 w-3.5" />
+                    <span>LinkedIn</span>
+                  </a>
+                )}
+
+                {profile.is_self ? (
+                  <button
+                    onClick={() => setEditOpen(true)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 shadow-xs transition"
+                  >
+                    <Edit3 className="h-3.5 w-3.5" />
+                    <span>Edit Profile</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleToggleFollow}
+                    disabled={isFollowLoading}
+                    className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold transition ${
+                      profile.is_following
+                        ? "border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                        : "bg-indigo-600 text-white hover:bg-indigo-500 shadow-xs"
+                    }`}
+                  >
+                    {profile.is_following ? (
+                      <>
+                        <UserCheck className="h-3.5 w-3.5" />
+                        <span>Following</span>
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="h-3.5 w-3.5" />
+                        <span>Follow</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Bio */}

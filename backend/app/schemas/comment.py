@@ -34,7 +34,13 @@ class CommentUpdate(BaseModel):
 class CommentAuthorResponse(BaseModel):
     username: str
     full_name: str
-    profile_picture: str | None
+    profile_picture: str | None = None
+    course: str | None = None
+    branch: str | None = None
+    year: str | None = None
+    is_alumni: bool = False
+    is_id_verified: bool = False
+    linkedin_url: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

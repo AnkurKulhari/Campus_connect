@@ -135,7 +135,7 @@ export function CommentSection({
               className="group flex items-start justify-between gap-3 text-sm"
             >
               <div className="flex-1">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <a
                     href={`/profile/${comment.author.username}`}
                     className="font-semibold text-zinc-900 hover:text-indigo-600 dark:text-zinc-100 dark:hover:text-indigo-400 text-xs"
@@ -145,6 +145,11 @@ export function CommentSection({
                   <span className="text-xs text-zinc-400">
                     @{comment.author.username}
                   </span>
+                  {comment.author.year && (
+                    <span className="rounded bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 text-[9px] font-medium text-zinc-600 dark:text-zinc-300">
+                      {comment.author.year}
+                    </span>
+                  )}
                 </div>
 
                 {editingId === comment.id ? (

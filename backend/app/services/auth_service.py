@@ -67,6 +67,14 @@ def register_user(user_data: UserCreate, background_tasks: BackgroundTasks, db: 
         existing_pending.full_name = user_data.full_name
         existing_pending.username = user_data.username
         existing_pending.hashed_password = get_password_hash(user_data.password)
+        existing_pending.roll_number = user_data.roll_number
+        existing_pending.course = user_data.course
+        existing_pending.branch = user_data.branch
+        existing_pending.year = user_data.year
+        existing_pending.is_year_back = user_data.is_year_back
+        existing_pending.is_alumni = user_data.is_alumni or (bool(user_data.year) and "alumni" in user_data.year.lower())
+        existing_pending.id_card_url = user_data.id_card_url
+        existing_pending.linkedin_url = user_data.linkedin_url
         existing_pending.otp = otp
         existing_pending.failed_attempts = 0
         existing_pending.otp_expires_at = datetime.now(UTC) + timedelta(minutes=10)
@@ -77,11 +85,20 @@ def register_user(user_data: UserCreate, background_tasks: BackgroundTasks, db: 
         background_tasks.add_task(send_otp_email, user_data.college_email, otp)
         return {"message": "New OTP sent successfully."}
 
+    is_alumni_flag = user_data.is_alumni or (bool(user_data.year) and "alumni" in user_data.year.lower())
     pending_user = PendingRegistration(
         full_name=user_data.full_name,
         college_email=user_data.college_email,
         username=user_data.username,
         hashed_password=get_password_hash(user_data.password),
+        roll_number=user_data.roll_number,
+        course=user_data.course,
+        branch=user_data.branch,
+        year="Alumni" if is_alumni_flag else user_data.year,
+        is_year_back=user_data.is_year_back,
+        is_alumni=is_alumni_flag,
+        id_card_url=user_data.id_card_url,
+        linkedin_url=user_data.linkedin_url,
         otp=otp
     )
     db.add(pending_user)
@@ -140,12 +157,55 @@ def verify_email_service(verify_data: VerifyEmail, db: Session):
             detail=f"Incorrect OTP. {remaining} attempt(s) remaining."
         )
 
+    is_alumni_flag = pending_user.is_alumni or (bool(pending_user.year) and "alumni" in pending_user.year.lower())
+    is_id_verified = False
+
+    # Automated verification logic using IPEC / AKTU roll number formula
+    # Standard format: 13 digits (e.g., 2300300100032)
+    # First 2 digits: Admission Year (e.g. 23 -> 2023)
+    # Digits 3-6: 0030 (IPEC code)
+    if pending_user.roll_number:
+        clean_roll = pending_user.roll_number.strip()
+        if len(clean_roll) == 13 and clean_roll.isdigit():
+            batch_yy = int(clean_roll[:2])
+            college_code = clean_roll[2:6]
+            now = datetime.now(UTC)
+            # Academic year index (sessions start around July/August)
+            current_academic_start = now.year if now.month >= 7 else now.year - 1
+            calculated_year_num = current_academic_start - (2000 + batch_yy) + 1
+
+            if college_code == "0030":
+                if is_alumni_flag and calculated_year_num > 4:
+                    is_id_verified = True
+                elif not is_alumni_flag:
+                    standing_map = {1: "1st", 2: "2nd", 3: "3rd", 4: "4th"}
+                    expected_prefix = standing_map.get(calculated_year_num)
+                    if expected_prefix and pending_user.year and expected_prefix in pending_user.year:
+                        is_id_verified = True
+                    elif pending_user.is_year_back and pending_user.id_card_url:
+                        # Year back with uploaded card
+                        is_id_verified = True
+
+    # If ID card was uploaded and valid roll number
+    if pending_user.id_card_url and is_id_verified:
+        is_id_verified = True
+
     new_user = User(
         full_name=pending_user.full_name,
         username=pending_user.username,
         college_email=pending_user.college_email,
         hashed_password=pending_user.hashed_password,
-        is_verified=True
+        is_verified=True,
+        roll_number=pending_user.roll_number,
+        course=pending_user.course,
+        branch=pending_user.branch,
+        year="Alumni" if is_alumni_flag else pending_user.year,
+        is_year_back=pending_user.is_year_back,
+        is_alumni=is_alumni_flag,
+        id_card_url=pending_user.id_card_url,
+        is_id_verified=is_id_verified,
+        linkedin_url=pending_user.linkedin_url,
+        last_academic_verified_at=datetime.now(UTC)
     )
     db.add(new_user)
     db.delete(pending_user)

@@ -10,6 +10,17 @@ class PendingRegistration(Base):
     username: Mapped[str] = mapped_column(String(30), index=True, unique=True)
     college_email: Mapped[str] = mapped_column(String(100), unique=True)
     hashed_password: Mapped[str] = mapped_column(unique=False)
+    
+    # Academic & Student Identity
+    roll_number: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    course: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    branch: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    year: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    is_year_back: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_alumni: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    id_card_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    linkedin_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
     otp: Mapped[str] = mapped_column(String(6), nullable=False)
     otp_expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC) + timedelta(minutes=10))
     # Tracks failed OTP attempts; record is deleted after MAX_OTP_ATTEMPTS

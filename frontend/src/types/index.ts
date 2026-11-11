@@ -7,6 +7,16 @@ export interface User {
   created_at: string;
   bio?: string | null;
   profile_picture?: string | null;
+  roll_number?: string | null;
+  course?: string | null;
+  branch?: string | null;
+  year?: string | null;
+  is_year_back?: boolean;
+  is_alumni?: boolean;
+  id_card_url?: string | null;
+  is_id_verified?: boolean;
+  linkedin_url?: string | null;
+  last_academic_verified_at?: string | null;
 }
 
 export interface UserProfile {
@@ -15,6 +25,16 @@ export interface UserProfile {
   full_name: string;
   bio: string | null;
   profile_picture: string | null;
+  roll_number?: string | null;
+  course?: string | null;
+  branch?: string | null;
+  year?: string | null;
+  is_year_back?: boolean;
+  is_alumni?: boolean;
+  id_card_url?: string | null;
+  is_id_verified?: boolean;
+  linkedin_url?: string | null;
+  last_academic_verified_at?: string | null;
   followers_count: number;
   following_count: number;
   posts_count: number;
@@ -34,6 +54,12 @@ export interface PostAuthor {
   username: string;
   full_name: string;
   profile_picture: string | null;
+  course?: string | null;
+  branch?: string | null;
+  year?: string | null;
+  is_alumni?: boolean;
+  is_id_verified?: boolean;
+  linkedin_url?: string | null;
 }
 
 export interface Post {
@@ -60,6 +86,20 @@ export interface CommentAuthor {
   username: string;
   full_name: string;
   profile_picture: string | null;
+  course?: string | null;
+  branch?: string | null;
+  year?: string | null;
+  is_alumni?: boolean;
+  is_id_verified?: boolean;
+  linkedin_url?: string | null;
+}
+
+export interface PaginatedAlumni {
+  alumni: UserProfile[];
+  total: number;
+  page: number;
+  page_size: number;
+  has_next: boolean;
 }
 
 export interface Comment {

@@ -12,6 +12,7 @@ import {
   User as UserIcon,
   LogOut,
   PlusCircle,
+  Users,
 } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -74,6 +75,18 @@ export function Navbar({ onOpenCreatePost }: { onOpenCreatePost?: () => void }) 
             </a>
 
             <a
+              href="/alumni"
+              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                pathname === "/alumni"
+                  ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-white"
+                  : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
+              }`}
+            >
+              <Users className="h-4 w-4 text-violet-500" />
+              <span className="hidden md:inline">Alumni Circle</span>
+            </a>
+
+            <a
               href="/notifications"
               className={`relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                 pathname === "/notifications"
@@ -114,7 +127,7 @@ export function Navbar({ onOpenCreatePost }: { onOpenCreatePost?: () => void }) 
               <span className="hidden md:inline">@{user.username}</span>
             </a>
 
-            {onOpenCreatePost && (
+            {onOpenCreatePost && !user.is_alumni && user.year !== "Alumni" && (
               <button
                 onClick={onOpenCreatePost}
                 className="ml-1 hidden sm:flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition"

@@ -66,6 +66,13 @@ def create_post(
     current_user: User,
     db: Session,
 ) -> Post:
+    # Alumni posting restriction: Alumni can browse, like, and comment, but cannot publish new posts
+    if current_user.is_alumni or (current_user.year and current_user.year.strip().lower() == "alumni"):
+        raise HTTPException(
+            status_code=403,
+            detail="Alumni accounts have read-only browsing access and cannot publish new posts. Connect with students and explore the campus feed!"
+        )
+
     if not post_data.content and not files:
         raise HTTPException(status_code=400, detail="A post must have text content or at least one media file.")
 

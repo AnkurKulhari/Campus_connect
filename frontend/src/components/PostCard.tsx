@@ -11,7 +11,8 @@ import { CommentSection } from "./CommentSection";
 import { ConfirmModal } from "./ConfirmModal";
 import { ReportModal } from "./ReportModal";
 import { FormattedContent } from "./FormattedContent";
-import { Heart, MessageCircle, MoreVertical, Trash2, Flag } from "lucide-react";
+import { Heart, MessageCircle, MoreVertical, Trash2, Flag, GraduationCap, CheckCircle } from "lucide-react";
+import { LinkedinIcon } from "@/components/icons/LinkedinIcon";
 
 export function PostCard({
   post,
@@ -123,6 +124,43 @@ export function PostCard({
               <span className="text-xs text-zinc-400">
                 @{post.author.username}
               </span>
+
+              {/* Academic Badge */}
+              {post.author.is_alumni || post.author.year === "Alumni" ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700 dark:bg-violet-950/60 dark:text-violet-300">
+                  <GraduationCap className="h-3 w-3" />
+                  <span>Alumni</span>
+                  {post.author.branch && <span>• {post.author.branch.replace(/\(.*?\)/g, "").trim()}</span>}
+                </span>
+              ) : post.author.year ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+                  <span>{post.author.year}</span>
+                  {post.author.branch && <span>• {post.author.branch.replace(/\(.*?\)/g, "").trim()}</span>}
+                </span>
+              ) : null}
+
+              {/* Verified Student Badge */}
+              {post.author.is_id_verified && (
+                <span
+                  title="Verified Student ID"
+                  className="inline-flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400"
+                >
+                  <CheckCircle className="h-3.5 w-3.5" />
+                </span>
+              )}
+
+              {/* LinkedIn Networking Link */}
+              {post.author.linkedin_url && (
+                <a
+                  href={post.author.linkedin_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Connect on LinkedIn"
+                  className="text-zinc-400 hover:text-blue-600 transition"
+                >
+                  <LinkedinIcon className="h-3.5 w-3.5" />
+                </a>
+              )}
             </div>
             <Link
               href={`/posts/${post.id}`}
