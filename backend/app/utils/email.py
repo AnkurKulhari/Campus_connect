@@ -1,50 +1,16 @@
 import json
 import logging
-import socket
-import smtplib
 import urllib.request
 import urllib.error
-from email.message import EmailMessage
 
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
 
-def _create_ipv4_socket(host: str, port: int, timeout: float = 12):
-    """Force IPv4 socket resolution. Prevents [Errno 101] Network is unreachable on cloud hosts without IPv6."""
-    addr_info = socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_STREAM)
-    last_err = None
-    for af, socktype, proto, _, sa in addr_info:
-        sock = None
-        try:
-            sock = socket.socket(af, socktype, proto)
-            sock.settimeout(timeout)
-            sock.connect(sa)
-            return sock
-        except OSError as e:
-            last_err = e
-            if sock:
-                sock.close()
-    if last_err:
-        raise last_err
-    raise OSError(f"Could not connect to IPv4 for {host}:{port}")
-
-
-class SMTP_IPv4(smtplib.SMTP):
-    def _get_socket(self, host, port, timeout):
-        return _create_ipv4_socket(host, port, timeout)
-
-
-class SMTP_SSL_IPv4(smtplib.SMTP_SSL):
-    def _get_socket(self, host, port, timeout):
-        sock = _create_ipv4_socket(host, port, timeout)
-        return self.context.wrap_socket(sock, server_hostname=self._host)
-
-
 def send_via_brevo(to_email: str, otp: str) -> bool:
     """Send verification email via Brevo (Sendinblue) HTTP REST API over port 443 HTTPS.
-    Supports delivering to any recipient without custom domain verification."""
+    Works on all cloud platforms (Railway, Vercel, AWS) and delivers to any student address."""
     api_key = settings.BREVO_API_KEY.strip()
     if not api_key:
         return False
@@ -55,11 +21,21 @@ def send_via_brevo(to_email: str, otp: str) -> bool:
         "to": [{"email": to_email}],
         "subject": "CampusConnect Email Verification",
         "htmlContent": f"""
-        <div style="font-family: sans-serif; padding: 20px; color: #333;">
-            <h2 style="color: #4F46E5;">CampusConnect Email Verification</h2>
-            <p>Your verification OTP is:</p>
-            <h1 style="letter-spacing: 5px; color: #111;">{otp}</h1>
-            <p>This code will expire in 10 minutes.</p>
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; background: #ffffff; border: 1px solid #e4e4e7; border-radius: 16px;">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <h1 style="color: #4F46E5; margin: 0; font-size: 24px; font-weight: 700;">CampusConnect</h1>
+                <p style="color: #71717a; font-size: 13px; margin-top: 4px;">Inderprastha Engineering College</p>
+            </div>
+            <div style="padding: 24px; background: #f8fafc; border-radius: 12px; text-align: center;">
+                <p style="color: #334155; font-size: 14px; margin: 0 0 12px 0;">Your email verification code is:</p>
+                <div style="font-size: 32px; font-weight: 800; letter-spacing: 8px; color: #1e1b4b; padding: 12px 0; font-family: monospace;">
+                    {otp}
+                </div>
+                <p style="color: #64748b; font-size: 12px; margin: 12px 0 0 0;">This OTP will expire in 10 minutes. Max 5 attempts allowed.</p>
+            </div>
+            <p style="color: #a1a1aa; font-size: 11px; text-align: center; margin-top: 24px;">
+                If you did not request this verification code, please ignore this email.
+            </p>
         </div>
         """
     }).encode("utf-8")
@@ -78,19 +54,19 @@ def send_via_brevo(to_email: str, otp: str) -> bool:
     try:
         with urllib.request.urlopen(req, timeout=10) as response:
             if response.status in (200, 201):
-                logger.info("✅ Verification email sent to %s via Brevo API", to_email)
+                logger.info("✅ Verification OTP email successfully delivered to %s via Brevo", to_email)
                 return True
     except urllib.error.HTTPError as e:
         error_body = e.read().decode("utf-8", errors="ignore")
-        logger.warning("Brevo HTTP API error (%s): %s", e.code, error_body)
+        logger.error("❌ Brevo API error (%s): %s", e.code, error_body)
     except Exception as e:
-        logger.warning("Brevo API request failed: %s", e)
+        logger.error("❌ Brevo API request failed: %s", e)
 
     return False
 
 
 def send_via_resend(to_email: str, otp: str) -> bool:
-    """Send verification email via Resend HTTP REST API (port 443 HTTPS)."""
+    """Send verification email via Resend HTTP REST API over port 443 HTTPS."""
     api_key = settings.RESEND_API_KEY.strip()
     if not api_key:
         return False
@@ -100,11 +76,10 @@ def send_via_resend(to_email: str, otp: str) -> bool:
         "to": [to_email],
         "subject": "CampusConnect Email Verification",
         "html": f"""
-        <div style="font-family: sans-serif; padding: 20px; color: #333;">
-            <h2 style="color: #4F46E5;">CampusConnect Email Verification</h2>
-            <p>Your verification OTP is:</p>
-            <h1 style="letter-spacing: 5px; color: #111;">{otp}</h1>
-            <p>This code will expire in 10 minutes.</p>
+        <div style="font-family: sans-serif; padding: 24px; max-width: 500px; margin: auto;">
+            <h2 style="color: #4F46E5;">CampusConnect Verification</h2>
+            <p>Your verification code is: <strong>{otp}</strong></p>
+            <p>Expires in 10 minutes.</p>
         </div>
         """
     }).encode("utf-8")
@@ -123,82 +98,27 @@ def send_via_resend(to_email: str, otp: str) -> bool:
     try:
         with urllib.request.urlopen(req, timeout=10) as response:
             if response.status in (200, 201):
-                logger.info("✅ Verification email sent to %s via Resend API", to_email)
+                logger.info("✅ Verification OTP email sent to %s via Resend", to_email)
                 return True
-    except urllib.error.HTTPError as e:
-        error_body = e.read().decode("utf-8", errors="ignore")
-        logger.warning("Resend HTTP API error (%s): %s", e.code, error_body)
     except Exception as e:
-        logger.warning("Resend API request failed: %s", e)
-
-    return False
-
-
-def send_via_smtp(to_email: str, otp: str) -> bool:
-    """Send verification email via IPv4 Gmail SMTP (trying port 587 STARTTLS, then port 465 SSL)."""
-    username = settings.SMTP_USERNAME.strip() if settings.SMTP_USERNAME else ""
-    password = settings.SMTP_PASSWORD.replace(" ", "").strip() if settings.SMTP_PASSWORD else ""
-
-    if not username or not password:
-        logger.warning("⚠️ SMTP credentials not set (SMTP_USERNAME or SMTP_PASSWORD is empty).")
-        return False
-
-    message = EmailMessage()
-    message["From"] = username
-    message["To"] = to_email
-    message["Subject"] = "CampusConnect Email Verification"
-    message.set_content(
-        f"""
-        CampusConnect Email Verification
-
-        Your verification OTP is: {otp}
-
-        This OTP will expire in 10 minutes.
-        """
-    )
-
-    # 1. Try STARTTLS on configured port (or 587)
-    try:
-        with SMTP_IPv4(settings.SMTP_HOST, 587, timeout=12) as server:
-            server.starttls()
-            server.login(username, password)
-            server.send_message(message)
-            logger.info("✅ OTP email sent successfully to %s via IPv4 SMTP (port 587)", to_email)
-            return True
-    except Exception as e587:
-        logger.warning("Port 587 IPv4 SMTP failed (%s), trying port 465 SSL...", e587)
-
-    # 2. Fallback to SMTPS / SSL on port 465
-    try:
-        with SMTP_SSL_IPv4(settings.SMTP_HOST, 465, timeout=12) as server:
-            server.login(username, password)
-            server.send_message(message)
-            logger.info("✅ OTP email sent successfully to %s via IPv4 SSL (port 465)", to_email)
-            return True
-    except Exception as e465:
-        logger.error("❌ Both port 587 and port 465 IPv4 SMTP failed for %s: %s", to_email, e465)
+        logger.warning("Resend API failed: %s", e)
 
     return False
 
 
 def send_otp_email(to_email: str, otp: str):
-    # Always log OTP in server logs for instant debugging & fallback
+    """Primary entry point for OTP delivery across all auth flows."""
     logger.info("🔑 [OTP Verification] Generated code for %s: %s", to_email, otp)
 
-    # 1. Try Brevo HTTP API (Port 443 HTTPS - sends to ANY email)
+    # 1. Primary: Brevo HTTP REST API (port 443 HTTPS)
     if send_via_brevo(to_email, otp):
         return
 
-    # 2. Try Resend HTTP API (Port 443 HTTPS)
+    # 2. Secondary: Resend HTTP REST API (port 443 HTTPS)
     if send_via_resend(to_email, otp):
         return
 
-    # 3. Try IPv4 Gmail SMTP (port 587 + 465)
-    if send_via_smtp(to_email, otp):
-        return
-
     logger.warning(
-        "⚠️ All outgoing email methods failed for %s. OTP is stored in Supabase & logs: %s",
+        "⚠️ Email delivery failed for %s. Code is saved in Supabase pending_registration table: %s",
         to_email, otp
     )
-

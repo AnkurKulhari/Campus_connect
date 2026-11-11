@@ -64,7 +64,7 @@ def change_password(
 @router.get("/test-email", tags=["Authentication"])
 def test_email():
     """Diagnostic endpoint to test live email delivery on Railway."""
-    from app.utils.email import send_via_brevo, send_via_resend, send_via_smtp
+    from app.utils.email import send_via_brevo, send_via_resend
     from app.core.config import settings
 
     username = settings.SMTP_USERNAME.strip() if settings.SMTP_USERNAME else ""
@@ -93,23 +93,14 @@ def test_email():
     else:
         results["resend"] = "not configured (RESEND_API_KEY empty)"
 
-    # Test IPv4 SMTP
-    try:
-        smtp_ok = send_via_smtp(target_email, dummy_otp)
-        results["smtp_ipv4"] = "success" if smtp_ok else "failed (all ports blocked or rejected)"
-    except Exception as e:
-        results["smtp_ipv4"] = f"error: {e}"
-
     success = (
         results.get("brevo") == "success"
         or results.get("resend") == "success"
-        or results.get("smtp_ipv4") == "success"
     )
     return {
         "status": "success" if success else "failed",
+        "primary_provider": "brevo",
         "results": results,
         "target_email": target_email,
-        "smtp_user": username,
-        "smtp_host": settings.SMTP_HOST
     }
 
