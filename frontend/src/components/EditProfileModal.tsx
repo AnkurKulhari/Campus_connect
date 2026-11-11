@@ -4,6 +4,7 @@ import React, { useState, useRef } from "react";
 import Image from "next/image";
 import { UserProfile } from "@/types";
 import { api } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import { X, Loader2, Camera, Upload } from "lucide-react";
 
 export function EditProfileModal({
@@ -17,6 +18,7 @@ export function EditProfileModal({
   onClose: () => void;
   onUpdated: (updated: UserProfile) => void;
 }) {
+  const { refreshUser } = useAuth();
   const [fullName, setFullName] = useState(profile.full_name);
   const [bio, setBio] = useState(profile.bio || "");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -68,6 +70,11 @@ export function EditProfileModal({
       });
 
       onUpdated(updated);
+      try {
+        await refreshUser();
+      } catch {
+        // ignore refresh error
+      }
       onClose();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to update profile.");

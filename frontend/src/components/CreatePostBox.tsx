@@ -73,8 +73,18 @@ export function CreatePostBox({
     <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
       <form onSubmit={handleSubmit}>
         <div className="flex gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-            {user.full_name.charAt(0).toUpperCase()}
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 font-bold text-indigo-700 overflow-hidden dark:bg-indigo-950 dark:text-indigo-300">
+            {user.profile_picture ? (
+              <Image
+                src={user.profile_picture}
+                alt={user.full_name}
+                fill
+                sizes="40px"
+                className="object-cover"
+              />
+            ) : (
+              user.full_name.charAt(0).toUpperCase()
+            )}
           </div>
           <div className="flex-1">
             <textarea

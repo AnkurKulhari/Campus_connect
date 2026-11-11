@@ -15,6 +15,8 @@ class UserResponse(BaseModel):
     college_email: EmailStr
     is_verified: bool
     created_at: datetime
+    bio: str | None = None
+    profile_picture: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

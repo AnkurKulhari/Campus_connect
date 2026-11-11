@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { usePathname } from "next/navigation";
@@ -91,13 +92,25 @@ export function Navbar({ onOpenCreatePost }: { onOpenCreatePost?: () => void }) 
 
             <a
               href={`/profile/${user.username}`}
-              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors ${
                 pathname.startsWith("/profile")
                   ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-white"
                   : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
               }`}
             >
-              <UserIcon className="h-4 w-4" />
+              <div className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 font-bold text-[10px] text-indigo-700 overflow-hidden dark:bg-indigo-950 dark:text-indigo-300">
+                {user.profile_picture ? (
+                  <Image
+                    src={user.profile_picture}
+                    alt={user.username}
+                    fill
+                    sizes="24px"
+                    className="object-cover"
+                  />
+                ) : (
+                  user.full_name.charAt(0).toUpperCase()
+                )}
+              </div>
               <span className="hidden md:inline">@{user.username}</span>
             </a>
 

@@ -5,6 +5,8 @@ export interface User {
   college_email: string;
   is_verified: boolean;
   created_at: string;
+  bio?: string | null;
+  profile_picture?: string | null;
 }
 
 export interface UserProfile {
