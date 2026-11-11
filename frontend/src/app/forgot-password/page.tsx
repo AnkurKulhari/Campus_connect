@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { api } from "@/lib/api";
 import { GraduationCap, Loader2, ArrowRight, CheckCircle2 } from "lucide-react";
+import { SuccessModal } from "@/components/SuccessModal";
 
 export default function ForgotPasswordPage() {
   const [step, setStep] = useState<"email" | "reset">("email");
@@ -12,6 +13,7 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,8 +42,7 @@ export default function ForgotPasswordPage() {
         otp: otp.trim(),
         new_password: newPassword,
       });
-      alert("Password has been reset successfully! You can now log in.");
-      window.location.href = "/login";
+      setShowSuccessModal(true);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Reset failed.");
     } finally {
@@ -171,6 +172,17 @@ export default function ForgotPasswordPage() {
           </a>
         </p>
       </div>
+
+      <SuccessModal
+        isOpen={showSuccessModal}
+        title="Password Reset Successfully!"
+        message="Your account password has been updated. You can now sign in with your new credentials."
+        actionText="Proceed to Sign In"
+        autoRedirectSeconds={4}
+        onAction={() => {
+          window.location.href = "/login";
+        }}
+      />
     </div>
   );
 }

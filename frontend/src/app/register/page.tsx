@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 import { GraduationCap, Loader2, ArrowRight, CheckCircle2, RotateCw } from "lucide-react";
+import { SuccessModal } from "@/components/SuccessModal";
 
 export default function RegisterPage() {
   const [step, setStep] = useState<"form" | "otp">("form");
@@ -15,6 +16,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Resend cooldown timer
   const [cooldown, setCooldown] = useState(0);
@@ -78,8 +80,7 @@ export default function RegisterPage() {
         college_email: collegeEmail.trim(),
         otp: otp.trim(),
       });
-      alert("Email verified successfully! You can now log in.");
-      window.location.href = "/login";
+      setShowSuccessModal(true);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Verification failed.");
     } finally {
@@ -293,6 +294,17 @@ export default function RegisterPage() {
           </a>
         </p>
       </div>
+
+      <SuccessModal
+        isOpen={showSuccessModal}
+        title="Email Verified Successfully!"
+        message={`Welcome to CampusConnect${fullName ? `, ${fullName}` : ""}! Your college account (${collegeEmail}) is now verified and active.`}
+        actionText="Proceed to Sign In"
+        autoRedirectSeconds={4}
+        onAction={() => {
+          window.location.href = "/login";
+        }}
+      />
     </div>
   );
 }
