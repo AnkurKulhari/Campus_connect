@@ -42,6 +42,53 @@ class SMTP_SSL_IPv4(smtplib.SMTP_SSL):
         return self.context.wrap_socket(sock, server_hostname=self._host)
 
 
+def send_via_brevo(to_email: str, otp: str) -> bool:
+    """Send verification email via Brevo (Sendinblue) HTTP REST API over port 443 HTTPS.
+    Supports delivering to any recipient without custom domain verification."""
+    api_key = settings.BREVO_API_KEY.strip()
+    if not api_key:
+        return False
+
+    sender_email = settings.SMTP_USERNAME.strip() or "onboarding@campusconnect.app"
+    payload = json.dumps({
+        "sender": {"name": "CampusConnect", "email": sender_email},
+        "to": [{"email": to_email}],
+        "subject": "CampusConnect Email Verification",
+        "htmlContent": f"""
+        <div style="font-family: sans-serif; padding: 20px; color: #333;">
+            <h2 style="color: #4F46E5;">CampusConnect Email Verification</h2>
+            <p>Your verification OTP is:</p>
+            <h1 style="letter-spacing: 5px; color: #111;">{otp}</h1>
+            <p>This code will expire in 10 minutes.</p>
+        </div>
+        """
+    }).encode("utf-8")
+
+    req = urllib.request.Request(
+        "https://api.brevo.com/v3/smtp/email",
+        data=payload,
+        headers={
+            "api-key": api_key,
+            "Content-Type": "application/json",
+            "User-Agent": "CampusConnect/1.0"
+        },
+        method="POST"
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=10) as response:
+            if response.status in (200, 201):
+                logger.info("✅ Verification email sent to %s via Brevo API", to_email)
+                return True
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode("utf-8", errors="ignore")
+        logger.warning("Brevo HTTP API error (%s): %s", e.code, error_body)
+    except Exception as e:
+        logger.warning("Brevo API request failed: %s", e)
+
+    return False
+
+
 def send_via_resend(to_email: str, otp: str) -> bool:
     """Send verification email via Resend HTTP REST API (port 443 HTTPS)."""
     api_key = settings.RESEND_API_KEY.strip()
@@ -138,11 +185,15 @@ def send_otp_email(to_email: str, otp: str):
     # Always log OTP in server logs for instant debugging & fallback
     logger.info("🔑 [OTP Verification] Generated code for %s: %s", to_email, otp)
 
-    # 1. Try Resend HTTP API if configured
+    # 1. Try Brevo HTTP API (Port 443 HTTPS - sends to ANY email)
+    if send_via_brevo(to_email, otp):
+        return
+
+    # 2. Try Resend HTTP API (Port 443 HTTPS)
     if send_via_resend(to_email, otp):
         return
 
-    # 2. Try IPv4 Gmail SMTP (port 587 + 465)
+    # 3. Try IPv4 Gmail SMTP (port 587 + 465)
     if send_via_smtp(to_email, otp):
         return
 

@@ -64,7 +64,7 @@ def change_password(
 @router.get("/test-email", tags=["Authentication"])
 def test_email():
     """Diagnostic endpoint to test live email delivery on Railway."""
-    from app.utils.email import send_via_resend, send_via_smtp
+    from app.utils.email import send_via_brevo, send_via_resend, send_via_smtp
     from app.core.config import settings
 
     username = settings.SMTP_USERNAME.strip() if settings.SMTP_USERNAME else ""
@@ -73,7 +73,17 @@ def test_email():
 
     results = {}
 
-    # Test Resend
+    # Test Brevo (Sendinblue HTTP API)
+    if settings.BREVO_API_KEY:
+        try:
+            brevo_ok = send_via_brevo(target_email, dummy_otp)
+            results["brevo"] = "success" if brevo_ok else "failed (check logs)"
+        except Exception as e:
+            results["brevo"] = f"error: {e}"
+    else:
+        results["brevo"] = "not configured (BREVO_API_KEY empty)"
+
+    # Test Resend (Resend HTTP API)
     if settings.RESEND_API_KEY:
         try:
             resend_ok = send_via_resend(target_email, dummy_otp)
@@ -90,7 +100,11 @@ def test_email():
     except Exception as e:
         results["smtp_ipv4"] = f"error: {e}"
 
-    success = results.get("resend") == "success" or results.get("smtp_ipv4") == "success"
+    success = (
+        results.get("brevo") == "success"
+        or results.get("resend") == "success"
+        or results.get("smtp_ipv4") == "success"
+    )
     return {
         "status": "success" if success else "failed",
         "results": results,

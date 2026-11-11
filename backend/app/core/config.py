@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
 
     RESEND_API_KEY: str = ""
+    BREVO_API_KEY: str = ""
 
     CLOUDINARY_CLOUD_NAME: str = ""
     CLOUDINARY_API_KEY: str = ""
