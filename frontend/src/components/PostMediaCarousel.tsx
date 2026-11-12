@@ -97,23 +97,23 @@ export function PostMediaCarousel({ media }: PostMediaCarouselProps) {
             setLightboxOpen(true);
           }}
           onContextMenu={(e) => e.preventDefault()}
-          className="relative w-full max-h-[580px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex justify-center cursor-pointer select-none group"
+          className="relative w-full rounded-2xl overflow-hidden bg-slate-950/5 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 flex items-center justify-center cursor-pointer select-none group shadow-xs"
         >
           {item.media_type === "video" ? (
             <video
               src={item.cloudinary_url}
               controls
-              className="w-full max-h-[580px] rounded-2xl object-contain select-none"
+              className="w-full max-h-[85vh] rounded-2xl object-contain select-none"
             />
           ) : (
-            <div className="relative w-full flex justify-center">
+            <div className="relative w-full flex items-center justify-center p-1 sm:p-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={item.cloudinary_url}
                 alt="Post attachment"
                 draggable={false}
                 onDragStart={(e) => e.preventDefault()}
-                className="max-h-[580px] w-auto max-w-full rounded-2xl object-contain pointer-events-none select-none group-hover:opacity-95 transition"
+                className="w-auto h-auto max-w-full max-h-[85vh] rounded-xl object-contain pointer-events-none select-none group-hover:opacity-95 transition"
               />
               {/* Download protection shield */}
               <div
@@ -123,7 +123,7 @@ export function PostMediaCarousel({ media }: PostMediaCarouselProps) {
               {/* Full View Hover Pill */}
               <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1.5 rounded-full bg-slate-950/70 px-2.5 py-1 text-white text-[11px] font-semibold tracking-wide backdrop-blur-md opacity-0 group-hover:opacity-100 transition duration-200 pointer-events-none border border-white/10 shadow-sm">
                 <Maximize2 className="h-3 w-3 text-blue-400" />
-                <span>Full View</span>
+                <span>Fullscreen</span>
               </div>
             </div>
           )}
@@ -145,7 +145,7 @@ export function PostMediaCarousel({ media }: PostMediaCarouselProps) {
       tabIndex={0}
       onKeyDown={handleKeyDown}
       onContextMenu={(e) => e.preventDefault()}
-      className="relative w-full aspect-square sm:aspect-[4/3] max-h-[560px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 shadow-md select-none group focus:outline-none"
+      className="relative w-full h-[70vh] min-h-[380px] max-h-[800px] rounded-2xl overflow-hidden bg-slate-950/80 border border-slate-200/80 dark:border-slate-800 shadow-md select-none group focus:outline-none flex items-center justify-center"
     >
       {/* Scroll-Snap Track: 100% flush slides, 0 glitching, native momentum physics */}
       <div
@@ -156,7 +156,7 @@ export function PostMediaCarousel({ media }: PostMediaCarouselProps) {
         {media.map((item, idx) => (
           <div
             key={item.id}
-            className="w-full h-full min-w-full shrink-0 snap-center snap-always flex items-center justify-center bg-slate-950 relative"
+            className="w-full h-full min-w-full shrink-0 snap-center snap-always flex items-center justify-center p-2 bg-slate-950/40 relative"
           >
             {item.media_type === "video" ? (
               <video
@@ -178,7 +178,7 @@ export function PostMediaCarousel({ media }: PostMediaCarouselProps) {
                   alt={`Slide ${idx + 1}`}
                   draggable={false}
                   onDragStart={(e) => e.preventDefault()}
-                  className="max-h-full max-w-full object-contain pointer-events-none select-none group-hover:opacity-95 transition"
+                  className="max-h-full max-w-full w-auto h-auto rounded-xl object-contain pointer-events-none select-none group-hover:opacity-95 transition"
                 />
                 {/* Download protection shield */}
                 <div
@@ -188,7 +188,7 @@ export function PostMediaCarousel({ media }: PostMediaCarouselProps) {
                 {/* Full View Hover Pill */}
                 <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1.5 rounded-full bg-slate-950/70 px-2.5 py-1 text-white text-[11px] font-semibold tracking-wide backdrop-blur-md opacity-0 group-hover:opacity-100 transition duration-200 pointer-events-none border border-white/10 shadow-sm">
                   <Maximize2 className="h-3 w-3 text-blue-400" />
-                  <span>Full View</span>
+                  <span>Fullscreen</span>
                 </div>
               </div>
             )}

@@ -11,7 +11,6 @@ import { CommentSection } from "./CommentSection";
 import { ConfirmModal } from "./ConfirmModal";
 import { ReportModal } from "./ReportModal";
 import { FormattedContent } from "./FormattedContent";
-import { ImageLightboxModal } from "./ImageLightboxModal";
 import {
   Heart,
   MessageCircle,
@@ -22,7 +21,6 @@ import {
   CheckCircle,
   ChevronLeft,
   ChevronRight,
-  Maximize2,
 } from "lucide-react";
 import { LinkedinIcon } from "@/components/icons/LinkedinIcon";
 
@@ -46,17 +44,6 @@ export function PostCard({
   const [isReported, setIsReported] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lightboxInitialIndex, setLightboxInitialIndex] = useState(0);
-
-  const openLightbox = (index: number, e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    setLightboxInitialIndex(index);
-    setLightboxOpen(true);
-  };
 
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -281,14 +268,14 @@ export function PostCard({
         </div>
       )}
 
-      {/* Media Attachments - Strictly 3:4 Aspect Ratio on Timeline, Full Ratio on Click */}
+      {/* Media Attachments - Compact 1:1 Aspect Ratio on Timeline, Navigates to Post Page on Click */}
       {post.media && post.media.length > 0 && (
         <div className="px-4 pb-3">
           {post.media.length === 1 ? (
             <div
-              onClick={(e) => openLightbox(0, e)}
+              onClick={() => router.push(`/posts/${post.id}`)}
               onContextMenu={(e) => e.preventDefault()}
-              className="relative w-full max-w-[480px] mx-auto aspect-[3/4] rounded-2xl overflow-hidden bg-slate-950/5 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 flex items-center justify-center cursor-pointer group select-none shadow-xs"
+              className="relative w-full max-w-[420px] mx-auto aspect-square rounded-2xl overflow-hidden bg-slate-950/5 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 flex items-center justify-center cursor-pointer group select-none shadow-xs"
             >
               {post.media[0].media_type === "video" ? (
                 <video
@@ -311,19 +298,14 @@ export function PostCard({
                     className="absolute inset-0 z-10"
                     onContextMenu={(e) => e.preventDefault()}
                   />
-                  {/* Full View Hover Pill */}
-                  <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1.5 rounded-full bg-slate-950/70 px-2.5 py-1 text-white text-[11px] font-semibold tracking-wide backdrop-blur-md opacity-0 group-hover:opacity-100 transition duration-200 pointer-events-none border border-white/10 shadow-sm">
-                    <Maximize2 className="h-3 w-3 text-blue-400" />
-                    <span>Full View</span>
-                  </div>
                 </>
               )}
             </div>
           ) : (
             <div
-              onClick={(e) => openLightbox(activeMediaIndex, e)}
+              onClick={() => router.push(`/posts/${post.id}`)}
               onContextMenu={(e) => e.preventDefault()}
-              className="relative w-full max-w-[480px] mx-auto aspect-[3/4] rounded-2xl overflow-hidden bg-slate-950/5 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 flex items-center justify-center cursor-pointer group select-none shadow-xs"
+              className="relative w-full max-w-[420px] mx-auto aspect-square rounded-2xl overflow-hidden bg-slate-950/5 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 flex items-center justify-center cursor-pointer group select-none shadow-xs"
             >
               {post.media[activeMediaIndex].media_type === "video" ? (
                 <video
@@ -395,12 +377,6 @@ export function PostCard({
                   />
                 ))}
               </div>
-
-              {/* Full View Hover Pill */}
-              <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1.5 rounded-full bg-slate-950/70 px-2.5 py-1 text-white text-[11px] font-semibold tracking-wide backdrop-blur-md opacity-0 group-hover:opacity-100 transition duration-200 pointer-events-none border border-white/10 shadow-sm">
-                <Maximize2 className="h-3 w-3 text-blue-400" />
-                <span>Full View</span>
-              </div>
             </div>
           )}
         </div>
@@ -456,14 +432,6 @@ export function PostCard({
         onReported={() => {
           setIsReported(true);
         }}
-      />
-
-      {/* Full Ratio Image Lightbox Modal */}
-      <ImageLightboxModal
-        isOpen={lightboxOpen}
-        onClose={() => setLightboxOpen(false)}
-        media={post.media}
-        initialIndex={lightboxInitialIndex}
       />
     </article>
   );
