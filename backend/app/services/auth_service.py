@@ -14,6 +14,8 @@ from app.utils.otp import generate_otp
 from datetime import datetime, timedelta, UTC
 from app.utils.email import send_otp_email
 from app.utils.moderation import assert_safe_content
+from app.utils.id_cache import get_cached_id_card, pop_cached_id_card
+from app.utils.cloudinary import upload_media_bytes
 
 # Constants for brute-force and spam protection
 MAX_OTP_ATTEMPTS = 5
@@ -34,6 +36,15 @@ def register_user(user_data: UserCreate, background_tasks: BackgroundTasks, db: 
             status_code=400,
             detail="College ID card photo is required for enrollment verification."
         )
+
+    # If an ephemeral cache token is passed, verify it is still valid in memory
+    if user_data.id_card_url.startswith("temp_id_"):
+        cached = get_cached_id_card(user_data.id_card_url)
+        if not cached:
+            raise HTTPException(
+                status_code=400,
+                detail="ID card upload session expired or invalid. Please select your ID card photo again."
+            )
 
     validate_email(user_data.college_email)
     validate_username(user_data.username)
@@ -204,6 +215,18 @@ def verify_email_service(verify_data: VerifyEmail, db: Session):
     if pending_user.id_card_url and is_id_verified:
         is_id_verified = True
 
+    # Secure deferred upload: ID card was held in memory cache; upload to Cloudinary now that email OTP is verified!
+    final_id_card_url = pending_user.id_card_url
+    if pending_user.id_card_url and pending_user.id_card_url.startswith("temp_id_"):
+        cached_id = pop_cached_id_card(pending_user.id_card_url)
+        if cached_id:
+            uploaded = upload_media_bytes(
+                cached_id["bytes"],
+                folder="campusconnect/id_cards",
+                filename=f"{pending_user.username}_id.jpg"
+            )
+            final_id_card_url = uploaded["url"]
+
     new_user = User(
         full_name=pending_user.full_name,
         username=pending_user.username,
@@ -217,7 +240,7 @@ def verify_email_service(verify_data: VerifyEmail, db: Session):
         year="Alumni" if is_alumni_flag else pending_user.year,
         is_year_back=pending_user.is_year_back,
         is_alumni=is_alumni_flag,
-        id_card_url=pending_user.id_card_url,
+        id_card_url=final_id_card_url,
         is_id_verified=is_id_verified,
         linkedin_url=pending_user.linkedin_url,
         last_academic_verified_at=datetime.now(UTC)
@@ -260,10 +283,15 @@ def resend_otp_service(resend_data: ResendOTP, background_tasks: BackgroundTasks
 def forgot_password_service(forgot_data: ForgotPassword, background_tasks: BackgroundTasks, db: Session):
     email = forgot_data.college_email.strip().lower()
 
-    # Silently succeed even if user not found to prevent email enumeration attacks
+    # Enforce strict college email format and numeric roll number
+    validate_email(email)
+
     user = db.query(User).filter(User.college_email == email).first()
     if not user:
-        return {"message": "If that email is registered, a reset OTP has been sent."}
+        raise HTTPException(
+            status_code=404,
+            detail=f"No registered account found with college email '{email}'. Please check your roll number or register."
+        )
 
     existing_request = db.query(PasswordResetRequest).filter(
         PasswordResetRequest.college_email == email
@@ -290,11 +318,14 @@ def forgot_password_service(forgot_data: ForgotPassword, background_tasks: Backg
         db.commit()
 
     background_tasks.add_task(send_otp_email, email, otp)
-    return {"message": "If that email is registered, a reset OTP has been sent."}
+    return {"message": "A password reset code has been sent to your college email."}
 
 
 def reset_password_service(reset_data: ResetPassword, db: Session):
     email = reset_data.college_email.strip().lower()
+
+    # Enforce strict college email format
+    validate_email(email)
 
     reset_request = db.query(PasswordResetRequest).filter(
         PasswordResetRequest.college_email == email

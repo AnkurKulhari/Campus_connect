@@ -15,18 +15,53 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  React.useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => setCooldown((prev) => prev - 1), 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
+    const trimmed = collegeEmail.trim().toLowerCase();
+    if (!trimmed.endsWith("@ipec.org.in")) {
+      setError("College email must end with @ipec.org.in (e.g. 2100300100045@ipec.org.in)");
+      return;
+    }
+    const local = trimmed.split("@")[0];
+    if (!/^\d+$/.test(local)) {
+      setError("College email must start with your numeric AKTU roll number (e.g. 2100300100045@ipec.org.in)");
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      const res = await api.auth.forgotPassword(collegeEmail.trim());
+      const res = await api.auth.forgotPassword(trimmed);
       setSuccessMsg(res.message);
       setStep("reset");
+      setCooldown(60);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to send reset code.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (cooldown > 0 || loading) return;
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await api.auth.forgotPassword(collegeEmail.trim().toLowerCase());
+      setSuccessMsg(res.message);
+      setCooldown(60);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to resend reset code.");
     } finally {
       setLoading(false);
     }
@@ -91,10 +126,13 @@ export default function ForgotPasswordPage() {
                 type="email"
                 value={collegeEmail}
                 onChange={(e) => setCollegeEmail(e.target.value)}
-                placeholder="210030010001@ipec.org.in"
+                placeholder="2100300100045@ipec.org.in"
                 required
                 className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
+              <p className="mt-1 text-[11px] text-slate-400">
+                Must be your registered @ipec.org.in email starting with your roll number.
+              </p>
             </div>
 
             <button
@@ -160,6 +198,24 @@ export default function ForgotPasswordPage() {
                 <span>Update Password</span>
               )}
             </button>
+
+            <div className="flex items-center justify-between pt-1 text-xs">
+              <button
+                type="button"
+                onClick={() => setStep("email")}
+                className="font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-slate-300 transition cursor-pointer"
+              >
+                ← Change email
+              </button>
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={cooldown > 0 || loading}
+                className="font-semibold text-blue-600 hover:underline dark:text-blue-400 disabled:opacity-40 transition cursor-pointer"
+              >
+                {cooldown > 0 ? `Resend code in ${cooldown}s` : "Resend code"}
+              </button>
+            </div>
           </form>
         )}
 

@@ -90,6 +90,38 @@ def upload_media(file: UploadFile, folder: str = "campusconnect/posts") -> dict:
     }
 
 
+def upload_media_bytes(
+    contents: bytes,
+    folder: str = "campusconnect/id_cards",
+    filename: str = "id_card.jpg"
+) -> dict:
+    """
+    Uploads raw image bytes to Cloudinary directly from server memory.
+    Used exclusively for uploading verified student ID cards after successful OTP verification.
+    """
+    configure_cloudinary()
+    assert_safe_image(contents, filename)
+
+    try:
+        result = cloudinary.uploader.upload(
+            contents,
+            folder=folder,
+            resource_type="image",
+            quality="auto",
+            fetch_format="auto",
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"ID card storage upload failed: {str(e)}")
+
+    return {
+        "url": result["secure_url"],
+        "public_id": result["public_id"],
+        "media_type": "image",
+    }
+
+
 def delete_media(public_id: str, media_type: str = "image"):
     """Deletes a Cloudinary asset by public_id."""
     configure_cloudinary()
