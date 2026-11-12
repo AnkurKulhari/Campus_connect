@@ -13,6 +13,7 @@ import {
   LogOut,
   PlusCircle,
   Users,
+  MessageSquare,
 } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -20,21 +21,26 @@ export function Navbar({ onOpenCreatePost }: { onOpenCreatePost?: () => void }) 
   const { user, logout } = useAuth();
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [unreadMessages, setUnreadMessages] = useState<number>(0);
 
   useEffect(() => {
     if (!user) return;
 
-    const fetchCount = async () => {
+    const fetchCounts = async () => {
       try {
-        const res = await api.notifications.getUnreadCount();
-        setUnreadCount(res.unread_count);
+        const [notifRes, msgRes] = await Promise.all([
+          api.notifications.getUnreadCount(),
+          api.messages.getUnreadCount(),
+        ]);
+        setUnreadCount(notifRes.unread_count);
+        setUnreadMessages(msgRes.unread_count);
       } catch {
         // Silently catch if not authorized
       }
     };
 
-    fetchCount();
-    const interval = setInterval(fetchCount, 20000); // refresh every 20s
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 15000); // refresh every 15s
     return () => clearInterval(interval);
   }, [user]);
 
@@ -99,6 +105,23 @@ export function Navbar({ onOpenCreatePost }: { onOpenCreatePost?: () => void }) 
               {unreadCount > 0 && (
                 <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
                   {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+            </a>
+
+            <a
+              href="/messages"
+              className={`relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                pathname === "/messages"
+                  ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-white"
+                  : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
+              }`}
+            >
+              <MessageSquare className="h-4 w-4" />
+              <span className="hidden md:inline">Messages</span>
+              {unreadMessages > 0 && (
+                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 px-1 text-[10px] font-bold text-white">
+                  {unreadMessages > 99 ? "99+" : unreadMessages}
                 </span>
               )}
             </a>

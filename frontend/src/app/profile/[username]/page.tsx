@@ -20,6 +20,7 @@ import {
   GraduationCap,
   ShieldCheck,
   AlertTriangle,
+  MessageSquare,
 } from "lucide-react";
 import { LinkedinIcon } from "@/components/icons/LinkedinIcon";
 
@@ -229,27 +230,37 @@ export default function ProfilePage() {
                     <span>Edit Profile</span>
                   </button>
                 ) : (
-                  <button
-                    onClick={handleToggleFollow}
-                    disabled={isFollowLoading}
-                    className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold transition ${
-                      profile.is_following
-                        ? "border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-                        : "bg-indigo-600 text-white hover:bg-indigo-500 shadow-xs"
-                    }`}
-                  >
-                    {profile.is_following ? (
-                      <>
-                        <UserCheck className="h-3.5 w-3.5" />
-                        <span>Following</span>
-                      </>
-                    ) : (
-                      <>
-                        <UserPlus className="h-3.5 w-3.5" />
-                        <span>Follow</span>
-                      </>
-                    )}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={`/messages?user=${profile.username}`}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 shadow-xs transition"
+                    >
+                      <MessageSquare className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                      <span>Message</span>
+                    </a>
+
+                    <button
+                      onClick={handleToggleFollow}
+                      disabled={isFollowLoading}
+                      className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold transition ${
+                        profile.is_following
+                          ? "border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                          : "bg-indigo-600 text-white hover:bg-indigo-500 shadow-xs"
+                      }`}
+                    >
+                      {profile.is_following ? (
+                        <>
+                          <UserCheck className="h-3.5 w-3.5" />
+                          <span>Following</span>
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="h-3.5 w-3.5" />
+                          <span>Follow</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

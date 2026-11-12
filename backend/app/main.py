@@ -7,7 +7,7 @@ from sqlalchemy import text
 from app.database import base
 from app.database.session import get_db
 from app.core.config import settings
-from app.routers import auth, users, posts, likes, notifications
+from app.routers import auth, users, posts, likes, notifications, messages
 from app.routers.comments import posts_router as comments_posts_router, comments_router
 
 app = FastAPI(title="CampusConnect API", version="1.0.0")
@@ -36,6 +36,7 @@ app.include_router(likes.router)
 app.include_router(comments_posts_router)
 app.include_router(comments_router)
 app.include_router(notifications.router)
+app.include_router(messages.router)
 
 
 @app.get("/", tags=["Root"])

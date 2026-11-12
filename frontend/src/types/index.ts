@@ -102,6 +102,45 @@ export interface PaginatedAlumni {
   has_next: boolean;
 }
 
+export interface ConversationParticipant {
+  id: number;
+  username: string;
+  full_name: string;
+  profile_picture: string | null;
+  course?: string | null;
+  branch?: string | null;
+  year?: string | null;
+  is_alumni?: boolean;
+  is_id_verified?: boolean;
+}
+
+export interface LastMessage {
+  id: number;
+  sender_id: number;
+  content: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface Conversation {
+  id: number;
+  participant: ConversationParticipant;
+  last_message: LastMessage | null;
+  unread_count: number;
+  created_at: string;
+  last_message_at: string;
+}
+
+export interface DirectMessage {
+  id: number;
+  conversation_id: number;
+  sender_id: number;
+  receiver_id: number;
+  content: string;
+  is_read: boolean;
+  created_at: string;
+}
+
 export interface Comment {
   id: number;
   content: string;

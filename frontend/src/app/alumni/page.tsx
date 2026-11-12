@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Building,
   Sparkles,
+  MessageSquare,
 } from "lucide-react";
 import { LinkedinIcon } from "@/components/icons/LinkedinIcon";
 
@@ -261,26 +262,36 @@ export default function AlumniCirclePage() {
                   </Link>
 
                   {user && user.id !== alumnus.id && (
-                    <button
-                      onClick={() => handleFollowToggle(alumnus.username)}
-                      className={`flex items-center justify-center gap-1 rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
-                        alumnus.is_following
-                          ? "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
-                          : "bg-indigo-600 text-white hover:bg-indigo-500 shadow-xs"
-                      }`}
-                    >
-                      {alumnus.is_following ? (
-                        <>
-                          <UserCheck className="h-3.5 w-3.5" />
-                          <span>Following</span>
-                        </>
-                      ) : (
-                        <>
-                          <UserPlus className="h-3.5 w-3.5" />
-                          <span>Follow</span>
-                        </>
-                      )}
-                    </button>
+                    <>
+                      <Link
+                        href={`/messages?user=${alumnus.username}`}
+                        title="Direct Message"
+                        className="flex items-center justify-center rounded-xl border border-zinc-200 px-2.5 py-1.5 text-zinc-600 hover:bg-zinc-100 hover:text-indigo-600 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 transition"
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                      </Link>
+
+                      <button
+                        onClick={() => handleFollowToggle(alumnus.username)}
+                        className={`flex items-center justify-center gap-1 rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
+                          alumnus.is_following
+                            ? "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
+                            : "bg-indigo-600 text-white hover:bg-indigo-500 shadow-xs"
+                        }`}
+                      >
+                        {alumnus.is_following ? (
+                          <>
+                            <UserCheck className="h-3.5 w-3.5" />
+                            <span>Following</span>
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus className="h-3.5 w-3.5" />
+                            <span>Follow</span>
+                          </>
+                        )}
+                      </button>
+                    </>
                   )}
                 </div>
               </div>

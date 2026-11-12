@@ -8,6 +8,8 @@ import {
   PaginatedFollowUsers,
   PaginatedNotifications,
   PaginatedAlumni,
+  Conversation,
+  DirectMessage,
 } from "@/types";
 
 const RAW_API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -342,6 +344,39 @@ export const api = {
     markAllRead: () =>
       request<{ message: string }>("/notifications/read-all", {
         method: "PATCH",
+      }),
+  },
+
+  messages: {
+    getUnreadCount: () =>
+      request<{ unread_count: number }>("/messages/unread-count"),
+
+    getConversations: () =>
+      request<Conversation[]>("/messages/conversations"),
+
+    getMessages: (conversationId: number, limit = 100) =>
+      request<DirectMessage[]>(`/messages/conversations/${conversationId}?limit=${limit}`),
+
+    sendMessage: (conversationId: number, content: string) =>
+      request<DirectMessage>(`/messages/conversations/${conversationId}`, {
+        method: "POST",
+        body: JSON.stringify({ content }),
+      }),
+
+    startConversation: (username: string, message?: string) =>
+      request<Conversation>(`/messages/start/${username}`, {
+        method: "POST",
+        body: JSON.stringify({ message }),
+      }),
+
+    blockUser: (username: string) =>
+      request<{ message: string }>(`/messages/block/${username}`, {
+        method: "POST",
+      }),
+
+    unblockUser: (username: string) =>
+      request<{ message: string }>(`/messages/block/${username}`, {
+        method: "DELETE",
       }),
   },
 };
