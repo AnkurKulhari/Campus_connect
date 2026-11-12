@@ -33,10 +33,6 @@ class UserProfileUpdate(BaseModel):
     bio: str | None = None
     profile_picture: str | None = None
     gender: str | None = None
-    course: str | None = None
-    branch: str | None = None
-    year: str | None = None
-    is_year_back: bool | None = None
     linkedin_url: str | None = None
 
 

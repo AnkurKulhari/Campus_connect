@@ -82,8 +82,9 @@ def update_my_profile(current_user: User, profile_data: UserProfileUpdate, db: S
             assert_safe_content(clean_bio, "Bio")
         current_user.bio = clean_bio or None
 
-    # 3. Update remaining profile fields
-    update_data = profile_data.model_dump(exclude_unset=True, exclude={"full_name", "bio"})
+    # 3. Update permitted personal fields only (academic credentials like course and year are strictly immutable)
+    allowed_fields = {"profile_picture", "gender", "linkedin_url"}
+    update_data = profile_data.model_dump(exclude_unset=True, include=allowed_fields)
     for field, value in update_data.items():
         setattr(current_user, field, value)
 

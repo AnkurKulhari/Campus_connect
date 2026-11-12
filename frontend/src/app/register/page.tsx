@@ -497,10 +497,12 @@ export default function RegisterPage() {
                       <select
                         value={course}
                         onChange={(e) => setCourse(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-xs text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800/60 dark:text-white transition"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-xs text-slate-900 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition cursor-pointer"
                       >
                         {COURSE_OPTIONS.map((c) => (
-                          <option key={c} value={c}>{c}</option>
+                          <option key={c} value={c} className="bg-white text-slate-900 dark:bg-slate-800 dark:text-white">
+                            {c}
+                          </option>
                         ))}
                       </select>
                     </div>
@@ -512,10 +514,12 @@ export default function RegisterPage() {
                       <select
                         value={year}
                         onChange={(e) => setYear(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-xs text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800/60 dark:text-white transition"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-xs text-slate-900 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition cursor-pointer"
                       >
                         {YEAR_OPTIONS.map((y) => (
-                          <option key={y} value={y}>{y}</option>
+                          <option key={y} value={y} className="bg-white text-slate-900 dark:bg-slate-800 dark:text-white">
+                            {y}
+                          </option>
                         ))}
                       </select>
                     </div>
@@ -527,10 +531,12 @@ export default function RegisterPage() {
                       <select
                         value={branch}
                         onChange={(e) => setBranch(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-xs text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800/60 dark:text-white transition truncate"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-xs text-slate-900 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition truncate cursor-pointer"
                       >
                         {BRANCH_OPTIONS.map((b) => (
-                          <option key={b} value={b}>{b}</option>
+                          <option key={b} value={b} className="bg-white text-slate-900 dark:bg-slate-800 dark:text-white">
+                            {b}
+                          </option>
                         ))}
                       </select>
                     </div>
@@ -546,7 +552,7 @@ export default function RegisterPage() {
                       onChange={(e) => setRollNumber(e.target.value)}
                       placeholder="e.g. 2100300100045"
                       maxLength={13}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-mono text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800/60 dark:text-white transition"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-mono text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
                     />
                     <p className="mt-1 text-[11px] text-slate-400">
                       Your official AKTU roll number printed on your college ID enables instant automated verified badge activation.
@@ -702,7 +708,7 @@ export default function RegisterPage() {
                     placeholder="••••••"
                     maxLength={6}
                     required
-                    className="w-full text-center tracking-[0.5em] text-2xl font-mono font-bold rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    className="w-full text-center tracking-[0.5em] text-2xl font-mono font-bold rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
                   />
                   <p className="mt-1.5 text-[11px] text-slate-400 text-center">
                     Code expires in 10 minutes. Maximum 5 verification attempts.

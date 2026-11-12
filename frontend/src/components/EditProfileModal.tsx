@@ -5,7 +5,7 @@ import Image from "next/image";
 import { UserProfile } from "@/types";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import { X, Loader2, Camera, Upload, Crop, ShieldCheck } from "lucide-react";
+import { X, Loader2, Camera, Upload, Crop, ShieldCheck, GraduationCap, Lock } from "lucide-react";
 import { LinkedinIcon } from "@/components/icons/LinkedinIcon";
 import { AvatarCropModal } from "@/components/AvatarCropModal";
 
@@ -24,10 +24,6 @@ export function EditProfileModal({
   const [fullName, setFullName] = useState(profile.full_name);
   const [bio, setBio] = useState(profile.bio || "");
   const [linkedinUrl, setLinkedinUrl] = useState(profile.linkedin_url || "");
-  const [year, setYear] = useState(profile.year || "1st Year");
-  const [branch, setBranch] = useState(profile.branch || "Computer Science & Engineering (CSE)");
-  const [course, setCourse] = useState(profile.course || "B.Tech");
-  const [isYearBack, setIsYearBack] = useState(profile.is_year_back || false);
 
   // Avatar states
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -82,16 +78,12 @@ export function EditProfileModal({
         currentPicUrl = uploadRes.profile_picture;
       }
 
-      // 2. Update profile fields
+      // 2. Update profile fields (academic standing is strictly locked to verified enrollment)
       const updated = await api.users.updateMeProfile({
         full_name: fullName.trim() || undefined,
         bio: bio.trim() || null,
         profile_picture: currentPicUrl,
         linkedin_url: linkedinUrl.trim() || null,
-        course,
-        branch,
-        year,
-        is_year_back: isYearBack,
       });
 
       onUpdated(updated);
@@ -256,58 +248,35 @@ export function EditProfileModal({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Course
-                </label>
-                <select
-                  value={course}
-                  onChange={(e) => setCourse(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                >
-                  <option value="B.Tech">B.Tech</option>
-                  <option value="MCA">MCA</option>
-                  <option value="MBA">MBA</option>
-                  <option value="M.Tech">M.Tech</option>
-                </select>
+            {/* Academic Standing (Locked Institutional Record) */}
+            <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-3.5 dark:border-slate-800 dark:bg-slate-800/40">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <GraduationCap className="h-4 w-4 text-indigo-500" />
+                  <span>Academic Standing</span>
+                </span>
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                  <Lock className="h-3 w-3" />
+                  <span>Verified Enrollment</span>
+                </span>
               </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Year / Status
-                </label>
-                <select
-                  value={year}
-                  onChange={(e) => setYear(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
-                >
-                  <option value="1st Year">1st Year</option>
-                  <option value="2nd Year">2nd Year</option>
-                  <option value="3rd Year">3rd Year</option>
-                  <option value="4th Year">4th Year</option>
-                  <option value="Alumni">Alumni</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-amber-200/80 bg-amber-50/70 p-3.5 dark:border-amber-900/40 dark:bg-amber-950/20">
-              <label className="flex items-start gap-2.5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isYearBack}
-                  onChange={(e) => setIsYearBack(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-amber-300 text-blue-600 focus:ring-blue-500"
-                />
-                <div>
-                  <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
-                    Extended Course Duration (Year-Back)
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-xl bg-white dark:bg-slate-800 p-2.5 border border-slate-200/60 dark:border-slate-700/60">
+                  <span className="block text-[10px] text-slate-400 font-semibold uppercase">Course & Branch</span>
+                  <span className="font-bold text-slate-900 dark:text-white truncate block">
+                    {profile.course || "B.Tech"} • {profile.branch?.replace(/\(.*?\)/g, "").trim() || "Engineering"}
                   </span>
-                  <p className="mt-0.5 text-[11px] text-amber-800/80 dark:text-amber-300/80 leading-snug">
-                    Keeps your student account active past your original batch timeline. Private and never shown to other students.
-                  </p>
                 </div>
-              </label>
+                <div className="rounded-xl bg-white dark:bg-slate-800 p-2.5 border border-slate-200/60 dark:border-slate-700/60">
+                  <span className="block text-[10px] text-slate-400 font-semibold uppercase">Academic Standing</span>
+                  <span className="font-bold text-slate-900 dark:text-white block">
+                    {profile.year || "Current Student"}
+                  </span>
+                </div>
+              </div>
+              <p className="mt-2 text-[11px] text-slate-400">
+                Academic course and standing are tied to your AKTU roll number formula and cannot be altered via edit profile.
+              </p>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
