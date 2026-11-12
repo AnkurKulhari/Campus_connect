@@ -13,6 +13,7 @@ from app.models.password_reset import PasswordResetRequest
 from app.utils.otp import generate_otp
 from datetime import datetime, timedelta, UTC
 from app.utils.email import send_otp_email
+from app.utils.moderation import assert_safe_content
 
 # Constants for brute-force and spam protection
 MAX_OTP_ATTEMPTS = 5
@@ -22,6 +23,17 @@ OTP_RESEND_COOLDOWN_SECONDS = 60
 def register_user(user_data: UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     # Normalize email to lowercase before any check or storage
     user_data.college_email = user_data.college_email.strip().lower()
+
+    # Content moderation: prevent profanity, cuss words, and abusive handles
+    assert_safe_content(user_data.full_name, "Full name")
+    assert_safe_content(user_data.username, "Username")
+
+    # Validate ID Card URL is provided (mandatory enrollment verification)
+    if not user_data.id_card_url or not user_data.id_card_url.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="College ID card photo is required for enrollment verification."
+        )
 
     validate_email(user_data.college_email)
     validate_username(user_data.username)

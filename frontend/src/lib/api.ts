@@ -132,9 +132,15 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
-    uploadIdCard: (file: File) => {
+    uploadIdCard: (file: File, fullName?: string, rollNumber?: string) => {
       const formData = new FormData();
       formData.append("file", file);
+      if (fullName) {
+        formData.append("full_name", fullName);
+      }
+      if (rollNumber) {
+        formData.append("roll_number", rollNumber);
+      }
       return request<{ id_card_url: string }>("/auth/upload-id-card", {
         method: "POST",
         body: formData,

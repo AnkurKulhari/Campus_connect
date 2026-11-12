@@ -30,3 +30,4 @@ cloudinary==1.44.0
 nudenet==3.4.2
 onnxruntime==1.23.2
 pillow==13.0.0
+pytesseract==0.3.13

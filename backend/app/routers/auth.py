@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, BackgroundTasks, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, BackgroundTasks, UploadFile, File, Form, HTTPException
 from app.database.session import get_db
 from sqlalchemy.orm import Session
 from app.schemas.auth import (
@@ -9,6 +9,8 @@ from app.models.user import User
 from app.auth.jwt import get_current_user
 from fastapi.security import OAuth2PasswordRequestForm
 from app.utils.cloudinary import upload_media, ALLOWED_IMAGE_TYPES
+from app.utils.moderation import assert_safe_content
+from app.utils.id_verification import verify_id_card_name
 from app.services.auth_service import (
     register_user, login_user, verify_email_service,
     resend_otp_service, forgot_password_service,
@@ -19,13 +21,29 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 @router.post("/upload-id-card")
-def upload_id_card(file: UploadFile = File(...)):
-    """Upload college ID card image to Cloudinary during registration."""
+def upload_id_card(
+    file: UploadFile = File(...),
+    full_name: str | None = Form(None),
+    roll_number: str | None = Form(None),
+):
+    """Upload college ID card image to Cloudinary during registration with OCR name verification."""
     if file.content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid image type '{file.content_type}'. Must be JPEG, PNG, WEBP, or GIF."
         )
+
+    # Read bytes to verify content safety and ID card name match before Cloudinary upload
+    file_bytes = file.file.read()
+    file.file.seek(0)
+
+    # Moderation check on name
+    if full_name and full_name.strip():
+        assert_safe_content(full_name.strip(), "Full name")
+        is_valid, reason = verify_id_card_name(file_bytes, full_name.strip(), roll_number)
+        if not is_valid:
+            raise HTTPException(status_code=400, detail=reason)
+
     uploaded = upload_media(file, folder="campusconnect/id_cards")
     return {"id_card_url": uploaded["url"]}
 

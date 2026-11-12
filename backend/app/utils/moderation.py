@@ -3,20 +3,67 @@ import os
 import tempfile
 from fastapi import HTTPException
 
-# Normalized patterns and keywords associated with 18+ adult/explicit content
-EXPLICIT_KEYWORDS = {
+# Comprehensive dictionary of abusive, vulgar, and cuss words in Hindi/Hinglish
+HINDI_EXPLICIT_WORDS = {
+    # Genitalia / Sexual anatomy
+    "chut", "choot", "chuut", "chute",
+    "lund", "lond", "loda", "lauda", "lowda", "lode", "lowde", "lawde", "lavda", "lavde", "lundtop",
+    "gaand", "gand", "gandu", "gaandu", "gandoo", "gandfat", "gandfati", "gandwe",
+    "bhosda", "bhosada", "bhosdi", "bhosdee", "bhosdike", "bhosdika", "bhosdiwala", "bhosdiwale", "bhosadchod", "bhosadi",
+    "tatte", "tatta", "jhat", "jhaat", "jhaatu", "jhatu",
+
+    # Abusive slurs & insults
+    "raand", "randi", "raandi", "randwa", "randwe", "randbaaz", "randibaaz", "chinal", "chinnal",
+    "chutiya", "chutiye", "chutye", "chutya", "chutiyapa", "chutmarika", "chutmarike",
+    "madarchod", "madarchodh", "maderchod", "madarxhod", "madrchod", "madarchodo",
+    "behenchod", "bhenchod", "bhenchodd", "behanchod", "bhenchodon", "bhenkelode", "bhenkeloda",
+    "harami", "haraami", "harramzada", "haramzada", "haramzade", "haramkhor",
+    "kameena", "kamina", "kamine", "kameene", "kamini",
+    "kutta", "kutti", "kutiya", "kutte", "kutto",
+    "suar", "bhadva", "bhadwa", "bhadwe", "hijra", "hijda", "chhakka",
+    "saala", "saale",
+
+    # Sexual acts & vulgar verbs
+    "chod", "choda", "chodna", "chodne", "chudo", "chudai", "chudwana", "chudvaye", "chudaye", "chudao", "chudwao",
+    "chus", "chuso", "chusna", "chusta", "chusti", "chuste",
+    "muth", "mutth", "muthal", "mutthal",
+}
+
+# Comprehensive dictionary of English vulgarities, curses, adult and hate terms
+ENGLISH_EXPLICIT_WORDS = {
     # Pornographic & adult explicit terms
     "porn", "porno", "pornography", "xxx", "nsfw", "hentai", "nude", "nudes",
     "nudity", "naked", "sex", "sexy", "boobs", "tits", "vagina", "penis",
     "cock", "dick", "pussy", "asshole", "blowjob", "handjob", "cum", "masturbate",
     "masturbation", "erotic", "stripper", "hardcore", "milf", "dildo", "slut",
     "whore", "escort", "onlyfans", "leakeds", "camgirl", "incest",
+
+    # Swearing, profanity & curses
+    "fuck", "fucker", "fucking", "fucked", "fuckoff", "motherfucker", "motherfucking", "fuckhead", "fucks",
+    "bitch", "bitches", "bitching", "bitchy",
+    "cunt", "cunts",
+    "dickhead", "dicks", "cockhead", "cocksucker",
+    "assholes", "dumbass", "jackass", "dipshit", "shithead", "bullshit", "shitty",
+    "bastard", "bastards",
+    "deepthroat", "threesome", "gangbang",
+
+    # Slurs
+    "nigger", "nigga", "faggot", "retard",
 }
+
+ALL_EXPLICIT_WORDS = HINDI_EXPLICIT_WORDS | ENGLISH_EXPLICIT_WORDS
+
+# Unambiguous stems that should be detected even inside concatenated usernames or handles
+UNAMBIGUOUS_STEMS = [
+    "chut", "choot", "raand", "randi", "bhosd", "madarchod", "behenchod", "bhenchod",
+    "lauda", "lowde", "lawde", "gaandu", "gandfat", "chutiya",
+    "motherfuck", "asshole", "cocksuck", "dickhead", "cunt", "nigger", "faggot",
+]
 
 # Regex to normalize obfuscated text:
 # Replaces leetspeak: 0->o, 1->i, @->a, $->s, 3->e, etc.
 LEET_MAP = str.maketrans({
-    "0": "o", "1": "i", "!": "i", "@": "a", "3": "e", "$": "s", "5": "s", "7": "t"
+    "0": "o", "1": "i", "!": "i", "@": "a", "3": "e", "$": "s", "5": "s", "7": "t", "4": "a"
 })
 
 # Lazy-loaded NudeNet detector
@@ -45,7 +92,8 @@ def get_nude_detector():
 
 def is_explicit_text(text: str | None) -> tuple[bool, str | None]:
     """
-    Scans text for 18+ explicit, adult, or pornographic content.
+    Scans text for profanity, abusive cuss words (Hindi / English),
+    and 18+ explicit, adult, or pornographic content.
     Returns (is_explicit, matched_word).
     """
     if not text or not text.strip():
@@ -60,34 +108,38 @@ def is_explicit_text(text: str | None) -> tuple[bool, str | None]:
     # Step 3: De-obfuscate leetspeak
     deobfuscated = cleaned.translate(LEET_MAP)
 
-    # Tokenize words using alphanumeric characters
-    words = set(re.findall(r"\b[a-z]{3,}\b", deobfuscated))
+    # Step 4: Tokenize words by alphanumeric boundaries (handles underscores, spaces, hyphens, dots)
+    tokens = set(re.findall(r"[a-z0-9]+", deobfuscated))
 
-    for word in words:
-        if word in EXPLICIT_KEYWORDS:
-            return True, word
+    for token in tokens:
+        if token in ALL_EXPLICIT_WORDS:
+            return True, token
+        # Check repeated characters (e.g. chuuuut -> chut, fuuuuck -> fuck)
+        collapsed = re.sub(r"(.)\1{2,}", r"\1", token)
+        if collapsed in ALL_EXPLICIT_WORDS:
+            return True, collapsed
 
-    # Step 4: Check condensed text without spaces (e.g. "p o r n" or "p_o_r_n")
-    condensed = re.sub(r"[\s\-_.*+~#@]+", "", deobfuscated)
-    for kw in ["porn", "nsfw", "hentai", "blowjob", "onlyfans"]:
-        if kw in condensed:
-            return True, kw
+    # Step 5: Check condensed text without spaces or separators (e.g. "chut_ka_saudagar", "ankurraand")
+    condensed = re.sub(r"[\s\-_.*+~#@/\\|]+", "", deobfuscated)
+    for stem in UNAMBIGUOUS_STEMS:
+        if stem in condensed:
+            return True, stem
 
     return False, None
 
 
 def assert_safe_content(text: str | None, content_type: str = "Post") -> None:
     """
-    Validates that content does not violate 18+ adult content guidelines.
-    Raises HTTPException 400 if explicit content is found.
+    Validates that content does not violate community guidelines (no cuss words, abusive language, or 18+ explicit content).
+    Raises HTTPException 400 if explicit or abusive content is found.
     """
     flagged, match = is_explicit_text(text)
     if flagged:
         raise HTTPException(
             status_code=400,
             detail=(
-                f"{content_type} rejected: Content violates CampusConnect community "
-                "guidelines (18+ explicit or adult content is not permitted on this campus network)."
+                f"{content_type} rejected: Content violates CampusConnect community guidelines "
+                "(profanity, abusive language, or 18+ explicit content is strictly not permitted on this campus network)."
             ),
         )
 

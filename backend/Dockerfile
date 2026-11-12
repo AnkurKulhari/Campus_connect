@@ -2,11 +2,13 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-# Install system dependencies for OpenCV and ONNX runtime
+# Install system dependencies for OpenCV, ONNX runtime, and Tesseract OCR
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libgl1 \
     libglib2.0-0 \
+    tesseract-ocr \
+    tesseract-ocr-eng \
     && rm -rf /var/lib/apt/lists/*
 
 # Install python requirements

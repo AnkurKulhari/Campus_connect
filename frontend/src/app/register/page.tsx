@@ -147,13 +147,20 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!idCardFile) {
+      setError("Official College ID card photo is required to verify your enrollment.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      let uploadedIdCardUrl: string | undefined = undefined;
-      // 1. Upload ID card if provided
-      if (idCardFile) {
-        const uploadRes = await api.auth.uploadIdCard(idCardFile);
-        uploadedIdCardUrl = uploadRes.id_card_url;
-      }
+      // 1. Upload ID card with OCR name verification
+      const uploadRes = await api.auth.uploadIdCard(
+        idCardFile,
+        fullName.trim(),
+        rollNumber.trim() || localPart
+      );
+      const uploadedIdCardUrl = uploadRes.id_card_url;
 
       const isAlumni = year.startsWith("Alumni");
 
@@ -238,7 +245,7 @@ export default function RegisterPage() {
               Step into your campus circle.
             </h1>
             <p className="mt-3 text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
-              Connect exclusively with verified IPEC classmates, faculty, and alumni. Share project breakthroughs, get placement insights, and stay ahead without the noise of open social networks.
+              Connect exclusively with verified IPEC students and alumni. Share project breakthroughs, get placement insights, and stay ahead without the noise of open social networks.
             </p>
 
             {/* Feature Cards */}
@@ -513,9 +520,14 @@ export default function RegisterPage() {
 
                   {/* College ID Card Upload */}
                   <div className="mt-4">
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                      College ID Card Photo <span className="text-slate-400 font-normal">(Optional, for instant verification)</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        College ID Card Photo <span className="text-red-500 font-bold">*</span>
+                      </label>
+                      <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded-full border border-blue-200/60 dark:border-blue-800/40">
+                        Required • Verified via OCR
+                      </span>
+                    </div>
                     <input
                       type="file"
                       ref={fileInputRef}
@@ -544,12 +556,15 @@ export default function RegisterPage() {
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="w-full flex items-center justify-center gap-2.5 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 p-4 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:border-blue-500 hover:text-blue-600 dark:hover:border-blue-400 dark:hover:text-blue-400 transition bg-slate-50/60 dark:bg-slate-800/30 cursor-pointer"
+                        className="w-full flex items-center justify-center gap-2.5 rounded-2xl border border-dashed border-blue-300 dark:border-blue-800/80 p-4 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:border-blue-500 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 transition bg-slate-50/60 dark:bg-slate-800/30 cursor-pointer"
                       >
                         <Upload className="h-4 w-4 text-blue-500" />
-                        <span>Upload College ID Card (JPEG, PNG, max 10MB)</span>
+                        <span>Upload Official College ID Card (JPEG, PNG, max 10MB)</span>
                       </button>
                     )}
+                    <p className="mt-1.5 text-[11px] text-slate-400 leading-relaxed">
+                      Upload a clear photo of your official college student ID card. Your entered Full Name must match the name printed on your ID card for verification.
+                    </p>
                   </div>
                 </div>
 
@@ -618,7 +633,7 @@ export default function RegisterPage() {
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Sending Verification OTP...</span>
+                      <span>Verifying ID & Sending OTP...</span>
                     </>
                   ) : (
                     <>
