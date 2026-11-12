@@ -7,6 +7,7 @@ from app.models.post import Post
 from app.models.follow import Follow
 from app.schemas.user import UserProfileUpdate
 from app.utils.cloudinary import upload_media, ALLOWED_IMAGE_TYPES
+from app.utils.moderation import assert_safe_content
 
 
 def _build_profile_response(user: User, current_user_id: int | None, db: Session) -> dict:
@@ -55,6 +56,11 @@ def get_my_profile(current_user: User, db: Session) -> dict:
 
 
 def update_my_profile(current_user: User, profile_data: UserProfileUpdate, db: Session) -> dict:
+    if profile_data.full_name:
+        assert_safe_content(profile_data.full_name, "Full name")
+    if profile_data.bio:
+        assert_safe_content(profile_data.bio, "Bio")
+
     update_data = profile_data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(current_user, field, value)
