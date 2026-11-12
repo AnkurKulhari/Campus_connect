@@ -30,21 +30,33 @@ def register_user(user_data: UserCreate, background_tasks: BackgroundTasks, db: 
     assert_safe_content(user_data.full_name, "Full name")
     assert_safe_content(user_data.username, "Username")
 
-    # Validate ID Card URL is provided (mandatory enrollment verification)
-    if not user_data.id_card_url or not user_data.id_card_url.strip():
+    # Validate ID Card URL is provided and strictly from ephemeral in-memory cache
+    if not user_data.id_card_url or not user_data.id_card_url.startswith("temp_id_"):
         raise HTTPException(
             status_code=400,
-            detail="College ID card photo is required for enrollment verification."
+            detail="Official College ID card photo must be verified and uploaded via /auth/upload-id-card."
         )
 
-    # If an ephemeral cache token is passed, verify it is still valid in memory
-    if user_data.id_card_url.startswith("temp_id_"):
-        cached = get_cached_id_card(user_data.id_card_url)
-        if not cached:
-            raise HTTPException(
-                status_code=400,
-                detail="ID card upload session expired or invalid. Please select your ID card photo again."
-            )
+    cached = get_cached_id_card(user_data.id_card_url)
+    if not cached:
+        raise HTTPException(
+            status_code=400,
+            detail="ID card upload session has expired or is invalid. Please upload your ID card photo again."
+        )
+
+    # Bind identity: verify that full_name and roll_number match the verified ID card session
+    cached_name = cached.get("full_name", "")
+    cached_roll = cached.get("roll_number", "")
+    if cached_name and cached_name != user_data.full_name.strip().lower():
+        raise HTTPException(
+            status_code=400,
+            detail="Full name in registration does not match the name verified on your uploaded ID card."
+        )
+    if cached_roll and user_data.roll_number and cached_roll != user_data.roll_number.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Roll number in registration does not match the roll number verified on your uploaded ID card."
+        )
 
     validate_email(user_data.college_email)
     validate_username(user_data.username)
@@ -173,7 +185,10 @@ def verify_email_service(verify_data: VerifyEmail, db: Session):
             detail="Too many incorrect attempts. Please register again."
         )
 
-    if pending_user.otp != verify_data.otp:
+    clean_submitted_otp = str(verify_data.otp).strip()
+    clean_pending_otp = str(pending_user.otp).strip()
+    import secrets
+    if not secrets.compare_digest(clean_pending_otp, clean_submitted_otp):
         pending_user.failed_attempts += 1
         if pending_user.failed_attempts >= MAX_OTP_ATTEMPTS:
             db.delete(pending_user)

@@ -11,9 +11,15 @@ _CACHE: dict[str, dict] = {}
 CACHE_TTL_SECONDS = 900  # 15 minutes (matches OTP expiration window)
 
 
-def store_cached_id_card(file_bytes: bytes, content_type: str = "image/jpeg") -> str:
+def store_cached_id_card(
+    file_bytes: bytes,
+    content_type: str = "image/jpeg",
+    full_name: str = "",
+    roll_number: str = "",
+) -> str:
     """
     Stores ID card bytes in temporary server-side memory cache.
+    Binds the upload session to the verified student name and roll number.
     Returns an unguessable opaque token (e.g. 'temp_id_...').
     Does NOT upload to Cloudinary.
     """
@@ -22,6 +28,8 @@ def store_cached_id_card(file_bytes: bytes, content_type: str = "image/jpeg") ->
     _CACHE[token] = {
         "bytes": file_bytes,
         "content_type": content_type,
+        "full_name": full_name.strip().lower(),
+        "roll_number": roll_number.strip(),
         "expires_at": time.time() + CACHE_TTL_SECONDS,
     }
     logger.info(f"ID card stored in temporary memory cache with token '{token[:16]}...'")

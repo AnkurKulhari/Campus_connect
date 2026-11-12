@@ -343,9 +343,26 @@ export default function RegisterPage() {
             </div>
 
             {error && (
-              <div className="mb-5 rounded-2xl bg-rose-50 border border-rose-200/60 p-3.5 text-xs text-rose-700 dark:bg-rose-950/40 dark:border-rose-900/40 dark:text-rose-300 flex items-start gap-2 animate-in fade-in">
-                <AlertTriangle className="h-4 w-4 shrink-0 text-rose-500 mt-0.5" />
-                <span>{error}</span>
+              <div className="mb-5 rounded-2xl bg-rose-50 border border-rose-200/60 p-3.5 text-xs text-rose-700 dark:bg-rose-950/40 dark:border-rose-900/40 dark:text-rose-300 flex items-start justify-between gap-2 animate-in fade-in">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-rose-500 mt-0.5" />
+                  <span>{error}</span>
+                </div>
+                {(error.toLowerCase().includes("purged") ||
+                  error.toLowerCase().includes("expired") ||
+                  error.toLowerCase().includes("please register again")) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep("form");
+                      setOtp("");
+                      setError(null);
+                    }}
+                    className="shrink-0 underline font-bold hover:text-rose-900 dark:hover:text-rose-200 cursor-pointer"
+                  >
+                    Start Over →
+                  </button>
+                )}
               </div>
             )}
 
@@ -678,8 +695,10 @@ export default function RegisterPage() {
                   </label>
                   <input
                     type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
                     placeholder="••••••"
                     maxLength={6}
                     required

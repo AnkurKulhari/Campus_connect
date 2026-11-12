@@ -71,6 +71,9 @@ Before committing any backend or frontend code, evaluate each attack class:
 - [ ] **Zero Cloudinary Leakage Before OTP**: Is the student ID card held strictly in server-side memory cache (`id_cache.py`) prior to email verification?
   - Verify that `/auth/upload-id-card` returns an opaque `temp_token` (`temp_id_...`) and **never** a public Cloudinary CDN URL.
   - Verify that `upload_media_bytes` is invoked **only** inside `verify_email_service` after the 6-digit OTP is validated.
+  - Verify that `/auth/upload-id-card` strictly mandates `full_name` and `roll_number` and executes both OCR verification and NudeNet explicit image scanning.
+  - Verify that `/auth/register` enforces `temp_id_...` token format and cryptographically binds the registrant's name and roll number to the uploaded ID card session (preventing client-side validation bypass).
+  - Verify that OTP equality check uses constant-time `secrets.compare_digest`.
 - [ ] **Privacy of Academic Year-Back**: Is `is_year_back` restricted to administrative calculations and profile self-view (`is_self`)? It must **never** be rendered publicly to classmates.
 - [ ] **Direct Message Privacy**: Are direct messages filtered strictly by participant ID (`or_(sender_id == current_user.id, recipient_id == current_user.id)`)?
 - [ ] **Notification Isolation**: Can a student only list and mark notifications where `recipient_id == current_user.id`?

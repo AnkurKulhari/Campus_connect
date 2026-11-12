@@ -9,7 +9,7 @@ from app.models.user import User
 from app.auth.jwt import get_current_user
 from fastapi.security import OAuth2PasswordRequestForm
 from app.utils.cloudinary import ALLOWED_IMAGE_TYPES
-from app.utils.moderation import assert_safe_content
+from app.utils.moderation import assert_safe_content, assert_safe_image
 from app.utils.id_verification import verify_id_card_name
 from app.utils.id_cache import store_cached_id_card
 from app.utils.rate_limiter import enforce_rate_limit
@@ -26,14 +26,23 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 def upload_id_card(
     request: Request,
     file: UploadFile = File(...),
-    full_name: str | None = Form(None),
-    roll_number: str | None = Form(None),
+    full_name: str = Form(...),
+    roll_number: str = Form(...),
 ):
     """
     Validates and securely caches college ID card image in server memory during registration.
+    Enforces mandatory full name and roll number bindings via OCR and AI safety filters.
     Does NOT upload to Cloudinary or expose CDN URLs prior to email OTP verification.
     """
     enforce_rate_limit(request, "upload_id_card", max_requests=8, window_seconds=300)
+
+    clean_name = full_name.strip()
+    clean_roll = roll_number.strip()
+
+    if not clean_name:
+        raise HTTPException(status_code=400, detail="Full name is required for ID card verification.")
+    if not clean_roll:
+        raise HTTPException(status_code=400, detail="Roll number is required for ID card verification.")
 
     if file.content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(
@@ -47,14 +56,23 @@ def upload_id_card(
         raise HTTPException(status_code=400, detail="ID card file exceeds maximum 10MB limit.")
 
     # Moderation check on name
-    if full_name and full_name.strip():
-        assert_safe_content(full_name.strip(), "Full name")
-        is_valid, reason = verify_id_card_name(file_bytes, full_name.strip(), roll_number)
-        if not is_valid:
-            raise HTTPException(status_code=400, detail=reason)
+    assert_safe_content(clean_name, "Full name")
 
-    # Cache image in memory — Cloudinary is NEVER touched here!
-    temp_token = store_cached_id_card(file_bytes, file.content_type or "image/jpeg")
+    # Moderation check on ID card image (prevents uploading explicit/inappropriate media)
+    assert_safe_image(file_bytes, "College ID Card")
+
+    # OCR name and roll number verification against ID card image
+    is_valid, reason = verify_id_card_name(file_bytes, clean_name, clean_roll)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=reason)
+
+    # Cache image in memory bound to student identity — Cloudinary is NEVER touched here!
+    temp_token = store_cached_id_card(
+        file_bytes,
+        file.content_type or "image/jpeg",
+        full_name=clean_name,
+        roll_number=clean_roll,
+    )
 
     return {
         "temp_token": temp_token,
