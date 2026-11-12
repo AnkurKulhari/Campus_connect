@@ -16,6 +16,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { LinkedinIcon } from "@/components/icons/LinkedinIcon";
+import { AuthGuard } from "@/components/AuthGuard";
 
 const BRANCH_FILTER_PILLS = [
   "All",
@@ -91,7 +92,8 @@ export default function AlumniCirclePage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <AuthGuard>
+      <div className="mx-auto max-w-5xl px-4 py-8">
       {/* Header Banner - High contrast modern navy gradient */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 p-6 sm:p-10 text-white shadow-xl">
         <div className="relative z-10 max-w-2xl">
@@ -311,6 +313,7 @@ export default function AlumniCirclePage() {
           </button>
         </div>
       )}
-    </div>
+      </div>
+    </AuthGuard>
   );
 }

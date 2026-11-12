@@ -35,12 +35,14 @@ export function getToken(): string | null {
 export function setToken(token: string): void {
   if (typeof window !== "undefined") {
     localStorage.setItem("cc_token", token);
+    document.cookie = `cc_token=${encodeURIComponent(token)}; path=/; max-age=2592000; SameSite=Lax`;
   }
 }
 
 export function removeToken(): void {
   if (typeof window !== "undefined") {
     localStorage.removeItem("cc_token");
+    document.cookie = "cc_token=; path=/; max-age=0; SameSite=Lax";
   }
 }
 

@@ -7,6 +7,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Conversation, DirectMessage } from "@/types";
 import { api } from "@/lib/api";
+import { AuthGuard } from "@/components/AuthGuard";
 import {
   MessageSquare,
   Send,
@@ -535,14 +536,16 @@ function MessagesContent() {
 
 export default function MessagesPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex h-96 items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-        </div>
-      }
-    >
-      <MessagesContent />
-    </Suspense>
+    <AuthGuard>
+      <Suspense
+        fallback={
+          <div className="flex h-96 items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          </div>
+        }
+      >
+        <MessagesContent />
+      </Suspense>
+    </AuthGuard>
   );
 }

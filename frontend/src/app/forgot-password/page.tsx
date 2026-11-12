@@ -2,11 +2,15 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { GraduationCap, Loader2, ArrowRight, CheckCircle2 } from "lucide-react";
 import { SuccessModal } from "@/components/SuccessModal";
 
 export default function ForgotPasswordPage() {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
   const [step, setStep] = useState<"email" | "reset">("email");
   const [collegeEmail, setCollegeEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -16,6 +20,12 @@ export default function ForgotPasswordPage() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+
+  React.useEffect(() => {
+    if (!isLoading && user) {
+      router.replace("/");
+    }
+  }, [user, isLoading, router]);
 
   React.useEffect(() => {
     if (cooldown <= 0) return;

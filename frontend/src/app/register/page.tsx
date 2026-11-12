@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import {
   GraduationCap,
@@ -53,12 +55,20 @@ const GENDER_OPTIONS = [
 ];
 
 export default function RegisterPage() {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
   const [step, setStep] = useState<"form" | "otp">("form");
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [collegeEmail, setCollegeEmail] = useState("");
   const [password, setPassword] = useState("");
   const [gender, setGender] = useState("Prefer not to say");
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      router.replace("/");
+    }
+  }, [user, isLoading, router]);
 
   // Academic Identity
   const [course, setCourse] = useState("B.Tech");

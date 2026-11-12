@@ -9,6 +9,7 @@ import { Post, PaginatedPosts, UserProfile } from "@/types";
 import { api } from "@/lib/api";
 import { PostCard } from "@/components/PostCard";
 import { CreatePostBox } from "@/components/CreatePostBox";
+import { AuthGuard } from "@/components/AuthGuard";
 import {
   Globe,
   Users,
@@ -587,14 +588,16 @@ function HomeFeedContent() {
 
 export default function HomePage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex justify-center py-20 text-slate-400">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-        </div>
-      }
-    >
-      <HomeFeedContent />
-    </Suspense>
+    <AuthGuard>
+      <Suspense
+        fallback={
+          <div className="flex justify-center py-20 text-slate-400">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          </div>
+        }
+      >
+        <HomeFeedContent />
+      </Suspense>
+    </AuthGuard>
   );
 }

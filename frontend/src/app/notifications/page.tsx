@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { Notification, PaginatedNotifications } from "@/types";
 import { api } from "@/lib/api";
+import { AuthGuard } from "@/components/AuthGuard";
 import {
   Bell,
   Heart,
@@ -80,7 +81,8 @@ export default function NotificationsPage() {
   const unreadExist = notifications.some((n) => !n.is_read);
 
   return (
-    <div className="mx-auto max-w-2xl px-4 sm:px-6 py-8">
+    <AuthGuard>
+      <div className="mx-auto max-w-2xl px-4 sm:px-6 py-8">
       <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 mb-6">
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-2xs">
@@ -189,6 +191,7 @@ export default function NotificationsPage() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </AuthGuard>
   );
 }

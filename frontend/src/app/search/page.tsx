@@ -18,6 +18,7 @@ import {
   Users,
 } from "lucide-react";
 import { LinkedinIcon } from "@/components/icons/LinkedinIcon";
+import { AuthGuard } from "@/components/AuthGuard";
 
 const BRANCH_OPTIONS = [
   "All",
@@ -344,14 +345,16 @@ function SearchContent() {
 
 export default function SearchPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex h-96 items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-        </div>
-      }
-    >
-      <SearchContent />
-    </Suspense>
+    <AuthGuard>
+      <Suspense
+        fallback={
+          <div className="flex h-96 items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          </div>
+        }
+      >
+        <SearchContent />
+      </Suspense>
+    </AuthGuard>
   );
 }

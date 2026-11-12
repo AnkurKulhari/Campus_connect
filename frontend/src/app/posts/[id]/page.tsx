@@ -12,6 +12,7 @@ import { CommentSection } from "@/components/CommentSection";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { ReportModal } from "@/components/ReportModal";
 import { PostMediaCarousel } from "@/components/PostMediaCarousel";
+import { AuthGuard } from "@/components/AuthGuard";
 import {
   ArrowLeft,
   Heart,
@@ -218,7 +219,8 @@ export default function PostDetailPage({
   });
 
   return (
-    <div className="mx-auto max-w-7xl px-3 sm:px-6 py-6">
+    <AuthGuard>
+      <div className="mx-auto max-w-7xl px-3 sm:px-6 py-6">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Sidebar: Campus Navigation */}
         <aside className="hidden lg:block lg:col-span-3 space-y-4">
@@ -685,6 +687,7 @@ export default function PostDetailPage({
           router.push("/");
         }}
       />
-    </div>
+      </div>
+    </AuthGuard>
   );
 }

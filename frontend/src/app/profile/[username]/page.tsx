@@ -23,6 +23,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { LinkedinIcon } from "@/components/icons/LinkedinIcon";
+import { AuthGuard } from "@/components/AuthGuard";
 
 export default function ProfilePage() {
   const params = useParams<{ username: string }>();
@@ -142,7 +143,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 sm:px-6 py-8">
+    <AuthGuard>
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 py-8">
       {/* Profile Header Card */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
@@ -370,6 +372,7 @@ export default function ProfilePage() {
           onClose={() => setFollowModal(null)}
         />
       )}
-    </div>
+      </div>
+    </AuthGuard>
   );
 }
