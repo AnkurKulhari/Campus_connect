@@ -175,6 +175,14 @@ export default function PostDetailPage({
     }
   };
 
+  const handleBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 2) {
+      router.back();
+    } else {
+      router.push("/");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -215,15 +223,6 @@ export default function PostDetailPage({
         {/* Left Sidebar: Campus Navigation */}
         <aside className="hidden lg:block lg:col-span-3 space-y-4">
           <div className="sticky top-20 space-y-4">
-            {/* Quick Back Button */}
-            <button
-              onClick={() => router.back()}
-              className="w-full flex items-center gap-2.5 rounded-2xl border border-slate-200/80 bg-white px-4 py-3 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-[#131B2E] dark:text-slate-200 dark:hover:bg-slate-800 shadow-xs transition"
-            >
-              <ArrowLeft className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-              <span>Back to Previous Page</span>
-            </button>
-
             {/* Navigation Pills */}
             <div className="rounded-3xl border border-slate-200/80 bg-white p-3 shadow-xs dark:border-slate-800 dark:bg-[#131B2E]">
               <nav className="space-y-1">
@@ -300,13 +299,13 @@ export default function PostDetailPage({
 
         {/* Center Main Column: Post & Instagram-Style Media Carousel */}
         <main className="col-span-12 lg:col-span-9 xl:col-span-6 space-y-4">
-          {/* Header bar on mobile */}
+          {/* Header bar with Back button */}
           <div className="flex items-center justify-between px-1">
             <button
-              onClick={() => router.back()}
-              className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition"
+              onClick={handleBack}
+              className="group flex items-center gap-2 rounded-xl py-1.5 px-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
               <span>Back</span>
             </button>
             <span className="text-xs font-semibold text-slate-400">Post Details</span>
