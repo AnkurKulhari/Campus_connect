@@ -313,7 +313,7 @@ export default function PostDetailPage({
 
           <article className="rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-[#131B2E] overflow-hidden">
             {/* Author Header */}
-            <div className="flex items-center justify-between p-4 sm:p-5 pb-3">
+            <div className="flex items-center justify-between p-4 sm:p-5 pb-3 relative z-30">
               <div className="flex items-center gap-3 min-w-0">
                 <Link
                   href={`/profile/${post.author.username}`}
@@ -372,37 +372,73 @@ export default function PostDetailPage({
               {user && (
                 <div className="relative">
                   <button
-                    onClick={() => setMenuOpen(!menuOpen)}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setMenuOpen(!menuOpen);
+                    }}
                     className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition"
+                    aria-label="Post actions"
                   >
                     <MoreVertical className="h-4 w-4" />
                   </button>
                   {menuOpen && (
-                    <div className="absolute right-0 mt-1 w-36 rounded-2xl border border-slate-200 bg-white py-1 shadow-xl dark:border-slate-800 dark:bg-slate-900 z-30 animate-in fade-in duration-100">
-                      {user.username === post.author.username ? (
-                        <button
-                          onClick={() => {
-                            setMenuOpen(false);
-                            setShowDeleteModal(true);
-                          }}
-                          className="flex w-full items-center gap-2 px-3.5 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                          <span>Delete Post</span>
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => {
-                            setMenuOpen(false);
-                            setShowReportModal(true);
-                          }}
-                          className="flex w-full items-center gap-2 px-3.5 py-2 text-xs font-semibold text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40"
-                        >
-                          <Flag className="h-3.5 w-3.5" />
-                          <span>Report Post</span>
-                        </button>
-                      )}
-                    </div>
+                    <>
+                      {/* Backdrop overlay to safely dismiss menu */}
+                      <div
+                        className="fixed inset-0 z-30"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          setMenuOpen(false);
+                        }}
+                        onContextMenu={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          setMenuOpen(false);
+                        }}
+                      />
+
+                      {/* Dropdown Menu */}
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                        }}
+                        className="absolute right-0 mt-1 w-36 rounded-2xl border border-slate-200 bg-white py-1.5 shadow-xl dark:border-slate-800 dark:bg-slate-900 z-40 animate-in fade-in zoom-in-95 duration-100"
+                      >
+                        {user.username === post.author.username ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              setMenuOpen(false);
+                              setShowDeleteModal(true);
+                            }}
+                            className="flex w-full items-center gap-2 px-3.5 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            <span>Delete Post</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              setMenuOpen(false);
+                              setShowReportModal(true);
+                            }}
+                            className="flex w-full items-center gap-2 px-3.5 py-2 text-xs font-semibold text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition cursor-pointer"
+                          >
+                            <Flag className="h-3.5 w-3.5" />
+                            <span>Report Post</span>
+                          </button>
+                        )}
+                      </div>
+                    </>
                   )}
                 </div>
               )}
