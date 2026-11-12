@@ -97,6 +97,9 @@ Before committing any backend or frontend code, evaluate each attack class:
   - Does `/auth/upload-id-card` run `verify_id_card_name` using Tesseract OCR with grayscale/contrast enhancement?
   - Does it verify that student name tokens or roll number appear on the uploaded card image?
   - Does it gracefully handle host environments without hard crashing?
+- [ ] **Dual-Engine Image Moderation (NSFWJS + NudeNet Defense-in-Depth)**:
+  - Does client-side NSFWJS (`checkImageSafety`) pre-screen images across file pickers (ID card, post media attachments, and avatars) to reject adult/hentai/explicit images before sending bytes across the network?
+  - Does server-side NudeNet (`assert_safe_image`) run anatomical object detection on raw bytes before any cloud storage upload (Cloudinary)?
 
 ### Class 4: Resource Exhaustion, Availability & Rate Limiting
 - [ ] **Server-Side IP Rate Limiting**: Does `rate_limiter.py` guard all public auth routes?

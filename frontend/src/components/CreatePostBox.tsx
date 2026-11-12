@@ -5,6 +5,7 @@ import Image from "next/image";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { Post } from "@/types";
+import { checkImageSafety } from "@/lib/nsfw";
 import {
   Image as ImageIcon,
   X,
@@ -100,13 +101,28 @@ export function CreatePostBox({
     textareaRef.current?.focus();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
 
     const selectedFiles = Array.from(e.target.files);
     if (files.length + selectedFiles.length > 5) {
-      alert("You can attach up to 5 files per post.");
+      setError("You can attach up to 5 files per post.");
       return;
+    }
+
+    // Pre-flight NSFW check using client-side NSFWJS
+    for (const f of selectedFiles) {
+      if (f.type.startsWith("image/")) {
+        const safety = await checkImageSafety(f);
+        if (safety.isExplicit) {
+          setError(
+            safety.reason ||
+              `Photo '${f.name}' was rejected by CampusConnect safety filters.`
+          );
+          if (fileInputRef.current) fileInputRef.current.value = "";
+          return;
+        }
+      }
     }
 
     const newFiles = [...files, ...selectedFiles];

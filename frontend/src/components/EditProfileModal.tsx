@@ -8,6 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { X, Loader2, Camera, Upload, Crop, ShieldCheck, GraduationCap, Lock } from "lucide-react";
 import { LinkedinIcon } from "@/components/icons/LinkedinIcon";
 import { AvatarCropModal } from "@/components/AvatarCropModal";
+import { checkImageSafety } from "@/lib/nsfw";
 
 export function EditProfileModal({
   profile,
@@ -37,7 +38,7 @@ export function EditProfileModal({
 
   if (!isOpen) return null;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -48,6 +49,14 @@ export function EditProfileModal({
 
     if (file.size > 10 * 1024 * 1024) {
       setError("Image size exceeds 10MB limit.");
+      return;
+    }
+
+    // Pre-flight NSFW check
+    const safety = await checkImageSafety(file);
+    if (safety.isExplicit) {
+      setError(safety.reason || "Profile image violates community safety guidelines.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
 

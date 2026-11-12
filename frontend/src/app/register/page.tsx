@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { LinkedinIcon } from "@/components/icons/LinkedinIcon";
 import { SuccessModal } from "@/components/SuccessModal";
+import { checkImageSafety } from "@/lib/nsfw";
 
 const COURSE_OPTIONS = ["B.Tech", "MCA", "MBA", "M.Tech"];
 
@@ -108,13 +109,23 @@ export default function RegisterPage() {
     }
   };
 
-  const handleIdCardSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleIdCardSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !e.target.files[0]) return;
     const file = e.target.files[0];
     if (file.size > 10 * 1024 * 1024) {
       setError("ID card image must be smaller than 10MB.");
       return;
     }
+
+    // Pre-flight NSFW scan
+    const safety = await checkImageSafety(file);
+    if (safety.isExplicit) {
+      setError(safety.reason || "Uploaded image violates community content safety guidelines.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    setError(null);
     setIdCardFile(file);
     setIdCardPreview(URL.createObjectURL(file));
   };
