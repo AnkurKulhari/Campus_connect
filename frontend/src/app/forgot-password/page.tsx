@@ -43,8 +43,13 @@ export default function ForgotPasswordPage() {
       return;
     }
     const local = trimmed.split("@")[0];
-    if (!/^\d+$/.test(local)) {
-      setError("College email must start with your numeric AKTU roll number (e.g. 2100300100045@ipec.org.in)");
+    const isStandard13 = /^\d{13}$/.test(local) && local.substring(2, 6) === "0030";
+    const isLegacy10 = /^\d{10}$/.test(local) && local.substring(2, 5) === "030";
+
+    if (!isStandard13 && !isLegacy10) {
+      setError(
+        "Invalid college email: Must contain your official 13-digit AKTU roll number with IPEC institute code 0030 (e.g. 2300300100032@ipec.org.in)."
+      );
       return;
     }
 

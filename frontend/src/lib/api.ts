@@ -149,11 +149,29 @@ export const api = {
       });
     },
 
-    verifyEmail: (data: { college_email: string; otp: string }) =>
-      request<{ message: string }>("/auth/verify-email", {
+    verifyEmail: async (data: { college_email: string; otp: string }) => {
+      const res = await request<{
+        status?: string;
+        verified?: boolean;
+        message: string;
+        access_token?: string;
+        token_type?: string;
+        user?: User;
+      }>("/auth/verify-email", {
         method: "POST",
         body: JSON.stringify(data),
-      }),
+      });
+
+      // Cryptographic Anti-Tamper Verification Gate:
+      // Defends against proxy tampering (e.g., rewriting HTTP 400/401 to 200 OK)
+      if (!res || res.status !== "success" || !res.access_token || !res.user) {
+        throw new Error(
+          res?.message || "Cryptographic verification failed: Server did not issue a valid authentication token."
+        );
+      }
+
+      return res;
+    },
 
     resendOtp: (college_email: string) =>
       request<{ message: string }>("/auth/resend-otp", {

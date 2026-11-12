@@ -175,6 +175,13 @@ def verify_email_service(verify_data: VerifyEmail, db: Session):
 
     if pending_user.otp != verify_data.otp:
         pending_user.failed_attempts += 1
+        if pending_user.failed_attempts >= MAX_OTP_ATTEMPTS:
+            db.delete(pending_user)
+            db.commit()
+            raise HTTPException(
+                status_code=400,
+                detail="Too many incorrect attempts (limit of 5 reached). Pending registration purged. Please register again."
+            )
         db.commit()
         remaining = MAX_OTP_ATTEMPTS - pending_user.failed_attempts
         raise HTTPException(
@@ -248,7 +255,19 @@ def verify_email_service(verify_data: VerifyEmail, db: Session):
     db.add(new_user)
     db.delete(pending_user)
     db.commit()
-    return {"message": "Email verified. You can now log in."}
+    db.refresh(new_user)
+
+    access_token = create_access_token(
+        data={"sub": str(new_user.id), "username": new_user.username}
+    )
+    return {
+        "status": "success",
+        "verified": True,
+        "message": "Email verified successfully.",
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": new_user,
+    }
 
 
 def resend_otp_service(resend_data: ResendOTP, background_tasks: BackgroundTasks, db: Session):

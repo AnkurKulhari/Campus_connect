@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, BackgroundTasks, UploadFile, File, Form,
 from app.database.session import get_db
 from sqlalchemy.orm import Session
 from app.schemas.auth import (
-    UserCreate, Token, MessageResponse, VerifyEmail, UserResponse,
+    UserCreate, Token, MessageResponse, VerifyEmail, VerifyEmailResponse, UserResponse,
     ResendOTP, ForgotPassword, ResetPassword, ChangePassword
 )
 from app.models.user import User
@@ -89,7 +89,7 @@ def get_me(current_user: User = Depends(get_current_user)):
     return current_user
 
 
-@router.post("/verify-email", response_model=MessageResponse)
+@router.post("/verify-email", response_model=VerifyEmailResponse)
 def verify_email(
     request: Request,
     verify_data: VerifyEmail,

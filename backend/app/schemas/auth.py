@@ -44,6 +44,14 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+class VerifyEmailResponse(BaseModel):
+    status: str
+    verified: bool
+    message: str
+    access_token: str
+    token_type: str
+    user: UserResponse
+
 class VerifyEmail(BaseModel):
     college_email: EmailStr
     otp: str

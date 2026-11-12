@@ -55,7 +55,7 @@ const GENDER_OPTIONS = [
 ];
 
 export default function RegisterPage() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, login } = useAuth();
   const router = useRouter();
   const [step, setStep] = useState<"form" | "otp">("form");
   const [fullName, setFullName] = useState("");
@@ -133,14 +133,19 @@ export default function RegisterPage() {
 
     const email = collegeEmail.trim().toLowerCase();
     if (!email.endsWith("@ipec.org.in")) {
-      setError("College email must end with @ipec.org.in (e.g. 2100300100045@ipec.org.in)");
+      setError("College email must end with @ipec.org.in (e.g. 2300300100032@ipec.org.in)");
       setLoading(false);
       return;
     }
 
     const localPart = email.split("@")[0];
-    if (!/^\d+$/.test(localPart)) {
-      setError("College email must start with your numeric roll number (e.g. 2100300100045@ipec.org.in)");
+    const isStandard13 = /^\d{13}$/.test(localPart) && localPart.substring(2, 6) === "0030";
+    const isLegacy10 = /^\d{10}$/.test(localPart) && localPart.substring(2, 5) === "030";
+
+    if (!isStandard13 && !isLegacy10) {
+      setError(
+        "Invalid college email: Must contain your official 13-digit AKTU roll number with IPEC institute code 0030 (e.g. 2300300100032@ipec.org.in)."
+      );
       setLoading(false);
       return;
     }
@@ -207,10 +212,13 @@ export default function RegisterPage() {
     setError(null);
 
     try {
-      await api.auth.verifyEmail({
+      const res = await api.auth.verifyEmail({
         college_email: collegeEmail.trim(),
         otp: otp.trim(),
       });
+      if (res.access_token) {
+        await login(res.access_token);
+      }
       setShowSuccessModal(true);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Verification failed.");
@@ -738,10 +746,10 @@ export default function RegisterPage() {
         isOpen={showSuccessModal}
         title="Email Verified Successfully!"
         message={`Welcome to CampusConnect${fullName ? `, ${fullName}` : ""}! Your college account (${collegeEmail}) is now verified and active.`}
-        actionText="Proceed to Sign In"
-        autoRedirectSeconds={4}
+        actionText="Enter Campus Feed"
+        autoRedirectSeconds={3}
         onAction={() => {
-          window.location.href = "/login";
+          window.location.href = "/";
         }}
       />
     </div>
