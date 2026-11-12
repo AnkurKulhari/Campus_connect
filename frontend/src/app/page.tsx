@@ -170,15 +170,26 @@ function HomeFeedContent() {
                   href={`/profile/${user.username}`}
                   className="inline-block group"
                 >
-                  <div className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-blue-600 font-bold text-2xl text-white overflow-hidden shadow-sm ring-4 ring-white dark:ring-slate-800">
+                  <div
+                    onContextMenu={(e) => e.preventDefault()}
+                    className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-blue-600 font-bold text-2xl text-white overflow-hidden shadow-sm ring-4 ring-white dark:ring-slate-800 select-none"
+                  >
                     {user.profile_picture ? (
-                      <Image
-                        src={user.profile_picture}
-                        alt={user.username}
-                        fill
-                        sizes="80px"
-                        className="object-cover group-hover:scale-105 transition"
-                      />
+                      <>
+                        <Image
+                          src={user.profile_picture}
+                          alt={user.username}
+                          fill
+                          draggable={false}
+                          onDragStart={(e) => e.preventDefault()}
+                          sizes="80px"
+                          className="object-cover group-hover:scale-105 transition pointer-events-none select-none"
+                        />
+                        <div
+                          className="absolute inset-0 z-10"
+                          onContextMenu={(e) => e.preventDefault()}
+                        />
+                      </>
                     ) : (
                       user.full_name.charAt(0).toUpperCase()
                     )}

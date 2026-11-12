@@ -30,3 +30,11 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   letter-spacing: -0.01em;
 }
+
+/* Media Download & Drag Protection across the app */
+img, video {
+  -webkit-touch-callout: none !important; /* Disables iOS long-press "Save to Photos" sheet */
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-user-drag: none !important;
+}

@@ -18,7 +18,6 @@ import {
   MoreVertical,
   Trash2,
   Loader2,
-  ExternalLink,
   Flag,
 } from "lucide-react";
 
@@ -238,26 +237,27 @@ export default function PostDetailPage({
                   <video
                     src={item.cloudinary_url}
                     controls
-                    className="w-full max-h-[640px] rounded-2xl object-contain"
+                    className="w-full max-h-[640px] rounded-2xl object-contain select-none"
                   />
                 ) : (
-                  <a
-                    href={item.cloudinary_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block group relative w-full flex justify-center"
-                    title="View full resolution"
+                  <div
+                    onContextMenu={(e) => e.preventDefault()}
+                    className="relative w-full flex justify-center select-none"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={item.cloudinary_url}
                       alt="Post media"
-                      className="max-h-[640px] w-auto max-w-full rounded-2xl object-contain transition duration-200"
+                      draggable={false}
+                      onDragStart={(e) => e.preventDefault()}
+                      className="max-h-[640px] w-auto max-w-full rounded-2xl object-contain transition duration-200 pointer-events-none select-none"
                     />
-                    <div className="absolute top-3 right-3 rounded-full bg-black/50 p-1.5 text-white opacity-0 group-hover:opacity-100 transition">
-                      <ExternalLink className="h-4 w-4" />
-                    </div>
-                  </a>
+                    {/* Invisible Protective Shield Overlay */}
+                    <div
+                      className="absolute inset-0 z-10"
+                      onContextMenu={(e) => e.preventDefault()}
+                    />
+                  </div>
                 )}
               </div>
             ))}

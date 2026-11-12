@@ -140,8 +140,9 @@ export function EditProfileModal({
                       src={avatarPreview}
                       alt={profile.username}
                       fill
+                      draggable={false}
                       sizes="96px"
-                      className="object-cover"
+                      className="object-cover select-none pointer-events-none"
                     />
                   ) : (
                     profile.full_name.charAt(0).toUpperCase()

@@ -146,16 +146,27 @@ export default function ProfilePage() {
       {/* Profile Header Card */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-          {/* Avatar */}
-          <div className="relative flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-blue-600 text-3xl font-bold text-white overflow-hidden shadow-md ring-4 ring-slate-100 dark:ring-slate-800">
+          {/* Avatar with Download & Drag Protection */}
+          <div
+            onContextMenu={(e) => e.preventDefault()}
+            className="relative flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-blue-600 text-3xl font-bold text-white overflow-hidden shadow-md ring-4 ring-slate-100 dark:ring-slate-800 select-none"
+          >
             {profile.profile_picture ? (
-              <Image
-                src={profile.profile_picture}
-                alt={profile.username}
-                fill
-                sizes="96px"
-                className="object-cover"
-              />
+              <>
+                <Image
+                  src={profile.profile_picture}
+                  alt={profile.username}
+                  fill
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
+                  sizes="96px"
+                  className="object-cover pointer-events-none select-none"
+                />
+                <div
+                  className="absolute inset-0 z-10"
+                  onContextMenu={(e) => e.preventDefault()}
+                />
+              </>
             ) : (
               profile.full_name.charAt(0).toUpperCase()
             )}

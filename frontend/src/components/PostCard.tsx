@@ -227,26 +227,36 @@ export function PostCard({
           {post.media.length === 1 ? (
             <div
               onClick={() => router.push(`/posts/${post.id}`)}
-              className="relative w-full max-h-[520px] rounded-2xl overflow-hidden bg-slate-950/5 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex justify-center cursor-pointer group"
+              onContextMenu={(e) => e.preventDefault()}
+              className="relative w-full max-h-[520px] rounded-2xl overflow-hidden bg-slate-950/5 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex justify-center cursor-pointer group select-none"
             >
               {post.media[0].media_type === "video" ? (
                 <video
                   src={post.media[0].cloudinary_url}
                   controls
-                  className="max-h-[520px] w-auto max-w-full rounded-2xl object-contain"
+                  className="max-h-[520px] w-auto max-w-full rounded-2xl object-contain select-none"
                 />
               ) : (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={post.media[0].cloudinary_url}
-                  alt="Post attachment"
-                  className="max-h-[520px] w-auto max-w-full rounded-2xl object-contain group-hover:opacity-95 transition duration-200"
-                />
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={post.media[0].cloudinary_url}
+                    alt="Post attachment"
+                    draggable={false}
+                    onDragStart={(e) => e.preventDefault()}
+                    className="max-h-[520px] w-auto max-w-full rounded-2xl object-contain group-hover:opacity-95 transition duration-200 pointer-events-none select-none"
+                  />
+                  {/* Invisible Protective Shield Overlay */}
+                  <div
+                    className="absolute inset-0 z-10"
+                    onContextMenu={(e) => e.preventDefault()}
+                  />
+                </>
               )}
             </div>
           ) : (
             <div
-              className={`grid gap-2 ${
+              className={`grid gap-2 select-none ${
                 post.media.length === 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"
               }`}
             >
@@ -254,22 +264,32 @@ export function PostCard({
                 <div
                   key={item.id}
                   onClick={() => router.push(`/posts/${post.id}`)}
-                  className="relative aspect-square w-full rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 cursor-pointer group"
+                  onContextMenu={(e) => e.preventDefault()}
+                  className="relative aspect-square w-full rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 cursor-pointer group select-none"
                 >
                   {item.media_type === "video" ? (
                     <video
                       src={item.cloudinary_url}
                       controls
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-cover select-none"
                     />
                   ) : (
-                    <Image
-                      src={item.cloudinary_url}
-                      alt="Post attachment"
-                      fill
-                      sizes="(max-width: 768px) 100vw, 500px"
-                      className="object-cover group-hover:scale-105 transition duration-300"
-                    />
+                    <>
+                      <Image
+                        src={item.cloudinary_url}
+                        alt="Post attachment"
+                        fill
+                        draggable={false}
+                        onDragStart={(e) => e.preventDefault()}
+                        sizes="(max-width: 768px) 100vw, 500px"
+                        className="object-cover group-hover:scale-105 transition duration-300 pointer-events-none select-none"
+                      />
+                      {/* Invisible Protective Shield Overlay */}
+                      <div
+                        className="absolute inset-0 z-10"
+                        onContextMenu={(e) => e.preventDefault()}
+                      />
+                    </>
                   )}
                 </div>
               ))}
