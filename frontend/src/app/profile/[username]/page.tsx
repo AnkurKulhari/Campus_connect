@@ -209,10 +209,13 @@ export default function ProfilePage() {
                     </span>
                   ) : null}
 
-                  {profile.is_year_back && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+                  {profile.is_self && profile.is_year_back && (
+                    <span
+                      title="Only visible to you: Course duration extended"
+                      className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/50 dark:border-amber-800/50"
+                    >
                       <AlertTriangle className="h-3 w-3" />
-                      <span>Extended Course</span>
+                      <span>Extended Course Active (Private)</span>
                     </span>
                   )}
                 </div>

@@ -272,15 +272,22 @@ export function EditProfileModal({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-3 dark:border-amber-900/40 dark:bg-amber-950/20">
-              <label className="flex items-center gap-2.5 cursor-pointer text-xs font-semibold text-amber-900 dark:text-amber-200">
+            <div className="rounded-2xl border border-amber-200/80 bg-amber-50/70 p-3.5 dark:border-amber-900/40 dark:bg-amber-950/20">
+              <label className="flex items-start gap-2.5 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={isYearBack}
                   onChange={(e) => setIsYearBack(e.target.checked)}
-                  className="h-4 w-4 rounded border-amber-300 text-blue-600 focus:ring-blue-500"
+                  className="mt-0.5 h-4 w-4 rounded border-amber-300 text-blue-600 focus:ring-blue-500"
                 />
-                <span>Extended Course Duration (Year-Back Student)</span>
+                <div>
+                  <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                    Extended Course Duration (Year-Back)
+                  </span>
+                  <p className="mt-0.5 text-[11px] text-amber-800/80 dark:text-amber-300/80 leading-snug">
+                    Keeps your student account active past your original batch timeline. Private and never shown to other students.
+                  </p>
+                </div>
               </label>
             </div>
 

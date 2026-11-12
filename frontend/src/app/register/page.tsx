@@ -553,22 +553,42 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
-                {/* Year-Back Declaration */}
-                <div className="rounded-2xl border border-amber-200/80 bg-amber-50/60 p-3.5 dark:border-amber-900/40 dark:bg-amber-950/20">
-                  <label className="flex items-start gap-2.5 cursor-pointer">
+                {/* Academic Year-Back / Course Extension Guidance */}
+                <div className="rounded-2xl border border-amber-200/90 bg-amber-50/70 p-4 dark:border-amber-900/50 dark:bg-amber-950/25 transition">
+                  <label className="flex items-start gap-3 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={isYearBack}
                       onChange={(e) => setIsYearBack(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 rounded border-amber-300 text-blue-600 focus:ring-blue-500 dark:border-amber-800"
+                      className="mt-1 h-4 w-4 rounded border-amber-400 text-blue-600 focus:ring-blue-500 dark:border-amber-700 cursor-pointer"
                     />
-                    <div>
-                      <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
-                        I have an Academic Year-Back / Extended Course
-                      </span>
-                      <p className="mt-0.5 text-[11px] text-amber-800/80 dark:text-amber-300/80 leading-relaxed">
-                        Selecting this ensures your student account remains active throughout your full extended degree timeline.
-                      </p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-bold text-amber-950 dark:text-amber-200">
+                          Academic Year-Back / Course Extension Notice
+                        </span>
+                        <span className="rounded-full bg-amber-200/80 dark:bg-amber-900/60 px-2 py-0.5 text-[10px] font-bold text-amber-900 dark:text-amber-200">
+                          Check if applicable
+                        </span>
+                      </div>
+
+                      <div className="mt-2 space-y-2 text-xs text-amber-900/90 dark:text-amber-200/90 leading-relaxed font-normal">
+                        <p>
+                          <strong>Why is this asked?</strong> CampusConnect automatically calculates your graduation year using the admission year in your AKTU roll number (e.g. <em>21...</em> indicates a 2021 admission).
+                        </p>
+                        
+                        <div className="rounded-xl bg-amber-100/70 dark:bg-amber-900/30 p-2.5 space-y-1.5 text-[11px] border border-amber-200/70 dark:border-amber-800/40">
+                          <p>
+                            • <strong>Who should check this:</strong> Any student who repeated an academic year, took a session break, or has a delayed graduation timeline where their current year of study differs from their original admission batch.
+                          </p>
+                          <p>
+                            • <strong>What this does:</strong> Protects your account from being prematurely converted to &ldquo;Alumni&rdquo; or expiring before you finish your degree, maintaining full student access to class feeds, discussions, and notes.
+                          </p>
+                          <p>
+                            • <strong>Privacy guarantee:</strong> This selection is strictly administrative for badge verification and account duration. It is <strong>never shown publicly</strong> on your posts or profile to other classmates.
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </label>
                 </div>
