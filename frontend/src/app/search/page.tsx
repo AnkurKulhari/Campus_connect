@@ -106,24 +106,24 @@ function SearchContent() {
     <div className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#2C251F] dark:text-[#F6F2EC] flex items-center gap-2.5">
-          <Users className="h-7 w-7 text-[#8C7A58] dark:text-[#A8936E]" />
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2.5">
+          <Users className="h-7 w-7 text-blue-600 dark:text-blue-400" />
           <span>Find Students & Alumni</span>
         </h1>
-        <p className="mt-1 text-xs sm:text-sm text-[#8C7E70] dark:text-[#9F9385]">
+        <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
           Search peers, batchmates, and graduated seniors across Inderprastha Engineering College.
         </p>
       </div>
 
       {/* Search Input Bar */}
       <div className="relative mb-5">
-        <Search className="absolute left-4 top-3.5 h-5 w-5 text-[#8C7E70]" />
+        <Search className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" />
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search by name, username, branch (CSE/IT), or interests..."
-          className="w-full rounded-full border border-[#DFD5C6] bg-[#FAF7F2] pl-12 pr-4 py-3 text-xs sm:text-sm text-[#2C251F] placeholder-[#8C7E70] shadow-2xs focus:border-[#8C7A58] focus:outline-none dark:border-[#383129] dark:bg-[#221E1A] dark:text-[#F6F2EC]"
+          className="w-full rounded-2xl border border-slate-200 bg-white pl-12 pr-4 py-3 text-xs sm:text-sm text-slate-900 placeholder-slate-400 shadow-2xs focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
         />
       </div>
 
@@ -141,8 +141,8 @@ function SearchContent() {
                 onClick={() => setRole(r)}
                 className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
                   isSelected
-                    ? "bg-[#8C7A58] text-white shadow-2xs"
-                    : "bg-[#FAF7F2] text-[#685E53] border border-[#E6DED3] hover:bg-[#EDE6DA] dark:border-[#383129] dark:bg-[#221E1A] dark:text-[#C7BCB0]"
+                    ? "bg-blue-600 text-white shadow-xs"
+                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
                 }`}
               >
                 {label}
@@ -161,8 +161,8 @@ function SearchContent() {
                 onClick={() => setBranch(b)}
                 className={`shrink-0 rounded-full px-3.5 py-1 text-[11px] font-semibold transition ${
                   isSelected
-                    ? "bg-[#2C251F] text-white dark:bg-[#F6F2EC] dark:text-[#2C251F]"
-                    : "bg-[#FAF7F2] text-[#685E53] border border-[#E6DED3] hover:bg-[#EDE6DA] dark:border-[#383129] dark:bg-[#221E1A] dark:text-[#C7BCB0]"
+                    ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
                 }`}
               >
                 {b}
@@ -173,23 +173,23 @@ function SearchContent() {
       </div>
 
       {/* Results Count */}
-      <div className="mb-4 text-xs font-semibold text-[#8C7E70] dark:text-[#9F9385]">
+      <div className="mb-4 text-xs font-semibold text-slate-500 dark:text-slate-400">
         Found {total} {total === 1 ? "result" : "results"}
       </div>
 
       {/* Results Grid */}
       {loading ? (
         <div className="flex h-64 flex-col items-center justify-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-[#8C7A58]" />
-          <p className="text-xs text-[#8C7E70]">Searching campus directory...</p>
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <p className="text-xs text-slate-500">Searching campus directory...</p>
         </div>
       ) : users.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-[#DFD5C6] p-12 text-center dark:border-[#383129] bg-[#FAF7F2] dark:bg-[#221E1A]">
-          <Users className="mx-auto h-12 w-12 text-[#8C7E70] mb-2" />
-          <h3 className="text-base font-bold text-[#2C251F] dark:text-[#F6F2EC]">
+        <div className="rounded-2xl border border-dashed border-slate-300 p-12 text-center dark:border-slate-800 bg-white dark:bg-slate-900">
+          <Users className="mx-auto h-12 w-12 text-slate-400 mb-2" />
+          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
             No Students Found
           </h3>
-          <p className="mt-1 text-xs text-[#8C7E70] max-w-sm mx-auto">
+          <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
             {query
               ? `No members matching "${query}". Try searching by department (CSE, IT), roll number, or name.`
               : "Type a name, roll number, or department above to search the IPEC network."}
@@ -200,14 +200,14 @@ function SearchContent() {
           {users.map((item) => (
             <div
               key={item.id}
-              className="flex flex-col justify-between rounded-3xl border border-[#E6DED3] bg-[#FAF7F2] p-5 shadow-xs transition hover:border-[#8C7A58] dark:border-[#383129] dark:bg-[#221E1A] dark:hover:border-[#A8936E]"
+              className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition hover:border-blue-400 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500"
             >
               <div>
                 {/* Header: Avatar + Verification */}
                 <div className="flex items-start justify-between gap-3">
                   <Link
                     href={`/profile/${item.username}`}
-                    className="relative flex h-13 w-13 shrink-0 items-center justify-center rounded-full bg-[#8C7A58] font-bold text-white overflow-hidden shadow-2xs"
+                    className="relative flex h-13 w-13 shrink-0 items-center justify-center rounded-full bg-blue-600 font-bold text-white overflow-hidden shadow-2xs"
                   >
                     {item.profile_picture ? (
                       <Image
@@ -237,16 +237,16 @@ function SearchContent() {
                 <div className="mt-3">
                   <Link
                     href={`/profile/${item.username}`}
-                    className="font-bold text-sm text-[#2C251F] hover:underline dark:text-[#F6F2EC] block truncate"
+                    className="font-bold text-sm text-slate-900 hover:underline dark:text-slate-100 block truncate"
                   >
                     {item.full_name}
                   </Link>
-                  <span className="text-xs text-[#8C7E70] dark:text-[#9F9385] block truncate">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 block truncate">
                     @{item.username}
                   </span>
 
-                  <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#EDE6DA] px-2.5 py-0.5 text-[11px] font-semibold text-[#685E53] dark:bg-[#2B2520] dark:text-[#D4C8B8]">
-                    <GraduationCap className="h-3.5 w-3.5 text-[#8C7A58]" />
+                  <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                    <GraduationCap className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                     <span>
                       {item.is_alumni || item.year === "Alumni"
                         ? "Alumni"
@@ -258,20 +258,20 @@ function SearchContent() {
 
                 {/* Bio */}
                 {item.bio && (
-                  <p className="mt-3 text-xs text-[#685E53] dark:text-[#C7BCB0] line-clamp-2 leading-relaxed">
+                  <p className="mt-3 text-xs text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
                     {item.bio}
                   </p>
                 )}
               </div>
 
               {/* Action Buttons */}
-              <div className="mt-5 pt-3 border-t border-[#EDE6DA] dark:border-[#2E2822] space-y-2">
+              <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
                 {item.linkedin_url && (
                   <a
                     href={item.linkedin_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full flex items-center justify-center gap-1.5 rounded-full bg-[#0077b5]/10 py-1.5 text-xs font-semibold text-[#0077b5] dark:bg-[#0077b5]/20 dark:text-blue-300 hover:bg-[#0077b5] hover:text-white transition"
+                    className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-[#0077b5]/10 py-1.5 text-xs font-semibold text-[#0077b5] dark:bg-[#0077b5]/20 dark:text-blue-300 hover:bg-[#0077b5] hover:text-white transition"
                   >
                     <LinkedinIcon className="h-3.5 w-3.5" />
                     <span>LinkedIn</span>
@@ -281,7 +281,7 @@ function SearchContent() {
                 <div className="flex items-center gap-2">
                   <Link
                     href={`/profile/${item.username}`}
-                    className="flex-1 rounded-full border border-[#DFD5C6] bg-white py-1.5 text-center text-xs font-semibold text-[#2C251F] hover:bg-[#EDE6DA] dark:border-[#383129] dark:bg-[#1A1714] dark:text-[#F6F2EC] dark:hover:bg-[#241F1A] transition"
+                    className="flex-1 rounded-xl border border-slate-200 bg-white py-1.5 text-center text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition"
                   >
                     Profile
                   </Link>
@@ -291,17 +291,17 @@ function SearchContent() {
                       <Link
                         href={`/messages?user=${item.username}`}
                         title="Send Message"
-                        className="flex items-center justify-center rounded-full border border-[#DFD5C6] bg-white p-2 text-[#8C7E70] hover:bg-[#EDE6DA] dark:border-[#383129] dark:bg-[#1A1714] dark:text-[#C7BCB0] dark:hover:bg-[#241F1A] transition"
+                        className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition"
                       >
                         <MessageSquare className="h-4 w-4" />
                       </Link>
 
                       <button
                         onClick={() => handleFollowToggle(item.username)}
-                        className={`flex items-center justify-center gap-1 rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+                        className={`flex items-center justify-center gap-1 rounded-xl px-4 py-1.5 text-xs font-semibold transition ${
                           item.is_following
-                            ? "bg-[#EDE6DA] text-[#685E53] hover:bg-[#E0D7C8] dark:bg-[#2B2520] dark:text-[#BDB1A3]"
-                            : "bg-[#8C7A58] text-white hover:bg-[#796847] shadow-2xs"
+                            ? "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
+                            : "bg-blue-600 text-white hover:bg-blue-700 shadow-2xs"
                         }`}
                       >
                         {item.is_following ? (
@@ -331,7 +331,7 @@ function SearchContent() {
           <button
             onClick={() => fetchUsers(query, role, branch, page + 1, true)}
             disabled={loadingMore}
-            className="inline-flex items-center gap-2 rounded-full border border-[#DFD5C6] bg-[#FAF7F2] px-6 py-2.5 text-xs font-bold text-[#685E53] hover:bg-[#EDE6DA] dark:border-[#383129] dark:bg-[#221E1A] dark:text-[#C7BCB0] transition"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 transition"
           >
             {loadingMore && <Loader2 className="h-4 w-4 animate-spin" />}
             <span>Load More Results</span>
@@ -347,7 +347,7 @@ export default function SearchPage() {
     <Suspense
       fallback={
         <div className="flex h-96 items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
         </div>
       }
     >

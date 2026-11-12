@@ -1,28 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  --background: #F6F1E9; /* Warm almond/cream tone from goonly reference */
-  --foreground: #2C251F; /* Deep rich espresso text */
+  --background: #F8FAFC; /* Modern clean slate-50 */
+  --foreground: #0F172A; /* Crisp deep slate text */
   --card-bg: #FFFFFF;
-  --card-warm: #EDE6DA;
-  --card-subtle: #F2ECE2;
-  --border-color: #E6DED3;
-  --accent-bronze: #8C7A58; /* Warm mocha bronze */
-  --accent-bronze-hover: #796847;
-  --text-muted: #7C7164;
+  --card-subtle: #F1F5F9;
+  --border-color: #E2E8F0;
+  --accent-primary: #2563EB; /* Crisp Royal Blue */
+  --accent-primary-hover: #1D4ED8;
+  --text-muted: #64748B;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #171412; /* Deep warm espresso obsidian */
-    --foreground: #F6F2EC; /* Warm ivory text */
-    --card-bg: #221E1A;    /* Dark warm surface */
-    --card-warm: #28231E;
-    --card-subtle: #1E1A17;
-    --border-color: #383129;
-    --accent-bronze: #A8936E; /* Warm golden bronze */
-    --accent-bronze-hover: #B9A47F;
-    --text-muted: #A09485;
+    --background: #0B0F19; /* Sleek midnight navy slate */
+    --foreground: #F8FAFC; /* Pure crisp text */
+    --card-bg: #131B2E;    /* Dark modern surface */
+    --card-subtle: #1A243B;
+    --border-color: #1E293B;
+    --accent-primary: #3B82F6; /* Vibrant modern blue */
+    --accent-primary-hover: #60A5FA;
+    --text-muted: #94A3B8;
   }
 }
 

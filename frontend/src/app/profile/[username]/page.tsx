@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { UserProfile, Post, PaginatedPosts } from "@/types";
 import { api } from "@/lib/api";
@@ -13,7 +14,6 @@ import {
   UserPlus,
   UserCheck,
   Edit3,
-  Calendar,
   Grid,
   Loader2,
   Sparkles,
@@ -116,8 +116,8 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex h-96 items-center justify-center text-zinc-400">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+      <div className="flex h-96 items-center justify-center text-slate-400">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     );
   }
@@ -125,18 +125,18 @@ export default function ProfilePage() {
   if (!profile) {
     return (
       <div className="mx-auto max-w-lg py-24 text-center">
-        <h2 className="text-lg font-bold text-[#2C251F] dark:text-[#F6F2EC]">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
           Student Profile Not Found
         </h2>
-        <p className="mt-1 text-xs text-[#8C7E70]">
+        <p className="mt-1 text-xs text-slate-500">
           The requested user @{username} doesn&apos;t exist or is not verified on CampusConnect.
         </p>
-        <a
+        <Link
           href="/"
-          className="mt-4 inline-block rounded-full bg-[#8C7A58] px-5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-[#796847] transition"
+          className="mt-4 inline-block rounded-xl bg-blue-600 px-5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 transition"
         >
           Return to Feed
-        </a>
+        </Link>
       </div>
     );
   }
@@ -144,10 +144,10 @@ export default function ProfilePage() {
   return (
     <div className="mx-auto max-w-4xl px-4 sm:px-6 py-8">
       {/* Profile Header Card */}
-      <div className="rounded-3xl border border-[#E6DED3] bg-[#FAF7F2] p-6 sm:p-8 shadow-xs dark:border-[#383129] dark:bg-[#221E1A]">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
           {/* Avatar */}
-          <div className="relative flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-[#8C7A58] text-3xl font-bold text-white overflow-hidden shadow-md ring-4 ring-white dark:ring-[#2C251F]">
+          <div className="relative flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-blue-600 text-3xl font-bold text-white overflow-hidden shadow-md ring-4 ring-slate-100 dark:ring-slate-800">
             {profile.profile_picture ? (
               <Image
                 src={profile.profile_picture}
@@ -166,7 +166,7 @@ export default function ProfilePage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
-                  <h1 className="text-xl font-extrabold text-[#2C251F] dark:text-[#F6F2EC]">
+                  <h1 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">
                     {profile.full_name}
                   </h1>
                   {profile.is_id_verified && (
@@ -179,19 +179,19 @@ export default function ProfilePage() {
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-[#8C7E70] dark:text-[#9F9385]">@{profile.username}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">@{profile.username}</p>
 
                 {/* Academic Badges */}
                 <div className="mt-2 flex items-center justify-center sm:justify-start gap-2 flex-wrap">
                   {profile.is_alumni || profile.year === "Alumni" ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#EDE6DA] px-3 py-0.5 text-xs font-semibold text-[#8C7A58] dark:bg-[#2B2520] dark:text-[#D4C8B8]">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
                       <GraduationCap className="h-3.5 w-3.5" />
                       <span>Alumni</span>
                       {profile.branch && <span>• {profile.branch.replace(/\(.*?\)/g, "").trim()}</span>}
                     </span>
                   ) : profile.year ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#EDE6DA] px-3 py-0.5 text-xs font-semibold text-[#685E53] dark:bg-[#2B2520] dark:text-[#D4C8B8]">
-                      <GraduationCap className="h-3.5 w-3.5" />
+                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-0.5 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                      <GraduationCap className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                       <span>{profile.year}</span>
                       {profile.course && <span>({profile.course})</span>}
                       {profile.branch && <span>• {profile.branch.replace(/\(.*?\)/g, "").trim()}</span>}
@@ -214,7 +214,7 @@ export default function ProfilePage() {
                     href={profile.linkedin_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-full bg-[#0077b5]/10 px-4 py-1.5 text-xs font-semibold text-[#0077b5] dark:bg-[#0077b5]/20 dark:text-blue-300 hover:bg-[#0077b5] hover:text-white shadow-2xs transition"
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-[#0077b5]/10 px-4 py-1.5 text-xs font-semibold text-[#0077b5] dark:bg-[#0077b5]/20 dark:text-blue-300 hover:bg-[#0077b5] hover:text-white shadow-2xs transition"
                   >
                     <LinkedinIcon className="h-3.5 w-3.5" />
                     <span>LinkedIn</span>
@@ -224,28 +224,28 @@ export default function ProfilePage() {
                 {profile.is_self ? (
                   <button
                     onClick={() => setEditOpen(true)}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-[#DFD5C6] bg-white px-4 py-1.5 text-xs font-semibold text-[#2C251F] hover:bg-[#EDE6DA] dark:border-[#383129] dark:bg-[#1A1714] dark:text-[#F6F2EC] dark:hover:bg-[#241F1A] shadow-2xs transition"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 shadow-2xs transition"
                   >
                     <Edit3 className="h-3.5 w-3.5" />
                     <span>Edit Profile</span>
                   </button>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <a
+                    <Link
                       href={`/messages?user=${profile.username}`}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-[#DFD5C6] bg-white px-4 py-1.5 text-xs font-semibold text-[#2C251F] hover:bg-[#EDE6DA] dark:border-[#383129] dark:bg-[#1A1714] dark:text-[#F6F2EC] dark:hover:bg-[#241F1A] shadow-2xs transition"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 shadow-2xs transition"
                     >
-                      <MessageSquare className="h-3.5 w-3.5 text-[#8C7A58] dark:text-[#A8936E]" />
+                      <MessageSquare className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                       <span>Message</span>
-                    </a>
+                    </Link>
 
                     <button
                       onClick={handleToggleFollow}
                       disabled={isFollowLoading}
-                      className={`inline-flex items-center gap-1.5 rounded-full px-5 py-1.5 text-xs font-semibold transition ${
+                      className={`inline-flex items-center gap-1.5 rounded-xl px-5 py-1.5 text-xs font-semibold transition ${
                         profile.is_following
-                          ? "border border-[#DFD5C6] bg-white text-[#2C251F] hover:bg-[#EDE6DA] dark:border-[#383129] dark:bg-[#1A1714] dark:text-[#F6F2EC]"
-                          : "bg-[#8C7A58] text-white hover:bg-[#796847] shadow-2xs"
+                          ? "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                          : "bg-blue-600 text-white hover:bg-blue-700 shadow-2xs"
                       }`}
                     >
                       {profile.is_following ? (
@@ -267,38 +267,38 @@ export default function ProfilePage() {
 
             {/* Bio */}
             {profile.bio && (
-              <p className="mt-3 text-sm text-[#5C5042] dark:text-[#C7BCB0] whitespace-pre-line leading-relaxed">
+              <p className="mt-3 text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed">
                 {profile.bio}
               </p>
             )}
 
             {/* Stats row */}
-            <div className="mt-5 flex items-center justify-center sm:justify-start gap-6 border-t border-[#EDE6DA] dark:border-[#2E2822] pt-4 text-xs">
+            <div className="mt-5 flex items-center justify-center sm:justify-start gap-6 border-t border-slate-100 dark:border-slate-800 pt-4 text-xs">
               <div>
-                <span className="font-extrabold text-[#2C251F] dark:text-[#F6F2EC]">
+                <span className="font-extrabold text-slate-900 dark:text-slate-100">
                   {profile.posts_count}
                 </span>{" "}
-                <span className="text-[#8C7E70]">posts</span>
+                <span className="text-slate-400">posts</span>
               </div>
 
               <button
                 onClick={() => setFollowModal("followers")}
                 className="hover:underline cursor-pointer"
               >
-                <span className="font-extrabold text-[#2C251F] dark:text-[#F6F2EC]">
+                <span className="font-extrabold text-slate-900 dark:text-slate-100">
                   {profile.followers_count}
                 </span>{" "}
-                <span className="text-[#8C7E70]">followers</span>
+                <span className="text-slate-400">followers</span>
               </button>
 
               <button
                 onClick={() => setFollowModal("following")}
                 className="hover:underline cursor-pointer"
               >
-                <span className="font-extrabold text-[#2C251F] dark:text-[#F6F2EC]">
+                <span className="font-extrabold text-slate-900 dark:text-slate-100">
                   {profile.following_count}
                 </span>{" "}
-                <span className="text-[#8C7E70]">following</span>
+                <span className="text-slate-400">following</span>
               </button>
             </div>
           </div>
@@ -307,21 +307,21 @@ export default function ProfilePage() {
 
       {/* User's Posts Feed */}
       <div className="mt-8">
-        <div className="flex items-center gap-2 border-b border-[#E6DED3] dark:border-[#383129] pb-3 mb-6">
-          <Grid className="h-4 w-4 text-[#8C7A58] dark:text-[#A8936E]" />
-          <h2 className="text-sm font-extrabold uppercase tracking-wider text-[#2C251F] dark:text-[#F6F2EC]">
+        <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 mb-6">
+          <Grid className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-900 dark:text-slate-100">
             Posts by @{profile.username}
           </h2>
         </div>
 
         {postsLoading ? (
-          <div className="flex justify-center py-12 text-zinc-400">
-            <Loader2 className="h-6 w-6 animate-spin" />
+          <div className="flex justify-center py-12 text-slate-400">
+            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
           </div>
         ) : posts.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800 py-12 text-center">
-            <Sparkles className="mx-auto h-6 w-6 text-zinc-400" />
-            <p className="mt-2 text-xs text-zinc-500">No posts shared yet.</p>
+          <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 py-12 text-center bg-white dark:bg-slate-900">
+            <Sparkles className="mx-auto h-6 w-6 text-slate-400" />
+            <p className="mt-2 text-xs text-slate-500">No posts shared yet.</p>
           </div>
         ) : (
           <div className="space-y-4 max-w-2xl mx-auto">

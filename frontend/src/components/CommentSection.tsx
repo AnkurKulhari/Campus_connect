@@ -90,7 +90,7 @@ export function CommentSection({
   };
 
   return (
-    <div className="border-t border-zinc-100 bg-zinc-50/70 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/40 rounded-b-xl">
+    <div className="border-t border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800/80 dark:bg-slate-900/40 rounded-b-xl">
       {/* Input */}
       {user ? (
         <form onSubmit={handleSubmit} className="flex items-center gap-2 mb-4">
@@ -100,19 +100,19 @@ export function CommentSection({
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Write a comment..."
             maxLength={500}
-            className="flex-1 rounded-lg border border-zinc-200 bg-white px-3.5 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+            className="flex-1 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
           />
           <button
             type="submit"
             disabled={!newComment.trim() || submitting}
-            className="inline-flex items-center justify-center rounded-lg bg-indigo-600 p-2 text-white hover:bg-indigo-500 disabled:opacity-40 transition"
+            className="inline-flex items-center justify-center rounded-lg bg-blue-600 p-2 text-white hover:bg-blue-500 disabled:opacity-40 transition"
           >
             <Send className="h-4 w-4" />
           </button>
         </form>
       ) : (
-        <p className="text-xs text-zinc-500 mb-3">
-          <a href="/login" className="text-indigo-600 font-medium hover:underline">
+        <p className="text-xs text-slate-500 mb-3">
+          <a href="/login" className="text-blue-600 font-medium hover:underline">
             Sign in
           </a>{" "}
           to leave a comment.
@@ -121,9 +121,9 @@ export function CommentSection({
 
       {/* List */}
       {loading ? (
-        <p className="text-xs text-zinc-400 py-2">Loading comments...</p>
+        <p className="text-xs text-slate-400 py-2">Loading comments...</p>
       ) : comments.length === 0 ? (
-        <div className="flex items-center gap-2 py-3 text-xs text-zinc-400">
+        <div className="flex items-center gap-2 py-3 text-xs text-slate-400">
           <MessageSquare className="h-3.5 w-3.5" />
           <span>No comments yet. Be the first to chime in!</span>
         </div>
@@ -138,15 +138,15 @@ export function CommentSection({
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <a
                     href={`/profile/${comment.author.username}`}
-                    className="font-semibold text-zinc-900 hover:text-indigo-600 dark:text-zinc-100 dark:hover:text-indigo-400 text-xs"
+                    className="font-semibold text-slate-900 hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-400 text-xs"
                   >
                     {comment.author.full_name}
                   </a>
-                  <span className="text-xs text-zinc-400">
+                  <span className="text-xs text-slate-400">
                     @{comment.author.username}
                   </span>
                   {comment.author.year && (
-                    <span className="rounded bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 text-[9px] font-medium text-zinc-600 dark:text-zinc-300">
+                    <span className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[9px] font-medium text-slate-600 dark:text-slate-300">
                       {comment.author.year}
                     </span>
                   )}
@@ -158,7 +158,7 @@ export function CommentSection({
                       type="text"
                       value={editText}
                       onChange={(e) => setEditText(e.target.value)}
-                      className="flex-1 rounded border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                      className="flex-1 rounded border border-slate-300 px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                     />
                     <button
                       onClick={() => handleEditSave(comment.id)}
@@ -168,13 +168,13 @@ export function CommentSection({
                     </button>
                     <button
                       onClick={() => setEditingId(null)}
-                      className="text-zinc-400 hover:text-zinc-600"
+                      className="text-slate-400 hover:text-slate-600"
                     >
                       <X className="h-4 w-4" />
                     </button>
                   </div>
                 ) : (
-                  <p className="mt-0.5 text-zinc-700 dark:text-zinc-300 text-xs sm:text-sm">
+                  <p className="mt-0.5 text-slate-700 dark:text-slate-300 text-xs sm:text-sm">
                     {comment.content}
                   </p>
                 )}
@@ -187,13 +187,13 @@ export function CommentSection({
                       setEditingId(comment.id);
                       setEditText(comment.content);
                     }}
-                    className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                    className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                   >
                     <Edit2 className="h-3 w-3" />
                   </button>
                   <button
                     onClick={() => setDeleteCommentId(comment.id)}
-                    className="p-1 text-zinc-400 hover:text-red-600"
+                    className="p-1 text-slate-400 hover:text-red-600"
                     title="Delete Comment"
                   >
                     <Trash2 className="h-3 w-3" />

@@ -21,7 +21,7 @@ export function FormattedContent({
           return (
             <span
               key={index}
-              className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer inline-block"
+              className="font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer inline-block"
               onClick={(e) => {
                 e.stopPropagation();
                 // Filter or navigate
@@ -40,7 +40,7 @@ export function FormattedContent({
               href={part}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-indigo-600 dark:text-indigo-400 hover:underline break-all"
+              className="text-blue-600 dark:text-blue-400 hover:underline break-all"
               onClick={(e) => e.stopPropagation()}
             >
               {part}

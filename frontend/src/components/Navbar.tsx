@@ -91,39 +91,39 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-[#E6DED3] bg-[#F6F1E9]/95 backdrop-blur dark:border-[#383129] dark:bg-[#171412]/95 transition-colors">
+    <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/90 backdrop-blur dark:border-slate-800/80 dark:bg-[#0B0F19]/90 transition-colors">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-3 sm:px-6">
         {/* Brand */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <Link
             href="/"
-            className="flex items-center gap-2 font-black text-xl tracking-tight text-[#2C251F] dark:text-[#F6F2EC] hover:opacity-90 transition"
+            className="flex items-center gap-2 font-black text-xl tracking-tight text-slate-900 dark:text-white hover:opacity-90 transition"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#8C7A58] text-white shadow-sm dark:bg-[#A8936E]">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-500/20">
               <GraduationCap className="h-5 w-5" />
             </div>
             <span className="font-extrabold tracking-tight">
-              campus<span className="text-[#8C7A58] dark:text-[#A8936E]">connect</span>
+              campus<span className="text-blue-600 dark:text-blue-400">connect</span>
             </span>
           </Link>
-          <span className="hidden md:inline-flex items-center rounded-full bg-[#EDE6DA] px-2.5 py-0.5 text-[11px] font-semibold text-[#6D5D46] dark:bg-[#28231E] dark:text-[#D4C8B8] border border-[#DFD6C8] dark:border-[#3D352B]">
+          <span className="hidden md:inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60">
             IPEC Campus
           </span>
         </div>
 
-        {/* Global Student & Alumni Search (Center Pill - Goonly style) */}
+        {/* Global Student & Alumni Search */}
         {user && (
           <div ref={searchContainerRef} className="relative flex-1 max-w-xs md:max-w-md mx-3 hidden sm:block">
             <form onSubmit={handleSearchSubmit}>
               <div className="relative">
-                <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-[#8C7E70] dark:text-[#9F9385]" />
+                <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-slate-400" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => setSearchFocused(true)}
                   placeholder="Search students, alumni, branch..."
-                  className="w-full rounded-full border border-[#DFD6C8] bg-[#EDE6DA]/70 pl-9.5 pr-8 py-2 text-xs text-[#2C251F] placeholder-[#8C7E70] transition-all focus:border-[#8C7A58] focus:bg-white focus:outline-none dark:border-[#383129] dark:bg-[#221E1A] dark:text-[#F6F2EC] dark:placeholder-[#9F9385] dark:focus:bg-[#1A1714] shadow-2xs"
+                  className="w-full rounded-full border border-slate-200 bg-slate-100/70 pl-9.5 pr-8 py-2 text-xs text-slate-900 placeholder-slate-400 transition-all focus:border-blue-500 focus:bg-white focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:placeholder-slate-500 dark:focus:bg-slate-800 shadow-2xs"
                 />
                 {searchQuery && (
                   <button
@@ -132,7 +132,7 @@ export function Navbar() {
                       setSearchQuery("");
                       setSearchResults([]);
                     }}
-                    className="absolute right-2.5 top-2.5 text-[#8C7E70] hover:text-[#2C251F] dark:hover:text-[#F6F2EC]"
+                    className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
@@ -142,17 +142,17 @@ export function Navbar() {
 
             {/* Live Search Floating Dropdown */}
             {searchFocused && searchQuery.trim().length >= 2 && (
-              <div className="absolute left-0 right-0 top-full mt-2 rounded-2xl border border-[#DFD6C8] bg-white p-2 shadow-xl dark:border-[#383129] dark:bg-[#221E1A] z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#8C7E70]">
+              <div className="absolute left-0 right-0 top-full mt-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-800 dark:bg-slate-900 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   {isSearching ? "Searching..." : "Students & Alumni"}
                 </div>
 
                 {isSearching ? (
                   <div className="flex items-center justify-center p-4">
-                    <Loader2 className="h-4 w-4 animate-spin text-[#8C7A58]" />
+                    <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
                   </div>
                 ) : searchResults.length === 0 ? (
-                  <div className="p-3 text-center text-xs text-[#8C7E70]">
+                  <div className="p-3 text-center text-xs text-slate-500">
                     No results found for &quot;{searchQuery}&quot;
                   </div>
                 ) : (
@@ -162,9 +162,9 @@ export function Navbar() {
                         key={result.id}
                         href={`/profile/${result.username}`}
                         onClick={() => setSearchFocused(false)}
-                        className="flex items-center gap-2.5 rounded-xl p-2 hover:bg-[#EDE6DA]/60 dark:hover:bg-[#2C2621] transition text-left"
+                        className="flex items-center gap-2.5 rounded-xl p-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-left"
                       >
-                        <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#8C7A58] font-bold text-xs text-white overflow-hidden">
+                        <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 font-bold text-xs text-white overflow-hidden shadow-2xs">
                           {result.profile_picture ? (
                             <Image
                               src={result.profile_picture}
@@ -179,14 +179,14 @@ export function Navbar() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1">
-                            <span className="font-semibold text-xs text-[#2C251F] dark:text-[#F6F2EC] truncate">
+                            <span className="font-semibold text-xs text-slate-900 dark:text-white truncate">
                               {result.full_name}
                             </span>
                             {result.is_id_verified && (
-                              <ShieldCheck className="h-3 w-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                              <ShieldCheck className="h-3 w-3 text-emerald-500 shrink-0" />
                             )}
                           </div>
-                          <div className="flex items-center gap-1.5 text-[11px] text-[#8C7E70] truncate">
+                          <div className="flex items-center gap-1.5 text-[11px] text-slate-400 truncate">
                             <span>@{result.username}</span>
                             {result.year && <span>• {result.year}</span>}
                           </div>
@@ -196,11 +196,11 @@ export function Navbar() {
                   </div>
                 )}
 
-                <div className="mt-1 pt-1 border-t border-[#DFD6C8] dark:border-[#383129]">
+                <div className="mt-1 pt-1 border-t border-slate-100 dark:border-slate-800">
                   <Link
                     href={`/search?q=${encodeURIComponent(searchQuery.trim())}`}
                     onClick={() => setSearchFocused(false)}
-                    className="block rounded-lg px-3 py-1.5 text-center text-[11px] font-semibold text-[#8C7A58] dark:text-[#A8936E] hover:bg-[#EDE6DA]/60 dark:hover:bg-[#2C2621]"
+                    className="block rounded-lg px-3 py-1.5 text-center text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40"
                   >
                     View all results for &quot;{searchQuery}&quot; →
                   </Link>
@@ -218,27 +218,27 @@ export function Navbar() {
               href="/search"
               className={`sm:hidden flex items-center justify-center rounded-full p-2 text-sm font-medium transition-colors ${
                 pathname === "/search"
-                  ? "bg-[#8C7A58] text-white"
-                  : "text-[#685E53] hover:bg-[#EDE6DA] dark:text-[#BDB1A3] dark:hover:bg-[#28231E]"
+                  ? "bg-blue-600 text-white"
+                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
               }`}
               title="Search students"
             >
               <Search className="h-4 w-4" />
             </Link>
 
-            {/* Notification Bell (Matches Goonly Top Bar Icon) */}
+            {/* Notification Bell */}
             <Link
               href="/notifications"
               className={`relative flex items-center justify-center rounded-full p-2 transition-colors ${
                 pathname === "/notifications"
-                  ? "bg-[#8C7A58] text-white"
-                  : "text-[#685E53] hover:bg-[#EDE6DA] dark:text-[#BDB1A3] dark:hover:bg-[#28231E]"
+                  ? "bg-blue-600 text-white"
+                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
               }`}
               title="Notifications"
             >
               <Bell className="h-4.5 w-4.5" />
               {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#E15241] px-1 text-[10px] font-bold text-white shadow-xs">
+                <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white shadow-xs">
                   {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
               )}
@@ -249,11 +249,11 @@ export function Navbar() {
               href={`/profile/${user.username}`}
               className={`flex items-center gap-2 rounded-full pl-1.5 pr-3 py-1 text-xs font-semibold border transition ${
                 pathname.startsWith("/profile")
-                  ? "bg-[#8C7A58] text-white border-[#8C7A58]"
-                  : "bg-[#EDE6DA]/60 border-[#DFD6C8] text-[#2C251F] hover:bg-[#EDE6DA] dark:bg-[#241F1A] dark:border-[#383129] dark:text-[#F6F2EC] dark:hover:bg-[#2A241E]"
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-slate-100/80 border-slate-200/80 text-slate-800 hover:bg-slate-200/70 dark:bg-slate-800/80 dark:border-slate-700/60 dark:text-slate-200 dark:hover:bg-slate-700"
               }`}
             >
-              <div className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#8C7A58] font-bold text-[11px] text-white overflow-hidden shadow-2xs">
+              <div className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 font-bold text-[11px] text-white overflow-hidden shadow-2xs">
                 {user.profile_picture ? (
                   <Image
                     src={user.profile_picture}
@@ -273,7 +273,7 @@ export function Navbar() {
             <button
               onClick={logout}
               title="Log out"
-              className="rounded-full p-2 text-[#8C7E70] hover:bg-[#EDE6DA] hover:text-[#2C251F] dark:text-[#A09485] dark:hover:bg-[#28231E] dark:hover:text-[#F6F2EC] transition"
+              className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition"
             >
               <LogOut className="h-4 w-4" />
             </button>
@@ -282,13 +282,13 @@ export function Navbar() {
           <div className="flex items-center gap-3">
             <Link
               href="/login"
-              className="rounded-full px-4 py-2 text-xs font-semibold text-[#2C251F] hover:bg-[#EDE6DA] dark:text-[#F6F2EC] dark:hover:bg-[#28231E] transition"
+              className="rounded-full px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 transition"
             >
               Sign In
             </Link>
             <Link
               href="/register"
-              className="rounded-full bg-[#8C7A58] px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#796847] dark:bg-[#A8936E] dark:hover:bg-[#97825E] transition"
+              className="rounded-full bg-blue-600 px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 transition"
             >
               Join Campus
             </Link>

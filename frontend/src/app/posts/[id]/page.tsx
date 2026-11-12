@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, use } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Post } from "@/types";
 import { api } from "@/lib/api";
@@ -101,7 +102,7 @@ export default function PostDetailPage({
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     );
   }
@@ -109,16 +110,16 @@ export default function PostDetailPage({
   if (error || !post) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-16 text-center">
-        <p className="text-sm font-semibold text-zinc-900 dark:text-white">
+        <p className="text-sm font-semibold text-slate-900 dark:text-white">
           {error || "Post not found."}
         </p>
-        <button
-          onClick={() => router.push("/")}
-          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white"
+        <Link
+          href="/"
+          className="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition"
         >
           <ArrowLeft className="h-4 w-4" />
           <span>Back to Feed</span>
-        </button>
+        </Link>
       </div>
     );
   }
@@ -138,21 +139,21 @@ export default function PostDetailPage({
       <div className="flex items-center gap-3 mb-4">
         <button
           onClick={() => router.back()}
-          className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+          className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
           title="Back"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h1 className="text-lg font-bold text-zinc-900 dark:text-white">Post</h1>
+        <h1 className="text-lg font-bold text-slate-900 dark:text-white">Post</h1>
       </div>
 
-      <article className="rounded-2xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900 overflow-hidden">
+      <article className="rounded-2xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
         {/* Author Header */}
         <div className="flex items-center justify-between p-5 pb-4">
           <div className="flex items-center gap-3">
-            <a
+            <Link
               href={`/profile/${post.author.username}`}
-              className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-indigo-100 font-bold text-indigo-700 overflow-hidden dark:bg-indigo-950 dark:text-indigo-300"
+              className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-600 font-bold text-white overflow-hidden shadow-2xs"
             >
               {post.author.profile_picture ? (
                 <Image
@@ -165,15 +166,15 @@ export default function PostDetailPage({
               ) : (
                 post.author.full_name.charAt(0).toUpperCase()
               )}
-            </a>
+            </Link>
             <div>
-              <a
+              <Link
                 href={`/profile/${post.author.username}`}
-                className="font-bold text-base text-zinc-900 hover:underline dark:text-white block leading-tight"
+                className="font-bold text-base text-slate-900 hover:underline dark:text-white block leading-tight"
               >
                 {post.author.full_name}
-              </a>
-              <span className="text-xs text-zinc-400">
+              </Link>
+              <span className="text-xs text-slate-400">
                 @{post.author.username}
               </span>
             </div>
@@ -183,19 +184,19 @@ export default function PostDetailPage({
             <div className="relative">
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 <MoreVertical className="h-4 w-4" />
               </button>
               {menuOpen && (
-                <div className="absolute right-0 mt-1 w-36 rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800 z-10">
+                <div className="absolute right-0 mt-1 w-36 rounded-xl border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800 z-10">
                   {user.username === post.author.username ? (
                     <button
                       onClick={() => {
                         setMenuOpen(false);
                         setShowDeleteModal(true);
                       }}
-                      className="flex w-full items-center gap-2 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
+                      className="flex w-full items-center gap-2 px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                       <span>Delete</span>
@@ -220,7 +221,7 @@ export default function PostDetailPage({
 
         {/* Content */}
         {post.content && (
-          <div className="px-5 pb-4 text-base text-zinc-900 dark:text-zinc-100 leading-relaxed">
+          <div className="px-5 pb-4 text-base text-slate-900 dark:text-slate-100 leading-relaxed">
             <FormattedContent text={post.content} />
           </div>
         )}
@@ -231,7 +232,7 @@ export default function PostDetailPage({
             {post.media.map((item) => (
               <div
                 key={item.id}
-                className="relative rounded-2xl overflow-hidden bg-zinc-950/5 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex justify-center"
+                className="relative rounded-2xl overflow-hidden bg-slate-950/5 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex justify-center"
               >
                 {item.media_type === "video" ? (
                   <video
@@ -264,32 +265,32 @@ export default function PostDetailPage({
         )}
 
         {/* Date / Timestamp */}
-        <div className="px-5 py-3 border-t border-zinc-100 dark:border-zinc-800 text-xs text-zinc-400">
+        <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-400">
           {formattedDate}
         </div>
 
         {/* Stats & Actions */}
-        <div className="flex items-center gap-8 px-5 py-3.5 border-t border-zinc-100 dark:border-zinc-800 text-sm">
+        <div className="flex items-center gap-8 px-5 py-3.5 border-t border-slate-100 dark:border-slate-800 text-sm">
           <button
             onClick={handleLike}
             className={`flex items-center gap-2 font-medium transition ${
               liked
                 ? "text-rose-600 dark:text-rose-500"
-                : "text-zinc-600 hover:text-rose-600 dark:text-zinc-400 dark:hover:text-rose-400"
+                : "text-slate-600 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400"
             }`}
           >
             <Heart className={`h-5 w-5 ${liked ? "fill-current" : ""}`} />
             <span>{likeCount}</span>
           </button>
 
-          <div className="flex items-center gap-2 font-medium text-zinc-600 dark:text-zinc-400">
+          <div className="flex items-center gap-2 font-medium text-slate-600 dark:text-slate-400">
             <MessageCircle className="h-5 w-5" />
             <span>{commentCount}</span>
           </div>
         </div>
 
         {/* Comments Section directly below */}
-        <div className="border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/30">
+        <div className="border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
           <CommentSection
             postId={post.id}
             onCommentCountChange={(count) => setCommentCount(count)}

@@ -53,23 +53,23 @@ export function ReportModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 transition-all">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 transition-all">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
-          <div className="flex items-center gap-2.5 text-zinc-900 dark:text-white">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-2.5 text-slate-900 dark:text-white">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">
               <Flag className="h-4 w-4" />
             </div>
             <div>
               <h3 className="text-sm font-bold">Report Post</h3>
-              <p className="text-[11px] text-zinc-500">
+              <p className="text-[11px] text-slate-500">
                 Help keep the campus network safe
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             <X className="h-4 w-4" />
           </button>
@@ -80,10 +80,10 @@ export function ReportModal({
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-950/60 dark:text-green-400">
               <ShieldAlert className="h-6 w-6" />
             </div>
-            <h4 className="text-sm font-bold text-zinc-900 dark:text-white">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white">
               Report Submitted
             </h4>
-            <p className="text-xs text-zinc-500 max-w-xs mx-auto">
+            <p className="text-xs text-slate-500 max-w-xs mx-auto">
               Thank you. This post has been flagged and will be automatically
               quarantined if reported by multiple campus peers.
             </p>
@@ -97,7 +97,7 @@ export function ReportModal({
             )}
 
             <div>
-              <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 Reason for Reporting
               </label>
               <div className="space-y-1.5">
@@ -106,8 +106,8 @@ export function ReportModal({
                     key={reason}
                     className={`flex items-center gap-2.5 rounded-lg border p-2.5 text-xs cursor-pointer transition ${
                       selectedReason === reason
-                        ? "border-indigo-600 bg-indigo-50/60 font-semibold text-indigo-900 dark:border-indigo-500 dark:bg-indigo-950/40 dark:text-indigo-200"
-                        : "border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800/60"
+                        ? "border-blue-600 bg-blue-50/60 font-semibold text-blue-900 dark:border-blue-500 dark:bg-blue-950/40 dark:text-blue-200"
+                        : "border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800/60"
                     }`}
                   >
                     <input
@@ -116,7 +116,7 @@ export function ReportModal({
                       value={reason}
                       checked={selectedReason === reason}
                       onChange={() => setSelectedReason(reason)}
-                      className="text-indigo-600 focus:ring-indigo-500"
+                      className="text-blue-600 focus:ring-blue-500"
                     />
                     <span>{reason}</span>
                   </label>
@@ -125,7 +125,7 @@ export function ReportModal({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Additional Details (Optional)
               </label>
               <textarea
@@ -134,7 +134,7 @@ export function ReportModal({
                 rows={2}
                 maxLength={300}
                 placeholder="Provide context if necessary..."
-                className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>
 
@@ -143,7 +143,7 @@ export function ReportModal({
                 type="button"
                 onClick={onClose}
                 disabled={submitting}
-                className="rounded-lg border border-zinc-200 px-4 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 transition disabled:opacity-50"
+                className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition disabled:opacity-50"
               >
                 Cancel
               </button>

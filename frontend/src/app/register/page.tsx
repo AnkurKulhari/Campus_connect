@@ -204,15 +204,15 @@ export default function RegisterPage() {
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4 py-8">
-      <div className="w-full max-w-xl rounded-2xl border border-zinc-200 bg-white p-6 sm:p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white shadow-md shadow-indigo-500/20">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 to-blue-500 text-white shadow-md shadow-blue-500/20">
             <GraduationCap className="h-7 w-7" />
           </div>
-          <h1 className="mt-4 text-xl font-bold tracking-tight text-zinc-900 dark:text-white">
+          <h1 className="mt-4 text-xl font-bold tracking-tight text-slate-900 dark:text-white">
             {step === "form" ? "Join CampusConnect" : "Verify College Email"}
           </h1>
-          <p className="mt-1 text-xs text-zinc-500">
+          <p className="mt-1 text-xs text-slate-500">
             {step === "form"
               ? "Exclusively for Inderprastha Engineering College students & alumni"
               : `We sent a 6-digit code to ${collegeEmail}`}
@@ -237,7 +237,7 @@ export default function RegisterPage() {
             {/* Account Credentials */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Full Name <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -246,12 +246,12 @@ export default function RegisterPage() {
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="e.g. Ankur Kumar"
                   required
-                  className="w-full rounded-lg border border-zinc-200 bg-white px-3.5 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Username <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -260,14 +260,14 @@ export default function RegisterPage() {
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="e.g. ankur_k"
                   required
-                  className="w-full rounded-lg border border-zinc-200 bg-white px-3.5 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   College Email <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -276,15 +276,15 @@ export default function RegisterPage() {
                   onChange={handleEmailChange}
                   placeholder="2300300100032@ipec.org.in"
                   required
-                  className="w-full rounded-lg border border-zinc-200 bg-white px-3.5 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
-                <p className="mt-1 text-[11px] text-zinc-400">
+                <p className="mt-1 text-[11px] text-slate-400">
                   Must end with @ipec.org.in
                 </p>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Password <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -293,29 +293,29 @@ export default function RegisterPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Min 8 chars"
                   required
-                  className="w-full rounded-lg border border-zinc-200 bg-white px-3.5 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
               </div>
             </div>
 
             {/* Academic Standing */}
-            <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800">
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-1.5 mb-2">
-                <GraduationCap className="h-4 w-4 text-indigo-500" />
-                <span className="text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
+                <GraduationCap className="h-4 w-4 text-blue-500" />
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                   Academic Standing
                 </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Course <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={course}
                     onChange={(e) => setCourse(e.target.value)}
-                    className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                   >
                     {COURSE_OPTIONS.map((c) => (
                       <option key={c} value={c}>
@@ -326,13 +326,13 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Branch <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={branch}
                     onChange={(e) => setBranch(e.target.value)}
-                    className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                   >
                     {BRANCH_OPTIONS.map((b) => (
                       <option key={b} value={b}>
@@ -343,13 +343,13 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Year / Status <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={year}
                     onChange={(e) => setYear(e.target.value)}
-                    className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                   >
                     {YEAR_OPTIONS.map((y) => (
                       <option key={y} value={y}>
@@ -362,16 +362,16 @@ export default function RegisterPage() {
             </div>
 
             {/* University Roll Number & Student ID Verification */}
-            <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800">
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-1.5 mb-2">
                 <ShieldCheck className="h-4 w-4 text-emerald-500" />
-                <span className="text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                   Student Verification
                 </span>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   13-Digit University Roll Number
                 </label>
                 <input
@@ -380,16 +380,16 @@ export default function RegisterPage() {
                   onChange={(e) => setRollNumber(e.target.value)}
                   placeholder="e.g. 2300300100032"
                   maxLength={13}
-                  className="w-full rounded-lg border border-zinc-200 bg-white px-3.5 py-2.5 text-sm font-mono text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-mono text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
-                <p className="mt-1 text-[11px] text-zinc-400">
+                <p className="mt-1 text-[11px] text-slate-400">
                   Your official 13-digit AKTU roll number printed on your college ID enables instant automated badge verification.
                 </p>
               </div>
 
               {/* College ID Card Upload */}
               <div className="mt-3">
-                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   College ID Card Photo
                 </label>
                 <input
@@ -401,7 +401,7 @@ export default function RegisterPage() {
                 />
 
                 {idCardPreview ? (
-                  <div className="relative mt-1 aspect-video w-full max-w-xs rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800">
+                  <div className="relative mt-1 aspect-video w-full max-w-xs rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
                     <Image
                       src={idCardPreview}
                       alt="College ID Preview"
@@ -420,13 +420,13 @@ export default function RegisterPage() {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 p-4 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:border-indigo-500 hover:text-indigo-600 transition bg-zinc-50/50 dark:bg-zinc-800/30"
+                    className="w-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-4 text-xs font-medium text-slate-600 dark:text-slate-400 hover:border-blue-500 hover:text-blue-600 transition bg-slate-50/50 dark:bg-slate-800/30"
                   >
                     <Upload className="h-4 w-4" />
                     <span>Upload College ID Card (JPEG, PNG, max 10MB)</span>
                   </button>
                 )}
-                <p className="mt-1 text-[11px] text-zinc-400">
+                <p className="mt-1 text-[11px] text-slate-400">
                   Used exclusively to verify your student standing. Special cases (lateral entry, branch change) are verified manually.
                 </p>
               </div>
@@ -439,7 +439,7 @@ export default function RegisterPage() {
                   type="checkbox"
                   checked={isYearBack}
                   onChange={(e) => setIsYearBack(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-amber-300 text-indigo-600 focus:ring-indigo-500 dark:border-amber-800"
+                  className="mt-0.5 h-4 w-4 rounded border-amber-300 text-blue-600 focus:ring-blue-500 dark:border-amber-800"
                 />
                 <div>
                   <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
@@ -457,17 +457,17 @@ export default function RegisterPage() {
 
             {/* LinkedIn URL (Optional) */}
             <div>
-              <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                LinkedIn Profile URL <span className="text-zinc-400 font-normal">(Optional — for networking)</span>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                LinkedIn Profile URL <span className="text-slate-400 font-normal">(Optional — for networking)</span>
               </label>
               <div className="relative">
-                <LinkedinIcon className="absolute left-3 top-3 h-4 w-4 text-zinc-400" />
+                <LinkedinIcon className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                 <input
                   type="url"
                   value={linkedinUrl}
                   onChange={(e) => setLinkedinUrl(e.target.value)}
                   placeholder="https://linkedin.com/in/yourprofile"
-                  className="w-full rounded-lg border border-zinc-200 bg-white pl-9 pr-3.5 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                  className="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
               </div>
             </div>
@@ -481,7 +481,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 py-3 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 transition disabled:opacity-50"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white shadow-xs hover:bg-blue-700 transition disabled:opacity-50"
             >
               {loading ? (
                 <>
@@ -499,7 +499,7 @@ export default function RegisterPage() {
         ) : (
           <form onSubmit={handleVerifyOtp} className="mt-6 space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 6-Digit Verification Code
               </label>
               <input
@@ -509,9 +509,9 @@ export default function RegisterPage() {
                 placeholder="123456"
                 maxLength={6}
                 required
-                className="w-full text-center tracking-widest text-lg font-mono rounded-lg border border-zinc-200 bg-white px-3.5 py-2.5 text-zinc-900 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                className="w-full text-center tracking-widest text-lg font-mono rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
-              <p className="mt-1 text-[11px] text-zinc-400 text-center">
+              <p className="mt-1 text-[11px] text-slate-400 text-center">
                 OTP expires in 10 minutes. Max 5 attempts.
               </p>
             </div>
@@ -525,7 +525,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={otp.length !== 6 || loading}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 transition disabled:opacity-50"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-blue-700 transition disabled:opacity-50"
             >
               {loading ? (
                 <>
@@ -541,7 +541,7 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={() => setStep("form")}
-                className="text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300"
+                className="text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"
               >
                 ← Edit details
               </button>
@@ -550,7 +550,7 @@ export default function RegisterPage() {
                 type="button"
                 onClick={handleResend}
                 disabled={cooldown > 0 || loading}
-                className="inline-flex items-center gap-1 text-indigo-600 hover:underline dark:text-indigo-400 disabled:opacity-40"
+                className="inline-flex items-center gap-1 text-blue-600 hover:underline dark:text-blue-400 disabled:opacity-40"
               >
                 <RotateCw className="h-3 w-3" />
                 <span>
@@ -561,11 +561,11 @@ export default function RegisterPage() {
           </form>
         )}
 
-        <p className="mt-6 text-center text-xs text-zinc-500">
+        <p className="mt-6 text-center text-xs text-slate-500">
           Already verified?{" "}
           <a
             href="/login"
-            className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
+            className="font-semibold text-blue-600 hover:underline dark:text-blue-400"
           >
             Sign in
           </a>

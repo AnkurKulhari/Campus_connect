@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { GraduationCap, Loader2, ArrowRight } from "lucide-react";
@@ -29,29 +30,29 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
-      <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-xs dark:border-slate-800 dark:bg-slate-900">
         {/* Brand */}
         <div className="text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white shadow-md shadow-indigo-500/20">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
             <GraduationCap className="h-7 w-7" />
           </div>
-          <h1 className="mt-4 text-xl font-bold tracking-tight text-zinc-900 dark:text-white">
+          <h1 className="mt-4 text-xl font-bold tracking-tight text-slate-900 dark:text-white">
             Welcome Back to Campus
           </h1>
-          <p className="mt-1 text-xs text-zinc-500">
+          <p className="mt-1 text-xs text-slate-500">
             Sign in with your roll number or college username
           </p>
         </div>
 
         {error && (
-          <div className="mt-5 rounded-lg bg-red-50 p-3 text-xs text-red-600 dark:bg-red-950/40 dark:text-red-400">
+          <div className="mt-5 rounded-xl bg-rose-50 p-3 text-xs text-rose-600 dark:bg-rose-950/40 dark:text-rose-400">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
               Username or College Email
             </label>
             <input
@@ -60,21 +61,21 @@ export default function LoginPage() {
               onChange={(e) => setUsername(e.target.value)}
               placeholder="e.g. 210030010001 or john_doe"
               required
-              className="w-full rounded-lg border border-zinc-200 bg-white px-3.5 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
             />
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                 Password
               </label>
-              <a
+              <Link
                 href="/forgot-password"
-                className="text-xs text-indigo-600 hover:underline dark:text-indigo-400"
+                className="text-xs text-blue-600 hover:underline dark:text-blue-400"
               >
                 Forgot password?
-              </a>
+              </Link>
             </div>
             <input
               type="password"
@@ -82,26 +83,17 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
-              className="w-full rounded-lg border border-zinc-200 bg-white px-3.5 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
             />
           </div>
-
-          {error && (
-            <div className="rounded-lg bg-red-50 p-3 text-xs text-red-600 dark:bg-red-950/40 dark:text-red-400">
-              {error}
-            </div>
-          )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 transition disabled:opacity-50"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-blue-700 transition disabled:opacity-50"
           >
             {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Signing in...</span>
-              </>
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <>
                 <span>Sign In</span>
@@ -111,14 +103,14 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-xs text-zinc-500">
+        <p className="mt-6 text-center text-xs text-slate-500">
           Not registered yet?{" "}
-          <a
+          <Link
             href="/register"
-            className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
+            className="font-semibold text-blue-600 hover:underline dark:text-blue-400"
           >
-            Create student account
-          </a>
+            Create your account
+          </Link>
         </p>
       </div>
     </div>
