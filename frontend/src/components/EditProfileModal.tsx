@@ -5,7 +5,7 @@ import Image from "next/image";
 import { UserProfile } from "@/types";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import { X, Loader2, Camera, Upload, Crop } from "lucide-react";
+import { X, Loader2, Camera, Upload, Crop, ShieldCheck } from "lucide-react";
 import { LinkedinIcon } from "@/components/icons/LinkedinIcon";
 import { AvatarCropModal } from "@/components/AvatarCropModal";
 
@@ -195,16 +195,35 @@ export function EditProfileModal({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Full Name
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Full Name
+                </label>
+                {profile.is_id_verified && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200/50 dark:border-emerald-800/40">
+                    <ShieldCheck className="h-3 w-3" />
+                    <span>Verified via College ID</span>
+                  </span>
+                )}
+              </div>
               <input
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
+                disabled={profile.is_id_verified}
+                readOnly={profile.is_id_verified}
                 required
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
+                className={`w-full rounded-xl border px-3.5 py-2 text-sm transition ${
+                  profile.is_id_verified
+                    ? "border-slate-200 bg-slate-100/80 text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400 cursor-not-allowed select-none"
+                    : "border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
+                }`}
               />
+              {profile.is_id_verified && (
+                <p className="mt-1 text-[11px] text-slate-400">
+                  To safeguard campus trust and prevent spoofing, verified names are permanently bound to your college ID card.
+                </p>
+              )}
             </div>
 
             <div>

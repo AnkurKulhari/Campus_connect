@@ -6,8 +6,8 @@ from app.models.user import User
 from app.models.post import Post
 from app.models.follow import Follow
 from app.schemas.user import UserProfileUpdate
-from app.utils.cloudinary import upload_media, ALLOWED_IMAGE_TYPES
-from app.utils.moderation import assert_safe_content
+from app.utils.cloudinary import upload_media, upload_media_bytes, ALLOWED_IMAGE_TYPES
+from app.utils.moderation import assert_safe_content, assert_safe_image
 
 
 def _build_profile_response(user: User, current_user_id: int | None, db: Session) -> dict:
@@ -57,12 +57,33 @@ def get_my_profile(current_user: User, db: Session) -> dict:
 
 
 def update_my_profile(current_user: User, profile_data: UserProfileUpdate, db: Session) -> dict:
-    if profile_data.full_name:
-        assert_safe_content(profile_data.full_name, "Full name")
-    if profile_data.bio:
-        assert_safe_content(profile_data.bio, "Bio")
+    # 1. Full name integrity check: Locked once ID verified to prevent spoofing verified identities
+    if profile_data.full_name is not None:
+        new_name = profile_data.full_name.strip()
+        if not new_name:
+            raise HTTPException(status_code=400, detail="Full name cannot be empty.")
 
-    update_data = profile_data.model_dump(exclude_unset=True)
+        if new_name != current_user.full_name:
+            if current_user.is_id_verified:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "Your full name is verified against your official college ID card and cannot be modified. "
+                        "Contact campus administration for official name correction requests."
+                    )
+                )
+            assert_safe_content(new_name, "Full name")
+            current_user.full_name = new_name
+
+    # 2. Bio content safety check
+    if profile_data.bio is not None:
+        clean_bio = profile_data.bio.strip()
+        if clean_bio:
+            assert_safe_content(clean_bio, "Bio")
+        current_user.bio = clean_bio or None
+
+    # 3. Update remaining profile fields
+    update_data = profile_data.model_dump(exclude_unset=True, exclude={"full_name", "bio"})
     for field, value in update_data.items():
         setattr(current_user, field, value)
 
@@ -78,7 +99,18 @@ def update_avatar(file: UploadFile, current_user: User, db: Session) -> dict:
             detail=f"Invalid image type '{file.content_type}'. Must be JPEG, PNG, WEBP, or GIF."
         )
 
-    uploaded = upload_media(file, folder="campusconnect/avatars")
+    file_bytes = file.file.read()
+    if len(file_bytes) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Avatar image exceeds maximum 10MB limit.")
+
+    # Explicit image content moderation (NudeNet)
+    assert_safe_image(file_bytes, "Profile Picture")
+
+    uploaded = upload_media_bytes(
+        file_bytes,
+        folder="campusconnect/avatars",
+        filename=f"{current_user.username}_avatar.jpg"
+    )
     current_user.profile_picture = uploaded["url"]
 
     db.commit()

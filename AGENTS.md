@@ -60,6 +60,7 @@ Before committing any backend or frontend code, evaluate each attack class:
 
 ### Class 1: Authentication & Identity Assurance
 - [ ] **IPEC Formula & College Domain Check**: Does every email parameter go through `validate_email(email)`? Does it strictly reject non-IPEC domains, leading/trailing spaces, and invalid roll numbers? Must enforce either a 13-digit AKTU roll number with IPEC institute code `0030` or 10-digit legacy alumni roll number with code `030`.
+- [ ] **Verified Identity Immutability (Name Spoofing Guard)**: Once a student is verified (`is_id_verified == True`), is `full_name` locked in both `update_my_profile` and `EditProfileModal`? Verified students must never be allowed to change their legal name to arbitrary aliases or impersonations.
 - [ ] **Anti-Response-Tampering Defense (Proxy Rewriting Guard)**: Does `/auth/verify-email` return a cryptographic signed JWT access token and user payload upon success? Does the client verify `data.status === "success"` and `data.access_token` rather than blindly relying on HTTP status code `200` to prevent proxy status manipulation (e.g., Burp Suite rewriting `400/401` to `200 OK`)?
 - [ ] **OTP Brute-Force Defense**: Does the OTP verification record enforce `MAX_OTP_ATTEMPTS = 5` and immediately purge the pending record upon reaching the limit?
 - [ ] **OTP Resend Cooldown**: Is a minimum 60-second database-backed cooldown (`last_otp_sent_at`) enforced before dispatching another email?
