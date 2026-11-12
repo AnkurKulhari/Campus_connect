@@ -33,22 +33,23 @@ def validate_password(password: str):
         )
 
 def validate_username(username: str):
-    if len(username) < 3:
+    clean_username = username.strip().lower()
+    if len(clean_username) < 3:
         raise HTTPException(status_code=400,detail="Username must be at least 3 characters long.")
 
-    if len(username) > 30:
+    if len(clean_username) > 30:
         raise HTTPException(status_code=400, detail="Username must be at most 30 characters long.")
 
-    if not re.fullmatch(r"^[a-z0-9_.]+$", username):
+    if not re.fullmatch(r"^[a-z0-9_.]+$", clean_username):
         raise HTTPException(status_code=400, detail="Username can only contain letters, numbers, periods (.) and underscores (_).")
 
-    if ".." in username:
+    if ".." in clean_username:
         raise HTTPException(status_code=400, detail="Username must not contain consecutive periods.")
 
-    if username.startswith("."):
+    if clean_username.startswith("."):
         raise HTTPException(status_code=400, detail="Username must not start with a period.")
 
-    if username.endswith("."):
+    if clean_username.endswith("."):
         raise HTTPException(status_code=400, detail="Username must not end with a period.")
 
 

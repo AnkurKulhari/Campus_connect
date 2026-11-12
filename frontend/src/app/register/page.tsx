@@ -109,11 +109,54 @@ export default function RegisterPage() {
     }
   };
 
+  // Compress camera photos for fast mobile uploads and reliable OCR
+  const compressImage = (file: File, maxWidth = 1600, quality = 0.85): Promise<File> => {
+    return new Promise((resolve) => {
+      if (!file.type.startsWith("image/") || file.size < 500 * 1024) {
+        return resolve(file);
+      }
+      const img = document.createElement("img");
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        img.src = e.target?.result as string;
+      };
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return resolve(file);
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return resolve(file);
+            const compressed = new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), {
+              type: "image/jpeg",
+              lastModified: Date.now(),
+            });
+            resolve(compressed);
+          },
+          "image/jpeg",
+          quality
+        );
+      };
+      img.onerror = () => resolve(file);
+      reader.onerror = () => resolve(file);
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleIdCardSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !e.target.files[0]) return;
     const file = e.target.files[0];
-    if (file.size > 10 * 1024 * 1024) {
-      setError("ID card image must be smaller than 10MB.");
+    if (file.size > 15 * 1024 * 1024) {
+      setError("ID card image must be smaller than 15MB.");
       return;
     }
 
@@ -126,8 +169,9 @@ export default function RegisterPage() {
     }
 
     setError(null);
-    setIdCardFile(file);
-    setIdCardPreview(URL.createObjectURL(file));
+    const processedFile = await compressImage(file);
+    setIdCardFile(processedFile);
+    setIdCardPreview(URL.createObjectURL(processedFile));
   };
 
   const removeIdCard = () => {
@@ -192,7 +236,7 @@ export default function RegisterPage() {
 
       const res = await api.auth.register({
         full_name: fullName.trim(),
-        username: username.trim(),
+        username: username.trim().toLowerCase(),
         college_email: collegeEmail.trim(),
         password,
         gender,

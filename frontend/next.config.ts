@@ -21,6 +21,14 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  async rewrites() {
+    return [
+      {
+        source: "/api/proxy/:path*",
+        destination: "https://campusconnect-production-d75bdcf7.up.railway.app/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;

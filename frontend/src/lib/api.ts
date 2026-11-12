@@ -83,12 +83,31 @@ async function request<T>(
       headers,
     });
   } catch (networkError: unknown) {
-    console.error(`[API Network Error] calling ${API_BASE}${endpoint}:`, networkError);
-    const msg = networkError instanceof Error ? networkError.message : "Network request failed";
-    throw new ApiError(
-      0,
-      `Unable to reach backend at ${API_BASE} (${msg}). Please verify that Railway backend is running.`
-    );
+    // If direct fetch failed (e.g. Indian mobile ISPs blocking *.up.railway.app),
+    // automatically failover to same-origin Vercel rewrite proxy
+    if (typeof window !== "undefined" && !endpoint.startsWith("/api/proxy")) {
+      try {
+        console.warn(`[API Failover] Direct fetch to ${API_BASE}${endpoint} failed. Retrying via /api/proxy...`);
+        response = await fetch(`/api/proxy${endpoint}`, {
+          ...options,
+          headers,
+        });
+      } catch (proxyError: unknown) {
+        console.error(`[API Failover Error] calling /api/proxy${endpoint}:`, proxyError);
+        const msg = networkError instanceof Error ? networkError.message : "Network request failed";
+        throw new ApiError(
+          0,
+          `Unable to reach backend at ${API_BASE} (${msg}). Please verify that Railway backend is running.`
+        );
+      }
+    } else {
+      console.error(`[API Network Error] calling ${API_BASE}${endpoint}:`, networkError);
+      const msg = networkError instanceof Error ? networkError.message : "Network request failed";
+      throw new ApiError(
+        0,
+        `Unable to reach backend at ${API_BASE} (${msg}). Please verify that Railway backend is running.`
+      );
+    }
   }
 
   if (!response.ok) {

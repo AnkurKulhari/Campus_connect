@@ -23,8 +23,9 @@ OTP_RESEND_COOLDOWN_SECONDS = 60
 
 
 def register_user(user_data: UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    # Normalize email to lowercase before any check or storage
+    # Normalize email and username to lowercase before any check or storage
     user_data.college_email = user_data.college_email.strip().lower()
+    user_data.username = user_data.username.strip().lower()
 
     # Content moderation: prevent profanity, cuss words, and abusive handles
     assert_safe_content(user_data.full_name, "Full name")
