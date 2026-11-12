@@ -3,6 +3,7 @@ import {
   UserProfile,
   Post,
   PaginatedPosts,
+  TrendingTopic,
   Comment,
   PaginatedComments,
   PaginatedFollowUsers,
@@ -224,8 +225,15 @@ export const api = {
       });
     },
 
-    getFeed: (page = 1, pageSize = 20) =>
-      request<PaginatedPosts>(`/posts/feed?page=${page}&page_size=${pageSize}`),
+    getFeed: (page = 1, pageSize = 20, tag?: string) => {
+      const url = tag
+        ? `/posts/feed?page=${page}&page_size=${pageSize}&tag=${encodeURIComponent(tag)}`
+        : `/posts/feed?page=${page}&page_size=${pageSize}`;
+      return request<PaginatedPosts>(url);
+    },
+
+    getTrendingTopics: (limit = 6) =>
+      request<TrendingTopic[]>(`/posts/trending?limit=${limit}`),
 
     getFollowingFeed: (page = 1, pageSize = 20) =>
       request<PaginatedPosts>(`/posts/following?page=${page}&page_size=${pageSize}`),

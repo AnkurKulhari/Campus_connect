@@ -2,7 +2,8 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { PostMedia } from "@/types";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
+import { ImageLightboxModal } from "./ImageLightboxModal";
 
 interface PostMediaCarouselProps {
   media: PostMedia[];
@@ -10,6 +11,8 @@ interface PostMediaCarouselProps {
 
 export function PostMediaCarousel({ media }: PostMediaCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   if (!media || media.length === 0) return null;
@@ -87,34 +90,52 @@ export function PostMediaCarousel({ media }: PostMediaCarouselProps) {
   if (total === 1) {
     const item = media[0];
     return (
-      <div
-        onContextMenu={(e) => e.preventDefault()}
-        className="relative w-full max-h-[580px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex justify-center select-none"
-      >
-        {item.media_type === "video" ? (
-          <video
-            src={item.cloudinary_url}
-            controls
-            className="w-full max-h-[580px] rounded-2xl object-contain select-none"
-          />
-        ) : (
-          <div className="relative w-full flex justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+      <>
+        <div
+          onClick={() => {
+            setLightboxIndex(0);
+            setLightboxOpen(true);
+          }}
+          onContextMenu={(e) => e.preventDefault()}
+          className="relative w-full max-h-[580px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex justify-center cursor-pointer select-none group"
+        >
+          {item.media_type === "video" ? (
+            <video
               src={item.cloudinary_url}
-              alt="Post attachment"
-              draggable={false}
-              onDragStart={(e) => e.preventDefault()}
-              className="max-h-[580px] w-auto max-w-full rounded-2xl object-contain pointer-events-none select-none"
+              controls
+              className="w-full max-h-[580px] rounded-2xl object-contain select-none"
             />
-            {/* Download protection shield */}
-            <div
-              className="absolute inset-0 z-10 pointer-events-auto"
-              onContextMenu={(e) => e.preventDefault()}
-            />
-          </div>
-        )}
-      </div>
+          ) : (
+            <div className="relative w-full flex justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={item.cloudinary_url}
+                alt="Post attachment"
+                draggable={false}
+                onDragStart={(e) => e.preventDefault()}
+                className="max-h-[580px] w-auto max-w-full rounded-2xl object-contain pointer-events-none select-none group-hover:opacity-95 transition"
+              />
+              {/* Download protection shield */}
+              <div
+                className="absolute inset-0 z-10 pointer-events-auto"
+                onContextMenu={(e) => e.preventDefault()}
+              />
+              {/* Full View Hover Pill */}
+              <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1.5 rounded-full bg-slate-950/70 px-2.5 py-1 text-white text-[11px] font-semibold tracking-wide backdrop-blur-md opacity-0 group-hover:opacity-100 transition duration-200 pointer-events-none border border-white/10 shadow-sm">
+                <Maximize2 className="h-3 w-3 text-blue-400" />
+                <span>Full View</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <ImageLightboxModal
+          isOpen={lightboxOpen}
+          onClose={() => setLightboxOpen(false)}
+          media={media}
+          initialIndex={lightboxIndex}
+        />
+      </>
     );
   }
 
@@ -144,20 +165,31 @@ export function PostMediaCarousel({ media }: PostMediaCarouselProps) {
                 className="max-h-full max-w-full object-contain select-none"
               />
             ) : (
-              <div className="relative h-full w-full flex items-center justify-center">
+              <div
+                onClick={() => {
+                  setLightboxIndex(idx);
+                  setLightboxOpen(true);
+                }}
+                className="relative h-full w-full flex items-center justify-center cursor-pointer group"
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={item.cloudinary_url}
                   alt={`Slide ${idx + 1}`}
                   draggable={false}
                   onDragStart={(e) => e.preventDefault()}
-                  className="max-h-full max-w-full object-contain pointer-events-none select-none"
+                  className="max-h-full max-w-full object-contain pointer-events-none select-none group-hover:opacity-95 transition"
                 />
                 {/* Download protection shield */}
                 <div
                   className="absolute inset-0 z-10 pointer-events-auto"
                   onContextMenu={(e) => e.preventDefault()}
                 />
+                {/* Full View Hover Pill */}
+                <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1.5 rounded-full bg-slate-950/70 px-2.5 py-1 text-white text-[11px] font-semibold tracking-wide backdrop-blur-md opacity-0 group-hover:opacity-100 transition duration-200 pointer-events-none border border-white/10 shadow-sm">
+                  <Maximize2 className="h-3 w-3 text-blue-400" />
+                  <span>Full View</span>
+                </div>
               </div>
             )}
           </div>
@@ -216,6 +248,13 @@ export function PostMediaCarousel({ media }: PostMediaCarouselProps) {
           );
         })}
       </div>
+
+      <ImageLightboxModal
+        isOpen={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        media={media}
+        initialIndex={lightboxIndex}
+      />
     </div>
   );
 }

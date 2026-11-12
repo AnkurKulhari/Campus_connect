@@ -7,12 +7,13 @@ from app.auth.jwt import get_current_user
 from app.models.user import User
 from app.schemas.post import (
     PostResponse, PaginatedPostsResponse, PostCreate, PostUpdate,
-    PostReportCreate, PostReportResponse
+    PostReportCreate, PostReportResponse, TrendingTopicResponse
 )
 from app.schemas.auth import MessageResponse
 from app.services.post_service import (
     create_post, get_post, get_feed, get_following_feed,
-    get_user_posts, update_post, delete_post, report_post
+    get_user_posts, update_post, delete_post, report_post,
+    get_trending_topics
 )
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
@@ -34,11 +35,22 @@ def create(
 def feed(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=50),
+    tag: str | None = Query(default=None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Paginated campus feed — most recent posts first."""
-    return get_feed(page, page_size, current_user.id, db)
+    """Paginated campus feed — most recent posts first, optionally filtered by tag."""
+    return get_feed(page, page_size, current_user.id, db, tag=tag)
+
+
+@router.get("/trending", response_model=list[TrendingTopicResponse])
+def trending(
+    limit: int = Query(default=6, ge=1, le=20),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Returns actual trending hashtags and campus topics calculated from live posts."""
+    return get_trending_topics(db, limit)
 
 
 @router.get("/following", response_model=PaginatedPostsResponse)

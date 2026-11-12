@@ -9,6 +9,7 @@ import { Post, PaginatedPosts, UserProfile } from "@/types";
 import { api } from "@/lib/api";
 import { PostCard } from "@/components/PostCard";
 import { CreatePostBox } from "@/components/CreatePostBox";
+import { TrendingTopicsCard } from "@/components/TrendingTopicsCard";
 import { AuthGuard } from "@/components/AuthGuard";
 import {
   Globe,
@@ -60,7 +61,7 @@ function HomeFeedContent() {
 
   // Fetch feed
   const fetchPosts = useCallback(
-    async (tab: "campus" | "following", pageNum = 1, append = false) => {
+    async (tab: "campus" | "following", pageNum = 1, append = false, currentTag?: string | null) => {
       if (pageNum === 1) setLoading(true);
       else setLoadingMore(true);
 
@@ -68,7 +69,7 @@ function HomeFeedContent() {
         const data: PaginatedPosts =
           tab === "following" && user
             ? await api.posts.getFollowingFeed(pageNum, 15)
-            : await api.posts.getFeed(pageNum, 15);
+            : await api.posts.getFeed(pageNum, 15, currentTag || undefined);
 
         if (append) {
           setPosts((prev) => [...prev, ...data.posts]);
@@ -88,8 +89,8 @@ function HomeFeedContent() {
   );
 
   useEffect(() => {
-    fetchPosts(activeTab, 1, false);
-  }, [activeTab, fetchPosts]);
+    fetchPosts(activeTab, 1, false, tagParam);
+  }, [activeTab, tagParam, fetchPosts]);
 
   // Fetch Suggested Students & Alumni for Right Sidebar
   useEffect(() => {
@@ -422,10 +423,10 @@ function HomeFeedContent() {
                 />
               ))}
 
-              {hasNext && !tagParam && (
+              {hasNext && (
                 <div className="text-center pt-2">
                   <button
-                    onClick={() => fetchPosts(activeTab, page + 1, true)}
+                    onClick={() => fetchPosts(activeTab, page + 1, true, tagParam)}
                     disabled={loadingMore}
                     className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-[#131B2E] dark:text-slate-200 dark:hover:bg-slate-800 transition shadow-xs disabled:opacity-50"
                   >
@@ -520,38 +521,8 @@ function HomeFeedContent() {
               </div>
             )}
 
-            {/* Trending on Campus - Clean Hashtags WITHOUT fake post counts */}
-            <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-[#131B2E]">
-              <div className="flex items-center gap-2 text-slate-900 dark:text-white mb-3">
-                <Flame className="h-4 w-4 text-orange-500" />
-                <h3 className="font-extrabold text-xs uppercase tracking-wider">
-                  Trending on Campus
-                </h3>
-              </div>
-
-              <div className="space-y-1.5 text-xs">
-                {[
-                  { tag: "Placements2026", category: "Career" },
-                  { tag: "SmartIndiaHackathon", category: "Coding" },
-                  { tag: "SemesterExams", category: "Academics" },
-                  { tag: "IPEC_CSI", category: "Society" },
-                  { tag: "TechFest2026", category: "Event" },
-                ].map((item) => (
-                  <button
-                    key={item.tag}
-                    onClick={() => router.push(`/?tag=${item.tag}`)}
-                    className="w-full flex items-center justify-between text-left group p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition"
-                  >
-                    <span className="font-semibold text-xs text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
-                      #{item.tag}
-                    </span>
-                    <span className="text-[10px] rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-slate-500 dark:text-slate-400 font-medium">
-                      {item.category}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
+            {/* Trending on Campus - Live Topics from Real DB Posts */}
+            <TrendingTopicsCard activeTag={tagParam} />
 
             {/* Campus Verification Notice - Rich High-Contrast Royal Navy / Blue */}
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-900 p-5 text-white shadow-lg border border-blue-500/30">

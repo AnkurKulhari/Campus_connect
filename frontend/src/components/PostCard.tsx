@@ -11,7 +11,19 @@ import { CommentSection } from "./CommentSection";
 import { ConfirmModal } from "./ConfirmModal";
 import { ReportModal } from "./ReportModal";
 import { FormattedContent } from "./FormattedContent";
-import { Heart, MessageCircle, MoreVertical, Trash2, Flag, GraduationCap, CheckCircle } from "lucide-react";
+import { ImageLightboxModal } from "./ImageLightboxModal";
+import {
+  Heart,
+  MessageCircle,
+  MoreVertical,
+  Trash2,
+  Flag,
+  GraduationCap,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+} from "lucide-react";
 import { LinkedinIcon } from "@/components/icons/LinkedinIcon";
 
 export function PostCard({
@@ -33,6 +45,18 @@ export function PostCard({
   const [showReportModal, setShowReportModal] = useState(false);
   const [isReported, setIsReported] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [activeMediaIndex, setActiveMediaIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxInitialIndex, setLightboxInitialIndex] = useState(0);
+
+  const openLightbox = (index: number, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setLightboxInitialIndex(index);
+    setLightboxOpen(true);
+  };
 
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -257,20 +281,20 @@ export function PostCard({
         </div>
       )}
 
-      {/* Media Attachments - Natural aspect ratio */}
+      {/* Media Attachments - Strictly 3:4 Aspect Ratio on Timeline, Full Ratio on Click */}
       {post.media && post.media.length > 0 && (
         <div className="px-4 pb-3">
           {post.media.length === 1 ? (
             <div
-              onClick={() => router.push(`/posts/${post.id}`)}
+              onClick={(e) => openLightbox(0, e)}
               onContextMenu={(e) => e.preventDefault()}
-              className="relative w-full max-h-[520px] rounded-2xl overflow-hidden bg-slate-950/5 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex justify-center cursor-pointer group select-none"
+              className="relative w-full max-w-[480px] mx-auto aspect-[3/4] rounded-2xl overflow-hidden bg-slate-950/5 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 flex items-center justify-center cursor-pointer group select-none shadow-xs"
             >
               {post.media[0].media_type === "video" ? (
                 <video
                   src={post.media[0].cloudinary_url}
                   controls
-                  className="max-h-[520px] w-auto max-w-full rounded-2xl object-contain select-none"
+                  className="w-full h-full object-cover rounded-2xl select-none"
                 />
               ) : (
                 <>
@@ -280,7 +304,42 @@ export function PostCard({
                     alt="Post attachment"
                     draggable={false}
                     onDragStart={(e) => e.preventDefault()}
-                    className="max-h-[520px] w-auto max-w-full rounded-2xl object-contain group-hover:opacity-95 transition duration-200 pointer-events-none select-none"
+                    className="w-full h-full object-cover rounded-2xl group-hover:scale-[1.02] transition duration-300 pointer-events-none select-none"
+                  />
+                  {/* Invisible Protective Shield Overlay */}
+                  <div
+                    className="absolute inset-0 z-10"
+                    onContextMenu={(e) => e.preventDefault()}
+                  />
+                  {/* Full View Hover Pill */}
+                  <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1.5 rounded-full bg-slate-950/70 px-2.5 py-1 text-white text-[11px] font-semibold tracking-wide backdrop-blur-md opacity-0 group-hover:opacity-100 transition duration-200 pointer-events-none border border-white/10 shadow-sm">
+                    <Maximize2 className="h-3 w-3 text-blue-400" />
+                    <span>Full View</span>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            <div
+              onClick={(e) => openLightbox(activeMediaIndex, e)}
+              onContextMenu={(e) => e.preventDefault()}
+              className="relative w-full max-w-[480px] mx-auto aspect-[3/4] rounded-2xl overflow-hidden bg-slate-950/5 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 flex items-center justify-center cursor-pointer group select-none shadow-xs"
+            >
+              {post.media[activeMediaIndex].media_type === "video" ? (
+                <video
+                  src={post.media[activeMediaIndex].cloudinary_url}
+                  controls
+                  className="w-full h-full object-cover rounded-2xl select-none"
+                />
+              ) : (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={post.media[activeMediaIndex].cloudinary_url}
+                    alt={`Photo ${activeMediaIndex + 1}`}
+                    draggable={false}
+                    onDragStart={(e) => e.preventDefault()}
+                    className="w-full h-full object-cover rounded-2xl group-hover:scale-[1.02] transition duration-300 pointer-events-none select-none"
                   />
                   {/* Invisible Protective Shield Overlay */}
                   <div
@@ -289,46 +348,59 @@ export function PostCard({
                   />
                 </>
               )}
-            </div>
-          ) : (
-            <div
-              className={`grid gap-2 select-none ${
-                post.media.length === 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"
-              }`}
-            >
-              {post.media.map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => router.push(`/posts/${post.id}`)}
-                  onContextMenu={(e) => e.preventDefault()}
-                  className="relative aspect-square w-full rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 cursor-pointer group select-none"
-                >
-                  {item.media_type === "video" ? (
-                    <video
-                      src={item.cloudinary_url}
-                      controls
-                      className="h-full w-full object-cover select-none"
-                    />
-                  ) : (
-                    <>
-                      <Image
-                        src={item.cloudinary_url}
-                        alt="Post attachment"
-                        fill
-                        draggable={false}
-                        onDragStart={(e) => e.preventDefault()}
-                        sizes="(max-width: 768px) 100vw, 500px"
-                        className="object-cover group-hover:scale-105 transition duration-300 pointer-events-none select-none"
-                      />
-                      {/* Invisible Protective Shield Overlay */}
-                      <div
-                        className="absolute inset-0 z-10"
-                        onContextMenu={(e) => e.preventDefault()}
-                      />
-                    </>
-                  )}
-                </div>
-              ))}
+
+              {/* Photo Counter Badge */}
+              <div className="absolute top-3 right-3 z-20 flex items-center gap-1 rounded-full bg-slate-950/70 px-2.5 py-1 text-white text-[11px] font-bold tracking-wide backdrop-blur-md pointer-events-none border border-white/10 shadow-sm">
+                <span>{activeMediaIndex + 1}</span>
+                <span className="text-white/60">/</span>
+                <span>{post.media.length}</span>
+              </div>
+
+              {/* Previous Slide Arrow */}
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setActiveMediaIndex((prev) => (prev > 0 ? prev - 1 : post.media.length - 1));
+                }}
+                aria-label="Previous image"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-slate-950/60 text-white backdrop-blur-md border border-white/10 opacity-80 hover:opacity-100 hover:scale-105 active:scale-95 transition shadow-md"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+
+              {/* Next Slide Arrow */}
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setActiveMediaIndex((prev) => (prev < post.media.length - 1 ? prev + 1 : 0));
+                }}
+                aria-label="Next image"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-slate-950/60 text-white backdrop-blur-md border border-white/10 opacity-80 hover:opacity-100 hover:scale-105 active:scale-95 transition shadow-md"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+
+              {/* Indicator Dots */}
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 pointer-events-none">
+                {post.media.map((_, idx) => (
+                  <div
+                    key={idx}
+                    className={`h-1.5 rounded-full transition-all duration-200 ${
+                      idx === activeMediaIndex
+                        ? "w-5 bg-white shadow-sm"
+                        : "w-1.5 bg-white/50"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* Full View Hover Pill */}
+              <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1.5 rounded-full bg-slate-950/70 px-2.5 py-1 text-white text-[11px] font-semibold tracking-wide backdrop-blur-md opacity-0 group-hover:opacity-100 transition duration-200 pointer-events-none border border-white/10 shadow-sm">
+                <Maximize2 className="h-3 w-3 text-blue-400" />
+                <span>Full View</span>
+              </div>
             </div>
           )}
         </div>
@@ -384,6 +456,14 @@ export function PostCard({
         onReported={() => {
           setIsReported(true);
         }}
+      />
+
+      {/* Full Ratio Image Lightbox Modal */}
+      <ImageLightboxModal
+        isOpen={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        media={post.media}
+        initialIndex={lightboxInitialIndex}
       />
     </article>
   );

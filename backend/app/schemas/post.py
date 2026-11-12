@@ -90,3 +90,11 @@ class PostReportResponse(BaseModel):
     message: str
     reported: bool
     is_quarantined: bool
+
+
+class TrendingTopicResponse(BaseModel):
+    tag: str
+    post_count: int
+    category: str
+    is_active: bool
+

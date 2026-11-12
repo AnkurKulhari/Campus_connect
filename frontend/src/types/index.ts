@@ -84,6 +84,13 @@ export interface PaginatedPosts {
   has_next: boolean;
 }
 
+export interface TrendingTopic {
+  tag: string;
+  post_count: number;
+  category: string;
+  is_active: boolean;
+}
+
 export interface CommentAuthor {
   username: string;
   full_name: string;

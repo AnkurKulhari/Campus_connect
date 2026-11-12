@@ -1,3 +1,5 @@
+import re
+from collections import Counter
 from fastapi import HTTPException, UploadFile, BackgroundTasks
 from sqlalchemy.orm import Session, selectinload, with_expression
 from sqlalchemy import select, func
@@ -118,15 +120,30 @@ def get_post(post_id: int, current_user_id: int, db: Session) -> Post:
     return _get_post_or_404(post_id, current_user_id, db)
 
 
-def get_feed(page: int, page_size: int, current_user_id: int, db: Session) -> dict:
+def get_feed(
+    page: int,
+    page_size: int,
+    current_user_id: int,
+    db: Session,
+    tag: str | None = None,
+) -> dict:
     offset = (page - 1) * page_size
-    total = db.scalar(select(func.count(Post.id)).where(Post.is_hidden == False)) or 0
-
-    posts = db.scalars(
+    query = (
         select(Post)
         .options(*_post_options(current_user_id))
         .where(Post.is_hidden == False)
-        .order_by(Post.created_at.desc())
+    )
+    count_query = select(func.count(Post.id)).where(Post.is_hidden == False)
+
+    if tag:
+        tag_clean = tag.strip().lstrip("#")
+        tag_pattern = f"%{tag_clean}%"
+        query = query.where(Post.content.ilike(tag_pattern))
+        count_query = count_query.where(Post.content.ilike(tag_pattern))
+
+    total = db.scalar(count_query) or 0
+    posts = db.scalars(
+        query.order_by(Post.created_at.desc())
         .offset(offset)
         .limit(page_size)
     ).all()
@@ -138,6 +155,85 @@ def get_feed(page: int, page_size: int, current_user_id: int, db: Session) -> di
         "page_size": page_size,
         "has_next": (offset + page_size) < total,
     }
+
+
+def get_trending_topics(db: Session, limit: int = 6) -> list[dict]:
+    """
+    Computes real trending topics and hashtags from active posts in the database.
+    Ranks by frequency and post volume.
+    """
+    posts = db.scalars(
+        select(Post.content)
+        .where(Post.is_hidden == False, Post.content.isnot(None))
+        .order_by(Post.created_at.desc())
+        .limit(300)
+    ).all()
+
+    tag_regex = re.compile(r"#([A-Za-z0-9_]{2,30})")
+    counts = Counter()
+    case_map: dict[str, str] = {}
+
+    for content in posts:
+        if not content:
+            continue
+        tags = set(tag_regex.findall(content))
+        for t in tags:
+            t_lower = t.lower()
+            counts[t_lower] += 1
+            if t_lower not in case_map:
+                case_map[t_lower] = t
+            elif t[0].isupper() and not case_map[t_lower][0].isupper():
+                case_map[t_lower] = t
+
+    def infer_category(tag_lower: str) -> str:
+        if any(k in tag_lower for k in ["code", "hack", "dev", "tech", "ai", "ml", "python", "java", "algo", "web"]):
+            return "Coding"
+        if any(k in tag_lower for k in ["placement", "job", "intern", "career", "interview", "hire", "tpo"]):
+            return "Career"
+        if any(k in tag_lower for k in ["exam", "aktu", "sem", "result", "study", "syllabus", "notes"]):
+            return "Academics"
+        if any(k in tag_lower for k in ["fest", "event", "freshers", "farewell", "sports", "cultural"]):
+            return "Event"
+        if any(k in tag_lower for k in ["csi", "dsc", "club", "society", "ieee"]):
+            return "Society"
+        return "Campus"
+
+    results: list[dict] = []
+
+    for t_lower, count in counts.most_common(limit):
+        display_tag = case_map.get(t_lower, t_lower)
+        results.append({
+            "tag": display_tag,
+            "post_count": count,
+            "category": infer_category(t_lower),
+            "is_active": True,
+        })
+
+    if len(results) < limit:
+        campus_defaults = [
+            ("Placements2026", "Career"),
+            ("SmartIndiaHackathon", "Coding"),
+            ("SemesterExams", "Academics"),
+            ("IPEC_CSI", "Society"),
+            ("TechFest2026", "Event"),
+            ("CampusLife", "Campus"),
+        ]
+        existing_tags = {r["tag"].lower() for r in results}
+        for def_tag, def_cat in campus_defaults:
+            if def_tag.lower() not in existing_tags:
+                actual_count = sum(
+                    1 for c in posts if c and (f"#{def_tag.lower()}" in c.lower() or def_tag.lower() in c.lower())
+                )
+                results.append({
+                    "tag": def_tag,
+                    "post_count": actual_count,
+                    "category": def_cat,
+                    "is_active": actual_count > 0,
+                })
+                if len(results) >= limit:
+                    break
+
+    return results
 
 
 def get_following_feed(page: int, page_size: int, current_user_id: int, db: Session) -> dict:
