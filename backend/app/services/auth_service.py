@@ -66,6 +66,7 @@ def register_user(user_data: UserCreate, background_tasks: BackgroundTasks, db: 
 
         existing_pending.full_name = user_data.full_name
         existing_pending.username = user_data.username
+        existing_pending.gender = user_data.gender
         existing_pending.hashed_password = get_password_hash(user_data.password)
         existing_pending.roll_number = user_data.roll_number
         existing_pending.course = user_data.course
@@ -90,6 +91,7 @@ def register_user(user_data: UserCreate, background_tasks: BackgroundTasks, db: 
         full_name=user_data.full_name,
         college_email=user_data.college_email,
         username=user_data.username,
+        gender=user_data.gender,
         hashed_password=get_password_hash(user_data.password),
         roll_number=user_data.roll_number,
         course=user_data.course,
@@ -161,8 +163,8 @@ def verify_email_service(verify_data: VerifyEmail, db: Session):
     is_id_verified = False
 
     # Automated verification logic using IPEC / AKTU roll number formula
-    # Standard format: 13 digits (e.g., 2300300100032)
-    # First 2 digits: Admission Year (e.g. 23 -> 2023)
+    # Standard format: 13 digits (e.g., 2100300100045)
+    # First 2 digits: Admission Year (e.g. 21 -> 2021)
     # Digits 3-6: 0030 (IPEC code)
     if pending_user.roll_number:
         clean_roll = pending_user.roll_number.strip()
@@ -194,6 +196,7 @@ def verify_email_service(verify_data: VerifyEmail, db: Session):
         full_name=pending_user.full_name,
         username=pending_user.username,
         college_email=pending_user.college_email,
+        gender=pending_user.gender,
         hashed_password=pending_user.hashed_password,
         is_verified=True,
         roll_number=pending_user.roll_number,

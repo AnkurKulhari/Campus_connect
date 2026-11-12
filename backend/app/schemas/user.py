@@ -8,6 +8,7 @@ class UserProfileResponse(BaseModel):
     full_name: str
     bio: str | None = None
     profile_picture: str | None = None
+    gender: str | None = None
     roll_number: str | None = None
     course: str | None = None
     branch: str | None = None
@@ -31,6 +32,7 @@ class UserProfileUpdate(BaseModel):
     full_name: str | None = None
     bio: str | None = None
     profile_picture: str | None = None
+    gender: str | None = None
     course: str | None = None
     branch: str | None = None
     year: str | None = None

@@ -16,6 +16,7 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(unique=False)
     bio: Mapped[str | None] = mapped_column(nullable=True)
     profile_picture: Mapped[str | None] = mapped_column(nullable=True)
+    gender: Mapped[str | None] = mapped_column(String(20), nullable=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     
     # Academic & Student Identity

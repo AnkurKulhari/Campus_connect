@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import Image from "next/image";
 import { api } from "@/lib/api";
 import {
@@ -13,6 +14,12 @@ import {
   X,
   ShieldCheck,
   RotateCw,
+  Sparkles,
+  Users,
+  Briefcase,
+  Lock,
+  Mail,
+  User as UserIcon,
 } from "lucide-react";
 import { LinkedinIcon } from "@/components/icons/LinkedinIcon";
 import { SuccessModal } from "@/components/SuccessModal";
@@ -38,12 +45,20 @@ const YEAR_OPTIONS = [
   "Alumni (Passed Out)",
 ];
 
+const GENDER_OPTIONS = [
+  { id: "Male", label: "Male" },
+  { id: "Female", label: "Female" },
+  { id: "Other", label: "Other" },
+  { id: "Prefer not to say", label: "Prefer not to say" },
+];
+
 export default function RegisterPage() {
   const [step, setStep] = useState<"form" | "otp">("form");
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [collegeEmail, setCollegeEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [gender, setGender] = useState("Prefer not to say");
 
   // Academic Identity
   const [course, setCourse] = useState("B.Tech");
@@ -108,14 +123,14 @@ export default function RegisterPage() {
 
     const email = collegeEmail.trim().toLowerCase();
     if (!email.endsWith("@ipec.org.in")) {
-      setError("College email must end with @ipec.org.in (e.g. 210030010001@ipec.org.in)");
+      setError("College email must end with @ipec.org.in (e.g. 2100300100045@ipec.org.in)");
       setLoading(false);
       return;
     }
 
     const localPart = email.split("@")[0];
     if (!/^\d+$/.test(localPart)) {
-      setError("College email must start with your numeric roll number (e.g. 210030010001@ipec.org.in)");
+      setError("College email must start with your numeric roll number (e.g. 2100300100045@ipec.org.in)");
       setLoading(false);
       return;
     }
@@ -147,6 +162,7 @@ export default function RegisterPage() {
         username: username.trim(),
         college_email: collegeEmail.trim(),
         password,
+        gender,
         roll_number: rollNumber.trim() || localPart,
         course,
         branch,
@@ -203,373 +219,474 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4 py-8">
-      <div className="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 to-blue-500 text-white shadow-md shadow-blue-500/20">
-            <GraduationCap className="h-7 w-7" />
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-8 sm:py-12 relative overflow-hidden">
+      {/* Decorative ambient gradient blooms */}
+      <div className="absolute top-1/4 -left-48 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 -right-48 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative z-10">
+        {/* Left Column: CampusConnect Community Showcase (Visible on Desktop) */}
+        <div className="hidden lg:flex lg:col-span-5 flex-col justify-between space-y-6 sticky top-24 pr-4">
+          <div>
+            {/* Campus badge */}
+            <div className="inline-flex items-center gap-2 rounded-full bg-blue-500/10 border border-blue-500/20 px-3.5 py-1 text-xs font-bold text-blue-600 dark:text-blue-400">
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>IPEC Campus Exclusive</span>
+            </div>
+
+            <h1 className="mt-4 text-3xl xl:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+              Step into your campus circle.
+            </h1>
+            <p className="mt-3 text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
+              Connect exclusively with verified IPEC classmates, faculty, and alumni. Share project breakthroughs, get placement insights, and stay ahead without the noise of open social networks.
+            </p>
+
+            {/* Feature Cards */}
+            <div className="mt-8 space-y-3">
+              <div className="flex items-start gap-3.5 p-3.5 rounded-2xl border border-slate-200/80 bg-white/70 backdrop-blur-xs dark:border-slate-800 dark:bg-[#131B2E]/70 shadow-xs">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                  <ShieldCheck className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-white">100% Verified Students & Alumni</h4>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                    Zero spam or outsiders. Verification is tied directly to your official @ipec.org.in credentials.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3.5 p-3.5 rounded-2xl border border-slate-200/80 bg-white/70 backdrop-blur-xs dark:border-slate-800 dark:bg-[#131B2E]/70 shadow-xs">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                  <Briefcase className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-white">Senior Mentorship & Referrals</h4>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                    Get guidance directly from IPEC graduates working at top tech firms, product companies, and research labs.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3.5 p-3.5 rounded-2xl border border-slate-200/80 bg-white/70 backdrop-blur-xs dark:border-slate-800 dark:bg-[#131B2E]/70 shadow-xs">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  <Users className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-white">Safe, Protected Campus Space</h4>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                    Built-in media download protection shields and AI content safety filters safeguard student privacy.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-          <h1 className="mt-4 text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-            {step === "form" ? "Join CampusConnect" : "Verify College Email"}
-          </h1>
-          <p className="mt-1 text-xs text-slate-500">
-            {step === "form"
-              ? "Exclusively for Inderprastha Engineering College students & alumni"
-              : `We sent a 6-digit code to ${collegeEmail}`}
-          </p>
+
+          {/* Social Proof Footer */}
+          <div className="pt-4 border-t border-slate-200/60 dark:border-slate-800/60">
+            <div className="flex items-center gap-2">
+              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                Live IPEC Campus Network
+              </span>
+            </div>
+            <p className="mt-1 text-[11px] text-slate-400">
+              Students and alumni actively engaging across B.Tech, MCA, MBA & Alumni Circle.
+            </p>
+          </div>
         </div>
 
-        {error && (
-          <div className="mt-5 rounded-lg bg-red-50 p-3 text-xs text-red-600 dark:bg-red-950/40 dark:text-red-400">
-            {error}
-          </div>
-        )}
-
-        {successMsg && !error && (
-          <div className="mt-5 flex items-center gap-2 rounded-lg bg-green-50 p-3 text-xs text-green-700 dark:bg-green-950/40 dark:text-green-300">
-            <CheckCircle2 className="h-4 w-4 shrink-0" />
-            <span>{successMsg}</span>
-          </div>
-        )}
-
-        {step === "form" ? (
-          <form onSubmit={handleRegister} className="mt-6 space-y-4">
-            {/* Account Credentials */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Full Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="e.g. Ankur Kumar"
-                  required
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Username <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="e.g. ankur_k"
-                  required
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  College Email <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="email"
-                  value={collegeEmail}
-                  onChange={handleEmailChange}
-                  placeholder="2300300100032@ipec.org.in"
-                  required
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                />
-                <p className="mt-1 text-[11px] text-slate-400">
-                  Must end with @ipec.org.in
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Password <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Min 8 chars"
-                  required
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                />
-              </div>
-            </div>
-
-            {/* Academic Standing */}
-            <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-              <div className="flex items-center gap-1.5 mb-2">
-                <GraduationCap className="h-4 w-4 text-blue-500" />
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                  Academic Standing
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Course <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={course}
-                    onChange={(e) => setCourse(e.target.value)}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                  >
-                    {COURSE_OPTIONS.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
+        {/* Right Column: Registration Card */}
+        <div className="col-span-12 lg:col-span-7">
+          <div className="w-full rounded-3xl border border-slate-200/80 bg-white/95 dark:border-slate-800 dark:bg-[#131B2E]/95 p-6 sm:p-9 shadow-xl backdrop-blur-md">
+            {/* Header / Brand on mobile & title */}
+            <div className="text-left mb-6">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/20">
+                  <GraduationCap className="h-6 w-6" />
                 </div>
-
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Branch <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={branch}
-                    onChange={(e) => setBranch(e.target.value)}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                  >
-                    {BRANCH_OPTIONS.map((b) => (
-                      <option key={b} value={b}>
-                        {b}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Year / Status <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={year}
-                    onChange={(e) => setYear(e.target.value)}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                  >
-                    {YEAR_OPTIONS.map((y) => (
-                      <option key={y} value={y}>
-                        {y}
-                      </option>
-                    ))}
-                  </select>
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    {step === "form" ? "Create Student Account" : "Verify College Email"}
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {step === "form"
+                      ? "Exclusive to verified IPEC students & alumni (@ipec.org.in)"
+                      : `We sent a 6-digit confirmation code to ${collegeEmail}`}
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* University Roll Number & Student ID Verification */}
-            <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-              <div className="flex items-center gap-1.5 mb-2">
-                <ShieldCheck className="h-4 w-4 text-emerald-500" />
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                  Student Verification
-                </span>
+            {error && (
+              <div className="mb-5 rounded-2xl bg-rose-50 border border-rose-200/60 p-3.5 text-xs text-rose-700 dark:bg-rose-950/40 dark:border-rose-900/40 dark:text-rose-300 flex items-start gap-2 animate-in fade-in">
+                <AlertTriangle className="h-4 w-4 shrink-0 text-rose-500 mt-0.5" />
+                <span>{error}</span>
               </div>
+            )}
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  13-Digit University Roll Number
-                </label>
-                <input
-                  type="text"
-                  value={rollNumber}
-                  onChange={(e) => setRollNumber(e.target.value)}
-                  placeholder="e.g. 2300300100032"
-                  maxLength={13}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-mono text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                />
-                <p className="mt-1 text-[11px] text-slate-400">
-                  Your official 13-digit AKTU roll number printed on your college ID enables instant automated badge verification.
-                </p>
+            {successMsg && !error && (
+              <div className="mb-5 flex items-center gap-2 rounded-2xl bg-emerald-50 border border-emerald-200/60 p-3.5 text-xs text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-900/40 dark:text-emerald-300 animate-in fade-in">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                <span>{successMsg}</span>
               </div>
+            )}
 
-              {/* College ID Card Upload */}
-              <div className="mt-3">
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  College ID Card Photo
-                </label>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleIdCardSelect}
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                />
-
-                {idCardPreview ? (
-                  <div className="relative mt-1 aspect-video w-full max-w-xs rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
-                    <Image
-                      src={idCardPreview}
-                      alt="College ID Preview"
-                      fill
-                      className="object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={removeIdCard}
-                      className="absolute top-2 right-2 rounded-full bg-black/70 p-1.5 text-white hover:bg-black transition"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-4 text-xs font-medium text-slate-600 dark:text-slate-400 hover:border-blue-500 hover:text-blue-600 transition bg-slate-50/50 dark:bg-slate-800/30"
-                  >
-                    <Upload className="h-4 w-4" />
-                    <span>Upload College ID Card (JPEG, PNG, max 10MB)</span>
-                  </button>
-                )}
-                <p className="mt-1 text-[11px] text-slate-400">
-                  Used exclusively to verify your student standing. Special cases (lateral entry, branch change) are verified manually.
-                </p>
-              </div>
-            </div>
-
-            {/* Year-Back Declaration & Warning */}
-            <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3.5 dark:border-amber-900/40 dark:bg-amber-950/20">
-              <label className="flex items-start gap-2.5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isYearBack}
-                  onChange={(e) => setIsYearBack(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-amber-300 text-blue-600 focus:ring-blue-500 dark:border-amber-800"
-                />
+            {step === "form" ? (
+              <form onSubmit={handleRegister} className="space-y-5">
+                {/* Section 1: Account Credentials */}
                 <div>
-                  <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
-                    I have an Academic Year-Back / Extended Course
-                  </span>
-                  <div className="mt-1 flex items-start gap-1.5 text-[11px] text-amber-800/90 dark:text-amber-300/80 leading-relaxed">
-                    <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
-                    <span>
-                      <strong>Important Notice:</strong> If you have an academic year back and do not select this option, your student access will automatically expire based on your original batch timeline. Selecting this ensures your account remains active for your full extended course duration. We send a standing re-verification every 6 months to keep your account active.
+                  <div className="flex items-center gap-2 mb-3">
+                    <UserIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      Personal Identity
                     </span>
                   </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                        Full Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="e.g. Jake Gyllenhaal"
+                        required
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800/60 dark:text-white dark:focus:bg-slate-800 transition"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                        Username <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        placeholder="e.g. jake_gyllenhaal"
+                        required
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800/60 dark:text-white dark:focus:bg-slate-800 transition"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Gender Selector */}
+                  <div className="mt-4">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                      Gender <span className="text-slate-400 font-normal">(Displayed on profile)</span>
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {GENDER_OPTIONS.map((opt) => {
+                        const isSelected = gender === opt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => setGender(opt.id)}
+                            className={`px-3 py-2 text-xs font-semibold rounded-xl border transition text-center cursor-pointer ${
+                              isSelected
+                                ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                                : "bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-800"
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                        College Email <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <Mail className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
+                        <input
+                          type="email"
+                          value={collegeEmail}
+                          onChange={handleEmailChange}
+                          placeholder="e.g. 2100300100045@ipec.org.in"
+                          required
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800/60 dark:text-white dark:focus:bg-slate-800 transition"
+                        />
+                      </div>
+                      <p className="mt-1 text-[11px] text-slate-400">
+                        Must end with @ipec.org.in
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                        Password <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
+                        <input
+                          type="password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="Min 8 characters"
+                          required
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800/60 dark:text-white dark:focus:bg-slate-800 transition"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </label>
-            </div>
 
-            {/* LinkedIn URL (Optional) */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                LinkedIn Profile URL <span className="text-slate-400 font-normal">(Optional — for networking)</span>
-              </label>
-              <div className="relative">
-                <LinkedinIcon className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                <input
-                  type="url"
-                  value={linkedinUrl}
-                  onChange={(e) => setLinkedinUrl(e.target.value)}
-                  placeholder="https://linkedin.com/in/yourprofile"
-                  className="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                />
-              </div>
-            </div>
+                {/* Section 2: Academic Standing */}
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800/80">
+                  <div className="flex items-center gap-2 mb-3">
+                    <GraduationCap className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      Academic Standing & Verification
+                    </span>
+                  </div>
 
-            {error && (
-              <div className="rounded-lg bg-red-50 p-3 text-xs text-red-600 dark:bg-red-950/40 dark:text-red-400">
-                {error}
-              </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                        Course <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={course}
+                        onChange={(e) => setCourse(e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-xs text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800/60 dark:text-white transition"
+                      >
+                        {COURSE_OPTIONS.map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                        Academic Standing <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={year}
+                        onChange={(e) => setYear(e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-xs text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800/60 dark:text-white transition"
+                      >
+                        {YEAR_OPTIONS.map((y) => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                        Branch <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={branch}
+                        onChange={(e) => setBranch(e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2.5 text-xs text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800/60 dark:text-white transition truncate"
+                      >
+                        {BRANCH_OPTIONS.map((b) => (
+                          <option key={b} value={b}>{b}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                      13-Digit University Roll Number
+                    </label>
+                    <input
+                      type="text"
+                      value={rollNumber}
+                      onChange={(e) => setRollNumber(e.target.value)}
+                      placeholder="e.g. 2100300100045"
+                      maxLength={13}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-mono text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800/60 dark:text-white transition"
+                    />
+                    <p className="mt-1 text-[11px] text-slate-400">
+                      Your official AKTU roll number printed on your college ID enables instant automated verified badge activation.
+                    </p>
+                  </div>
+
+                  {/* College ID Card Upload */}
+                  <div className="mt-4">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                      College ID Card Photo <span className="text-slate-400 font-normal">(Optional, for instant verification)</span>
+                    </label>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleIdCardSelect}
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                    />
+
+                    {idCardPreview ? (
+                      <div className="relative mt-1 aspect-video w-full max-w-xs rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+                        <Image
+                          src={idCardPreview}
+                          alt="College ID Preview"
+                          fill
+                          className="object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={removeIdCard}
+                          className="absolute top-2 right-2 rounded-full bg-black/70 p-1.5 text-white hover:bg-black transition cursor-pointer"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full flex items-center justify-center gap-2.5 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 p-4 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:border-blue-500 hover:text-blue-600 dark:hover:border-blue-400 dark:hover:text-blue-400 transition bg-slate-50/60 dark:bg-slate-800/30 cursor-pointer"
+                      >
+                        <Upload className="h-4 w-4 text-blue-500" />
+                        <span>Upload College ID Card (JPEG, PNG, max 10MB)</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Year-Back Declaration */}
+                <div className="rounded-2xl border border-amber-200/80 bg-amber-50/60 p-3.5 dark:border-amber-900/40 dark:bg-amber-950/20">
+                  <label className="flex items-start gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isYearBack}
+                      onChange={(e) => setIsYearBack(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-amber-300 text-blue-600 focus:ring-blue-500 dark:border-amber-800"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                        I have an Academic Year-Back / Extended Course
+                      </span>
+                      <p className="mt-0.5 text-[11px] text-amber-800/80 dark:text-amber-300/80 leading-relaxed">
+                        Selecting this ensures your student account remains active throughout your full extended degree timeline.
+                      </p>
+                    </div>
+                  </label>
+                </div>
+
+                {/* Section 3: LinkedIn Profile */}
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                    LinkedIn Profile URL <span className="text-slate-400 font-normal">(Optional — for networking & alumni connections)</span>
+                  </label>
+                  <div className="relative">
+                    <LinkedinIcon className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
+                    <input
+                      type="url"
+                      value={linkedinUrl}
+                      onChange={(e) => setLinkedinUrl(e.target.value)}
+                      placeholder="https://linkedin.com/in/yourprofile"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800/60 dark:text-white dark:focus:bg-slate-800 transition"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition-all hover:scale-[1.005] active:scale-[0.99] disabled:opacity-50 cursor-pointer"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Sending Verification OTP...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Create Account & Verify Email</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyOtp} className="mt-6 space-y-5">
+                <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-200/60 dark:bg-blue-950/20 dark:border-blue-900/40 text-center">
+                  <p className="text-xs text-blue-900 dark:text-blue-300">
+                    We sent a 6-digit confirmation code to:
+                  </p>
+                  <p className="font-bold text-sm text-blue-700 dark:text-blue-400 mt-0.5">
+                    {collegeEmail}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 text-center">
+                    Enter 6-Digit Verification Code
+                  </label>
+                  <input
+                    type="text"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    placeholder="••••••"
+                    maxLength={6}
+                    required
+                    className="w-full text-center tracking-[0.5em] text-2xl font-mono font-bold rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                  <p className="mt-1.5 text-[11px] text-slate-400 text-center">
+                    Code expires in 10 minutes. Maximum 5 verification attempts.
+                  </p>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={otp.length !== 6 || loading}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition disabled:opacity-50 cursor-pointer"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Verifying Code...</span>
+                    </>
+                  ) : (
+                    <span>Complete Registration</span>
+                  )}
+                </button>
+
+                <div className="flex items-center justify-between pt-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setStep("form")}
+                    className="font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-slate-300 transition"
+                  >
+                    ← Edit details
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={cooldown > 0 || loading}
+                    className="inline-flex items-center gap-1.5 font-semibold text-blue-600 hover:underline dark:text-blue-400 disabled:opacity-40 transition"
+                  >
+                    <RotateCw className="h-3 w-3" />
+                    <span>
+                      {cooldown > 0 ? `Resend code in ${cooldown}s` : "Resend code"}
+                    </span>
+                  </button>
+                </div>
+              </form>
             )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white shadow-xs hover:bg-blue-700 transition disabled:opacity-50"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Submitting & Sending OTP...</span>
-                </>
-              ) : (
-                <>
-                  <span>Create Account & Verify</span>
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleVerifyOtp} className="mt-6 space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                6-Digit Verification Code
-              </label>
-              <input
-                type="text"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                placeholder="123456"
-                maxLength={6}
-                required
-                className="w-full text-center tracking-widest text-lg font-mono rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              />
-              <p className="mt-1 text-[11px] text-slate-400 text-center">
-                OTP expires in 10 minutes. Max 5 attempts.
-              </p>
-            </div>
-
-            {error && (
-              <div className="rounded-lg bg-red-50 p-3 text-xs text-red-600 dark:bg-red-950/40 dark:text-red-400">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={otp.length !== 6 || loading}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-blue-700 transition disabled:opacity-50"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Verifying...</span>
-                </>
-              ) : (
-                <span>Complete Registration</span>
-              )}
-            </button>
-
-            <div className="flex items-center justify-between pt-2 text-xs">
-              <button
-                type="button"
-                onClick={() => setStep("form")}
-                className="text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"
+            <p className="mt-8 text-center text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800/80 pt-5">
+              Already have an account?{" "}
+              <Link
+                href="/login"
+                className="font-bold text-blue-600 hover:underline dark:text-blue-400"
               >
-                ← Edit details
-              </button>
-
-              <button
-                type="button"
-                onClick={handleResend}
-                disabled={cooldown > 0 || loading}
-                className="inline-flex items-center gap-1 text-blue-600 hover:underline dark:text-blue-400 disabled:opacity-40"
-              >
-                <RotateCw className="h-3 w-3" />
-                <span>
-                  {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend OTP"}
-                </span>
-              </button>
-            </div>
-          </form>
-        )}
-
-        <p className="mt-6 text-center text-xs text-slate-500">
-          Already verified?{" "}
-          <a
-            href="/login"
-            className="font-semibold text-blue-600 hover:underline dark:text-blue-400"
-          >
-            Sign in
-          </a>
-        </p>
+                Sign in to your campus feed
+              </Link>
+            </p>
+          </div>
+        </div>
       </div>
 
       <SuccessModal

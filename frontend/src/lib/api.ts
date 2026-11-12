@@ -118,6 +118,7 @@ export const api = {
       college_email: string;
       username: string;
       password: string;
+      gender?: string;
       roll_number?: string;
       course?: string;
       branch?: string;

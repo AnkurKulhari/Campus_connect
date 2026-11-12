@@ -33,6 +33,7 @@ def _build_profile_response(user: User, current_user_id: int | None, db: Session
         "full_name": user.full_name,
         "bio": user.bio,
         "profile_picture": user.profile_picture,
+        "gender": getattr(user, "gender", None),
         "roll_number": user.roll_number,
         "course": user.course,
         "branch": user.branch,

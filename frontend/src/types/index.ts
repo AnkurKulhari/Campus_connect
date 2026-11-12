@@ -7,6 +7,7 @@ export interface User {
   created_at: string;
   bio?: string | null;
   profile_picture?: string | null;
+  gender?: string | null;
   roll_number?: string | null;
   course?: string | null;
   branch?: string | null;
@@ -25,6 +26,7 @@ export interface UserProfile {
   full_name: string;
   bio: string | null;
   profile_picture: string | null;
+  gender?: string | null;
   roll_number?: string | null;
   course?: string | null;
   branch?: string | null;

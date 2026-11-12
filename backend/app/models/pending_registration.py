@@ -10,6 +10,7 @@ class PendingRegistration(Base):
     username: Mapped[str] = mapped_column(String(30), index=True, unique=True)
     college_email: Mapped[str] = mapped_column(String(100), unique=True)
     hashed_password: Mapped[str] = mapped_column(unique=False)
+    gender: Mapped[str | None] = mapped_column(String(20), nullable=True)
     
     # Academic & Student Identity
     roll_number: Mapped[str | None] = mapped_column(String(20), nullable=True)

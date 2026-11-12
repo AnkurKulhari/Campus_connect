@@ -7,6 +7,7 @@ class UserCreate(BaseModel):
     college_email: EmailStr
     username: str
     password: str
+    gender: str | None = None
     roll_number: str | None = None
     course: str | None = None
     branch: str | None = None
@@ -22,6 +23,7 @@ class UserResponse(BaseModel):
     username: str
     college_email: EmailStr
     is_verified: bool
+    gender: str | None = None
     created_at: datetime
     bio: str | None = None
     profile_picture: str | None = None
