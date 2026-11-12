@@ -7,15 +7,6 @@ import { ClientOnly } from "@/components/ClientOnly";
 export const metadata: Metadata = {
   title: "CampusConnect | College Social Network",
   description: "Exclusive social network for verified college students.",
-  icons: {
-    icon: [
-      { url: "/icon.svg", type: "image/svg+xml" },
-      { url: "/favicon.ico", sizes: "any" },
-    ],
-    apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-    ],
-  },
 };
 
 export default function RootLayout({
