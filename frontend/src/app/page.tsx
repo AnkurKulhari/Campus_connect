@@ -541,18 +541,30 @@ function HomeFeedContent() {
               </div>
             </div>
 
-            {/* Campus Verification Notice */}
-            <div className="rounded-3xl border border-blue-200/70 bg-gradient-to-br from-blue-50/70 to-indigo-50/70 p-5 dark:border-blue-900/40 dark:bg-[#131B2E] shadow-xs">
-              <div className="flex items-center gap-2 text-blue-700 dark:text-blue-400 font-extrabold text-xs">
-                <School className="h-4 w-4" />
-                <span>IPEC Campus Exclusive</span>
-              </div>
-              <p className="mt-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                Connect exclusively with verified Inderprastha Engineering College students, faculty, and alumni.
-              </p>
-              <div className="mt-3.5 flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-bold">
-                <ShieldCheck className="h-4 w-4" />
-                <span>Roll Number & ID Verified</span>
+            {/* Campus Verification Notice - Rich High-Contrast Royal Navy / Blue */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-900 p-5 text-white shadow-lg border border-blue-500/30">
+              {/* Subtle ambient lighting */}
+              <div className="absolute -right-6 -bottom-6 h-28 w-28 rounded-full bg-white/10 blur-xl pointer-events-none" />
+              <div className="absolute left-1/2 -top-10 h-20 w-20 rounded-full bg-blue-400/20 blur-lg pointer-events-none" />
+
+              <div className="relative z-10">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-bold text-white backdrop-blur-md border border-white/20">
+                  <School className="h-3.5 w-3.5 text-blue-200" />
+                  <span>IPEC Campus Exclusive</span>
+                </div>
+                
+                <h4 className="mt-3 font-extrabold text-sm text-white tracking-tight">
+                  Verified College Network
+                </h4>
+                
+                <p className="mt-1 text-xs text-blue-100 leading-relaxed font-normal">
+                  Connect exclusively with verified Inderprastha Engineering College students, batchmates, and alumni.
+                </p>
+                
+                <div className="mt-3.5 inline-flex items-center gap-1.5 rounded-full bg-emerald-400/20 px-3 py-1 text-xs text-emerald-200 font-bold border border-emerald-300/30 backdrop-blur-sm">
+                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-300" />
+                  <span>Roll Number & ID Verified</span>
+                </div>
               </div>
             </div>
           </div>

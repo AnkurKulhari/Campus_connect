@@ -106,7 +106,7 @@ export function Navbar() {
               campus<span className="text-blue-600 dark:text-blue-400">connect</span>
             </span>
           </Link>
-          <span className="hidden md:inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60">
+          <span className="hidden md:inline-flex items-center rounded-full bg-blue-600 px-2.5 py-0.5 text-[11px] font-bold text-white shadow-xs">
             IPEC Campus
           </span>
         </div>
