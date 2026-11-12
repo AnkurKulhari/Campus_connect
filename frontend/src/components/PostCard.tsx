@@ -84,8 +84,8 @@ export function PostCard({
 
   if (isReported) {
     return (
-      <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-center dark:border-zinc-800 dark:bg-zinc-900/60 animate-in fade-in">
-        <p className="text-xs text-zinc-500 font-medium">
+      <div className="rounded-3xl border border-[#E6DED3] bg-[#EDE6DA]/50 p-4 text-center dark:border-[#383129] dark:bg-[#221E1A] animate-in fade-in">
+        <p className="text-xs text-[#8C7E70] font-medium">
           🚩 You reported this post. It has been removed from your feed and flagged for review.
         </p>
       </div>
@@ -93,13 +93,13 @@ export function PostCard({
   }
 
   return (
-    <article className="rounded-2xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900 overflow-hidden transition-all hover:border-zinc-300 dark:hover:border-zinc-700">
+    <article className="rounded-3xl border border-[#E6DED3] bg-[#FAF7F2] shadow-xs dark:border-[#383129] dark:bg-[#221E1A] overflow-hidden transition-all hover:border-[#DFD5C6] dark:hover:border-[#443B32]">
       {/* Header */}
       <div className="flex items-center justify-between p-4 pb-3">
         <div className="flex items-center gap-3">
           <Link
             href={`/profile/${post.author.username}`}
-            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 font-bold text-indigo-700 overflow-hidden dark:bg-indigo-950 dark:text-indigo-300"
+            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#8C7A58] font-bold text-white overflow-hidden shadow-2xs"
           >
             {post.author.profile_picture ? (
               <Image
@@ -117,23 +117,23 @@ export function PostCard({
             <div className="flex items-center gap-1.5 flex-wrap">
               <Link
                 href={`/profile/${post.author.username}`}
-                className="font-semibold text-sm text-zinc-900 hover:underline dark:text-zinc-100"
+                className="font-bold text-sm text-[#2C251F] hover:underline dark:text-[#F6F2EC]"
               >
                 {post.author.full_name}
               </Link>
-              <span className="text-xs text-zinc-400">
+              <span className="text-xs text-[#8C7E70] dark:text-[#9F9385]">
                 @{post.author.username}
               </span>
 
               {/* Academic Badge */}
               {post.author.is_alumni || post.author.year === "Alumni" ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700 dark:bg-violet-950/60 dark:text-violet-300">
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#EDE6DA] px-2 py-0.5 text-[10px] font-semibold text-[#8C7A58] dark:bg-[#2B2520] dark:text-[#D4C8B8]">
                   <GraduationCap className="h-3 w-3" />
                   <span>Alumni</span>
                   {post.author.branch && <span>• {post.author.branch.replace(/\(.*?\)/g, "").trim()}</span>}
                 </span>
               ) : post.author.year ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#EDE6DA] px-2 py-0.5 text-[10px] font-semibold text-[#6D5D46] dark:bg-[#2B2520] dark:text-[#D4C8B8]">
                   <span>{post.author.year}</span>
                   {post.author.branch && <span>• {post.author.branch.replace(/\(.*?\)/g, "").trim()}</span>}
                 </span>
@@ -156,7 +156,7 @@ export function PostCard({
                   target="_blank"
                   rel="noopener noreferrer"
                   title="Connect on LinkedIn"
-                  className="text-zinc-400 hover:text-blue-600 transition"
+                  className="text-[#8C7E70] hover:text-[#0077b5] transition"
                 >
                   <LinkedinIcon className="h-3.5 w-3.5" />
                 </a>
@@ -164,7 +164,7 @@ export function PostCard({
             </div>
             <Link
               href={`/posts/${post.id}`}
-              className="text-[11px] text-zinc-400 hover:underline"
+              className="text-[11px] text-[#8C7E70] dark:text-[#9F9385] hover:underline"
             >
               {formattedDate}
             </Link>
@@ -176,19 +176,19 @@ export function PostCard({
           <div className="relative">
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              className="rounded-full p-1.5 text-[#8C7E70] hover:bg-[#EDE6DA] dark:hover:bg-[#2A241E] transition"
             >
               <MoreVertical className="h-4 w-4" />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 mt-1 w-36 rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800 z-10">
+              <div className="absolute right-0 mt-1 w-36 rounded-2xl border border-[#E0D7CA] bg-white py-1.5 shadow-lg dark:border-[#383129] dark:bg-[#221E1A] z-10">
                 {user.username === post.author.username ? (
                   <button
                     onClick={() => {
                       setMenuOpen(false);
                       setShowDeleteModal(true);
                     }}
-                    className="flex w-full items-center gap-2 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
+                    className="flex w-full items-center gap-2 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                     <span>Delete</span>
@@ -199,7 +199,7 @@ export function PostCard({
                       setMenuOpen(false);
                       setShowReportModal(true);
                     }}
-                    className="flex w-full items-center gap-2 px-3 py-1.5 text-xs font-medium text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40"
+                    className="flex w-full items-center gap-2 px-3 py-1.5 text-xs font-semibold text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40"
                   >
                     <Flag className="h-3.5 w-3.5" />
                     <span>Report Post</span>
@@ -215,40 +215,38 @@ export function PostCard({
       {post.content && (
         <div
           onClick={() => router.push(`/posts/${post.id}`)}
-          className="px-4 pb-3 text-zinc-800 dark:text-zinc-200 text-sm cursor-pointer"
+          className="px-4 pb-3 text-[#2C251F] dark:text-[#F6F2EC] text-sm cursor-pointer"
         >
           <FormattedContent text={post.content} />
         </div>
       )}
 
-      {/* Media Attachments - Natural aspect ratio (Twitter style) */}
+      {/* Media Attachments - Natural aspect ratio */}
       {post.media && post.media.length > 0 && (
         <div className="px-4 pb-3">
           {post.media.length === 1 ? (
-            // Single image: preserves original photo aspect ratio up to max-h-[520px]
             <div
               onClick={() => router.push(`/posts/${post.id}`)}
-              className="relative w-full max-h-[520px] rounded-xl overflow-hidden bg-zinc-950/5 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex justify-center cursor-pointer group"
+              className="relative w-full max-h-[520px] rounded-2xl overflow-hidden bg-black/5 dark:bg-black/30 border border-[#E0D7CA] dark:border-[#383129] flex justify-center cursor-pointer group"
             >
               {post.media[0].media_type === "video" ? (
                 <video
                   src={post.media[0].cloudinary_url}
                   controls
-                  className="max-h-[520px] w-auto max-w-full rounded-xl object-contain"
+                  className="max-h-[520px] w-auto max-w-full rounded-2xl object-contain"
                 />
               ) : (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   src={post.media[0].cloudinary_url}
                   alt="Post attachment"
-                  className="max-h-[520px] w-auto max-w-full rounded-xl object-contain group-hover:opacity-95 transition duration-200"
+                  className="max-h-[520px] w-auto max-w-full rounded-2xl object-contain group-hover:opacity-95 transition duration-200"
                 />
               )}
             </div>
           ) : (
-            // Multiple images: clean grid
             <div
-              className={`grid gap-1.5 ${
+              className={`grid gap-2 ${
                 post.media.length === 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"
               }`}
             >
@@ -256,7 +254,7 @@ export function PostCard({
                 <div
                   key={item.id}
                   onClick={() => router.push(`/posts/${post.id}`)}
-                  className="relative aspect-square w-full rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 cursor-pointer group"
+                  className="relative aspect-square w-full rounded-2xl overflow-hidden bg-[#EDE6DA] dark:bg-[#2A241E] border border-[#E0D7CA] dark:border-[#383129] cursor-pointer group"
                 >
                   {item.media_type === "video" ? (
                     <video
@@ -281,13 +279,13 @@ export function PostCard({
       )}
 
       {/* Footer / Action Counts */}
-      <div className="flex items-center gap-6 px-4 py-3 border-t border-zinc-100 dark:border-zinc-800/80 text-xs text-zinc-500">
+      <div className="flex items-center gap-6 px-4 py-3 border-t border-[#EDE6DA] dark:border-[#2E2822] text-xs text-[#685E53] dark:text-[#A09485]">
         <button
           onClick={handleLike}
-          className={`flex items-center gap-1.5 font-medium transition ${
+          className={`flex items-center gap-1.5 font-semibold transition ${
             liked
-              ? "text-rose-600 dark:text-rose-500"
-              : "text-zinc-600 hover:text-rose-600 dark:text-zinc-400 dark:hover:text-rose-400"
+              ? "text-[#E15241]"
+              : "hover:text-[#E15241]"
           }`}
         >
           <Heart className={`h-4 w-4 ${liked ? "fill-current" : ""}`} />
@@ -296,7 +294,7 @@ export function PostCard({
 
         <button
           onClick={() => setShowComments(!showComments)}
-          className="flex items-center gap-1.5 font-medium text-zinc-600 hover:text-indigo-600 dark:text-zinc-400 dark:hover:text-indigo-400 transition"
+          className="flex items-center gap-1.5 font-semibold hover:text-[#8C7A58] dark:hover:text-[#A8936E] transition"
         >
           <MessageCircle className="h-4 w-4" />
           <span>{commentCount}</span>

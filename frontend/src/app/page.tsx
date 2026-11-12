@@ -27,6 +27,8 @@ import {
   UserCheck,
   Flame,
   ArrowRight,
+  Compass,
+  User as UserIcon,
 } from "lucide-react";
 
 const CAMPUS_PILLS = [
@@ -52,6 +54,8 @@ function HomeFeedContent() {
   const [page, setPage] = useState(1);
   const [hasNext, setHasNext] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [unreadNotifs, setUnreadNotifs] = useState(0);
+  const [unreadMsgs, setUnreadMsgs] = useState(0);
 
   // Fetch feed
   const fetchPosts = useCallback(
@@ -86,7 +90,7 @@ function HomeFeedContent() {
     fetchPosts(activeTab, 1, false);
   }, [activeTab, fetchPosts]);
 
-  // Fetch Suggested Students & Alumni for the Right Sidebar
+  // Fetch Suggested Students & Alumni for Right Sidebar
   useEffect(() => {
     if (!user) return;
     const loadSuggestions = async () => {
@@ -98,6 +102,26 @@ function HomeFeedContent() {
       }
     };
     loadSuggestions();
+  }, [user]);
+
+  // Fetch unread notification and message counts for Sidebar Badges
+  useEffect(() => {
+    if (!user) return;
+    const fetchBadges = async () => {
+      try {
+        const [notifRes, msgRes] = await Promise.all([
+          api.notifications.getUnreadCount(),
+          api.messages.getUnreadCount(),
+        ]);
+        setUnreadNotifs(notifRes.unread_count);
+        setUnreadMsgs(msgRes.unread_count);
+      } catch {
+        // Silently catch
+      }
+    };
+    fetchBadges();
+    const interval = setInterval(fetchBadges, 15000);
+    return () => clearInterval(interval);
   }, [user]);
 
   const handlePostCreated = (newPost: Post) => {
@@ -124,7 +148,7 @@ function HomeFeedContent() {
   };
 
   // Filter posts based on tagParam or selected pill
-  const activeTag = tagParam || (selectedPill !== "all" ? CAMPUS_PILLS.find((p) => p.id === selectedPill)?.tag : null);
+  const activeTag = tagParam || (selectedPill !== "all" && selectedPill !== "following" ? CAMPUS_PILLS.find((p) => p.id === selectedPill)?.tag : null);
 
   const displayedPosts = activeTag
     ? posts.filter((p) =>
@@ -134,98 +158,172 @@ function HomeFeedContent() {
     : posts;
 
   return (
-    <div className="mx-auto max-w-7xl px-3 sm:px-6 py-5">
+    <div className="mx-auto max-w-7xl px-3 sm:px-6 py-6">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Sidebar: Quick Navigation & Student Card (Desktop Only) */}
+        {/* Left Sidebar: Student Profile & Navigation (Goonly design) */}
         <aside className="hidden lg:block lg:col-span-3 space-y-4">
           <div className="sticky top-20 space-y-4">
-            {/* Quick Navigation Panel */}
-            <div className="rounded-2xl border border-zinc-200 bg-white p-3 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
-              <nav className="space-y-1">
-                <Link
-                  href="/"
-                  className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-semibold transition ${
-                    activeTab === "campus" && !tagParam
-                      ? "bg-indigo-600 text-white shadow-xs"
-                      : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                  }`}
-                >
-                  <Globe className="h-4 w-4" />
-                  <span>Campus Feed</span>
-                </Link>
-
-                <Link
-                  href="/alumni"
-                  className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition"
-                >
-                  <GraduationCap className="h-4 w-4 text-violet-500" />
-                  <span>Alumni Circle</span>
-                </Link>
-
-                <Link
-                  href="/messages"
-                  className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition"
-                >
-                  <MessageSquare className="h-4 w-4 text-indigo-500" />
-                  <span>Direct Messages</span>
-                </Link>
-
-                <Link
-                  href="/notifications"
-                  className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition"
-                >
-                  <Bell className="h-4 w-4 text-amber-500" />
-                  <span>Notifications</span>
-                </Link>
-
-                <Link
-                  href="/search"
-                  className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition"
-                >
-                  <Search className="h-4 w-4 text-emerald-500" />
-                  <span>Find Students</span>
-                </Link>
-              </nav>
-            </div>
-
-            {/* Current Student Profile Mini Card */}
+            {/* Student Profile Card (Top of Left Sidebar) */}
             {user && (
-              <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="rounded-3xl border border-[#E6DED3] bg-[#FAF7F2] p-5 shadow-xs dark:border-[#383129] dark:bg-[#221E1A] text-center">
                 <Link
                   href={`/profile/${user.username}`}
-                  className="flex items-center gap-3 group"
+                  className="inline-block group"
                 >
-                  <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 font-bold text-sm text-white overflow-hidden shadow-xs">
+                  <div className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#8C7A58] font-bold text-2xl text-white overflow-hidden shadow-sm ring-4 ring-white dark:ring-[#2C251F]">
                     {user.profile_picture ? (
                       <Image
                         src={user.profile_picture}
                         alt={user.username}
                         fill
-                        sizes="44px"
-                        className="object-cover"
+                        sizes="80px"
+                        className="object-cover group-hover:scale-105 transition"
                       />
                     ) : (
                       user.full_name.charAt(0).toUpperCase()
                     )}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-bold text-xs text-zinc-900 dark:text-white truncate group-hover:underline">
-                      {user.full_name}
-                    </p>
-                    <p className="text-[11px] text-zinc-400 truncate">@{user.username}</p>
-                    <span className="mt-1 inline-block rounded-md bg-indigo-50 px-1.5 py-0.2 text-[10px] font-medium text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
-                      {user.is_alumni ? "Alumni" : user.year || "Student"}
-                    </span>
-                  </div>
+                  <h2 className="mt-3 font-extrabold text-sm text-[#2C251F] dark:text-[#F6F2EC] truncate group-hover:underline">
+                    {user.full_name}
+                  </h2>
+                  <p className="text-xs text-[#8C7E70] dark:text-[#9F9385] truncate">
+                    @{user.username}
+                  </p>
                 </Link>
+                <div className="mt-2.5">
+                  <span className="inline-block rounded-full bg-[#EDE6DA] px-3 py-1 text-[11px] font-semibold text-[#6D5D46] dark:bg-[#2B2520] dark:text-[#D4C8B8]">
+                    {user.is_alumni ? "Alumni" : user.year || "Student"} {user.branch ? `• ${user.branch.replace(/\(.*?\)/g, "").trim()}` : ""}
+                  </span>
+                </div>
               </div>
             )}
+
+            {/* Navigation Pills (Goonly Sidebar) */}
+            <div className="rounded-3xl border border-[#E6DED3] bg-[#FAF7F2] p-3 shadow-xs dark:border-[#383129] dark:bg-[#221E1A]">
+              <nav className="space-y-1">
+                <Link
+                  href="/"
+                  className={`flex items-center justify-between rounded-2xl px-4 py-2.5 text-xs font-semibold transition ${
+                    activeTab === "campus" && !tagParam
+                      ? "bg-[#8C7A58] text-white shadow-xs"
+                      : "text-[#685E53] hover:bg-[#EDE6DA] dark:text-[#C7BCB0] dark:hover:bg-[#2A241F]"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Compass className="h-4 w-4" />
+                    <span>Timeline</span>
+                  </div>
+                </Link>
+
+                <Link
+                  href="/alumni"
+                  className="flex items-center justify-between rounded-2xl px-4 py-2.5 text-xs font-semibold text-[#685E53] hover:bg-[#EDE6DA] dark:text-[#C7BCB0] dark:hover:bg-[#2A241F] transition"
+                >
+                  <div className="flex items-center gap-3">
+                    <GraduationCap className="h-4 w-4 text-[#8C7A58] dark:text-[#A8936E]" />
+                    <span>Alumni Circle</span>
+                  </div>
+                </Link>
+
+                <Link
+                  href="/messages"
+                  className="flex items-center justify-between rounded-2xl px-4 py-2.5 text-xs font-semibold text-[#685E53] hover:bg-[#EDE6DA] dark:text-[#C7BCB0] dark:hover:bg-[#2A241F] transition"
+                >
+                  <div className="flex items-center gap-3">
+                    <MessageSquare className="h-4 w-4" />
+                    <span>Messages</span>
+                  </div>
+                  {unreadMsgs > 0 && (
+                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[#E15241] px-1.5 text-[10px] font-bold text-white shadow-2xs">
+                      {unreadMsgs > 99 ? "99+" : unreadMsgs}
+                    </span>
+                  )}
+                </Link>
+
+                <Link
+                  href="/notifications"
+                  className="flex items-center justify-between rounded-2xl px-4 py-2.5 text-xs font-semibold text-[#685E53] hover:bg-[#EDE6DA] dark:text-[#C7BCB0] dark:hover:bg-[#2A241F] transition"
+                >
+                  <div className="flex items-center gap-3">
+                    <Bell className="h-4 w-4" />
+                    <span>Notifications</span>
+                  </div>
+                  {unreadNotifs > 0 && (
+                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[#E15241] px-1.5 text-[10px] font-bold text-white shadow-2xs">
+                      {unreadNotifs > 99 ? "99+" : unreadNotifs}
+                    </span>
+                  )}
+                </Link>
+
+                <Link
+                  href="/search"
+                  className="flex items-center justify-between rounded-2xl px-4 py-2.5 text-xs font-semibold text-[#685E53] hover:bg-[#EDE6DA] dark:text-[#C7BCB0] dark:hover:bg-[#2A241F] transition"
+                >
+                  <div className="flex items-center gap-3">
+                    <Search className="h-4 w-4" />
+                    <span>Find Students</span>
+                  </div>
+                </Link>
+
+                {user && (
+                  <Link
+                    href={`/profile/${user.username}`}
+                    className="flex items-center justify-between rounded-2xl px-4 py-2.5 text-xs font-semibold text-[#685E53] hover:bg-[#EDE6DA] dark:text-[#C7BCB0] dark:hover:bg-[#2A241F] transition"
+                  >
+                    <div className="flex items-center gap-3">
+                      <UserIcon className="h-4 w-4" />
+                      <span>My Profile</span>
+                    </div>
+                  </Link>
+                )}
+              </nav>
+            </div>
           </div>
         </aside>
 
         {/* Center Feed Column */}
         <main className="col-span-12 lg:col-span-9 xl:col-span-6 space-y-4">
-          {/* Top Feed Filter Pills (Lumina Inspired) */}
+          {/* Header Row: Timeline Title & Filter Tabs (Goonly design) */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
+            <h1 className="font-extrabold text-xl text-[#2C251F] dark:text-[#F6F2EC] tracking-tight">
+              Timeline
+            </h1>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setSelectedPill("all");
+                  setActiveTab("campus");
+                  router.push("/");
+                }}
+                className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+                  activeTab === "campus" && selectedPill === "all"
+                    ? "bg-[#8C7A58] text-white shadow-2xs"
+                    : "text-[#685E53] hover:bg-[#EDE6DA] dark:text-[#C7BCB0] dark:hover:bg-[#2A241F]"
+                }`}
+              >
+                Recent
+              </button>
+
+              {user && (
+                <button
+                  onClick={() => {
+                    setSelectedPill("following");
+                    setActiveTab("following");
+                  }}
+                  className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+                    activeTab === "following"
+                      ? "bg-[#8C7A58] text-white shadow-2xs"
+                      : "text-[#685E53] hover:bg-[#EDE6DA] dark:text-[#C7BCB0] dark:hover:bg-[#2A241F]"
+                  }`}
+                >
+                  Following
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Campus Branch Sub-Pills */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
             {CAMPUS_PILLS.map((pill) => {
               const isSelected = selectedPill === pill.id;
@@ -234,6 +332,7 @@ function HomeFeedContent() {
                   key={pill.id}
                   onClick={() => {
                     setSelectedPill(pill.id);
+                    setActiveTab("campus");
                     if (pill.tag) {
                       router.push(`/?tag=${pill.tag}`);
                     } else {
@@ -241,40 +340,23 @@ function HomeFeedContent() {
                     }
                   }}
                   className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
-                    isSelected
-                      ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs"
-                      : "bg-white text-zinc-600 border border-zinc-200/80 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                    isSelected && activeTab === "campus"
+                      ? "bg-[#2C251F] text-white dark:bg-[#F6F2EC] dark:text-[#2C251F] shadow-xs"
+                      : "bg-[#FAF7F2] text-[#685E53] border border-[#E6DED3] hover:bg-[#EDE6DA] dark:border-[#383129] dark:bg-[#221E1A] dark:text-[#C7BCB0] dark:hover:bg-[#2A241F]"
                   }`}
                 >
                   {pill.label}
                 </button>
               );
             })}
-
-            {user && (
-              <button
-                onClick={() => {
-                  setSelectedPill("following");
-                  setActiveTab(activeTab === "following" ? "campus" : "following");
-                }}
-                className={`shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
-                  activeTab === "following"
-                    ? "bg-indigo-600 text-white shadow-xs"
-                    : "bg-white text-zinc-600 border border-zinc-200/80 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                }`}
-              >
-                <Users className="h-3.5 w-3.5" />
-                <span>Following</span>
-              </button>
-            )}
           </div>
 
           {/* Active Tag Filter Banner */}
           {tagParam && (
-            <div className="flex items-center justify-between rounded-xl bg-indigo-50 border border-indigo-200 px-4 py-2.5 dark:bg-indigo-950/40 dark:border-indigo-900/60">
-              <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-300">
-                <Tag className="h-4 w-4" />
-                <span className="text-xs sm:text-sm font-semibold">
+            <div className="flex items-center justify-between rounded-2xl bg-[#EDE6DA] border border-[#DFD5C6] px-4 py-2.5 dark:bg-[#28231E] dark:border-[#3D352B]">
+              <div className="flex items-center gap-2 text-[#2C251F] dark:text-[#F6F2EC]">
+                <Tag className="h-4 w-4 text-[#8C7A58] dark:text-[#A8936E]" />
+                <span className="text-xs sm:text-sm font-bold">
                   Posts tagged with #{tagParam}
                 </span>
               </div>
@@ -283,7 +365,7 @@ function HomeFeedContent() {
                   setSelectedPill("all");
                   router.push("/");
                 }}
-                className="flex items-center gap-1 rounded-md bg-white px-2 py-1 text-xs font-semibold text-zinc-700 shadow-xs hover:bg-zinc-50 dark:bg-zinc-800 dark:text-zinc-300 transition"
+                className="flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-[#2C251F] shadow-xs hover:bg-[#FAF7F2] dark:bg-[#221E1A] dark:text-[#F6F2EC] transition"
               >
                 <X className="h-3 w-3" />
                 <span>Clear</span>
@@ -296,21 +378,21 @@ function HomeFeedContent() {
 
           {/* Posts Feed */}
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-16 text-zinc-400">
-              <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+            <div className="flex flex-col items-center justify-center py-16 text-[#8C7E70]">
+              <Loader2 className="h-8 w-8 animate-spin text-[#8C7A58]" />
               <p className="mt-3 text-xs">Loading campus posts...</p>
             </div>
           ) : displayedPosts.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-800 p-12 text-center bg-white dark:bg-zinc-900">
-              <Sparkles className="mx-auto h-8 w-8 text-indigo-500" />
-              <h3 className="mt-3 text-sm font-semibold text-zinc-900 dark:text-white">
+            <div className="rounded-3xl border border-dashed border-[#DFD5C6] dark:border-[#383129] p-12 text-center bg-[#FAF7F2] dark:bg-[#221E1A]">
+              <Sparkles className="mx-auto h-8 w-8 text-[#8C7A58]" />
+              <h3 className="mt-3 text-sm font-bold text-[#2C251F] dark:text-[#F6F2EC]">
                 {tagParam
                   ? `No posts tagged with #${tagParam}`
                   : activeTab === "following"
                   ? "No posts from followed students yet"
                   : "No campus posts yet"}
               </h3>
-              <p className="mt-1 text-xs text-zinc-500 max-w-sm mx-auto">
+              <p className="mt-1 text-xs text-[#8C7E70] max-w-sm mx-auto">
                 {tagParam
                   ? "Be the first to share an update with this tag!"
                   : activeTab === "following"
@@ -333,7 +415,7 @@ function HomeFeedContent() {
                   <button
                     onClick={() => fetchPosts(activeTab, page + 1, true)}
                     disabled={loadingMore}
-                    className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 py-2.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 transition shadow-xs disabled:opacity-50"
+                    className="inline-flex items-center gap-2 rounded-full border border-[#DFD5C6] bg-[#FAF7F2] px-6 py-2.5 text-xs font-bold text-[#685E53] hover:bg-[#EDE6DA] dark:border-[#383129] dark:bg-[#221E1A] dark:text-[#C7BCB0] dark:hover:bg-[#2A241F] transition shadow-xs disabled:opacity-50"
                   >
                     {loadingMore ? (
                       <>
@@ -353,22 +435,22 @@ function HomeFeedContent() {
         {/* Right Sidebar: Suggestions & Trending Topics (Desktop) */}
         <aside className="hidden xl:block xl:col-span-3 space-y-4">
           <div className="sticky top-20 space-y-4">
-            {/* Who to Connect With (Socially & Lumina Inspired) */}
+            {/* Who to Connect With (Suggestions) */}
             {suggestions.length > 0 && (
-              <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-xs font-bold text-zinc-900 dark:text-white uppercase tracking-wider">
-                    Who to Connect With
+              <div className="rounded-3xl border border-[#E6DED3] bg-[#FAF7F2] p-5 shadow-xs dark:border-[#383129] dark:bg-[#221E1A]">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-extrabold text-xs text-[#2C251F] dark:text-[#F6F2EC] uppercase tracking-wider">
+                    Suggestions
                   </h3>
                   <Link
                     href="/search"
-                    className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+                    className="text-[11px] font-semibold text-[#8C7A58] dark:text-[#A8936E] hover:underline"
                   >
-                    View All
+                    See all
                   </Link>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3.5">
                   {suggestions.map((peer) => (
                     <div
                       key={peer.id}
@@ -378,7 +460,7 @@ function HomeFeedContent() {
                         href={`/profile/${peer.username}`}
                         className="flex items-center gap-2.5 min-w-0 flex-1 group"
                       >
-                        <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 font-bold text-xs text-white overflow-hidden shadow-xs">
+                        <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#8C7A58] font-bold text-xs text-white overflow-hidden shadow-2xs">
                           {peer.profile_picture ? (
                             <Image
                               src={peer.profile_picture}
@@ -392,29 +474,29 @@ function HomeFeedContent() {
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="font-bold text-xs text-zinc-900 dark:text-white truncate group-hover:underline">
+                          <p className="font-bold text-xs text-[#2C251F] dark:text-[#F6F2EC] truncate group-hover:underline">
                             {peer.full_name}
                           </p>
-                          <p className="text-[11px] text-zinc-400 truncate">
+                          <p className="text-[11px] text-[#8C7E70] dark:text-[#9F9385] truncate">
                             {peer.year || "Student"} {peer.branch ? `• ${peer.branch.replace(/\(.*?\)/g, "").trim()}` : ""}
                           </p>
                         </div>
                       </Link>
 
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1.5">
                         <Link
                           href={`/messages?user=${peer.username}`}
                           title="Message"
-                          className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-indigo-600 dark:hover:bg-zinc-800 transition"
+                          className="rounded-full p-1.5 text-[#8C7E70] hover:bg-[#EDE6DA] dark:hover:bg-[#2A241F] transition"
                         >
                           <MessageSquare className="h-3.5 w-3.5" />
                         </Link>
                         <button
                           onClick={() => handleSuggestionFollow(peer.username)}
-                          className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition ${
+                          className={`rounded-full px-3.5 py-1 text-[11px] font-semibold transition ${
                             peer.is_following
-                              ? "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
-                              : "bg-indigo-600 text-white hover:bg-indigo-500 shadow-2xs"
+                              ? "bg-[#EDE6DA] text-[#685E53] dark:bg-[#2B2520] dark:text-[#BDB1A3]"
+                              : "bg-[#8C7A58] text-white hover:bg-[#796847] shadow-2xs"
                           }`}
                         >
                           {peer.is_following ? "Following" : "Follow"}
@@ -426,16 +508,16 @@ function HomeFeedContent() {
               </div>
             )}
 
-            {/* Trending on Campus (Lumina Inspired) */}
-            <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
-              <div className="flex items-center gap-2 text-zinc-900 dark:text-white mb-3">
-                <Flame className="h-4 w-4 text-amber-500" />
-                <h3 className="text-xs font-bold uppercase tracking-wider">
+            {/* Trending on Campus */}
+            <div className="rounded-3xl border border-[#E6DED3] bg-[#FAF7F2] p-5 shadow-xs dark:border-[#383129] dark:bg-[#221E1A]">
+              <div className="flex items-center gap-2 text-[#2C251F] dark:text-[#F6F2EC] mb-3">
+                <Flame className="h-4 w-4 text-[#8C7A58] dark:text-[#A8936E]" />
+                <h3 className="font-extrabold text-xs uppercase tracking-wider">
                   Trending on Campus
                 </h3>
               </div>
 
-              <div className="space-y-2.5 text-xs">
+              <div className="space-y-2 text-xs">
                 {[
                   { tag: "Placements2026", count: "48 posts", category: "Career" },
                   { tag: "SmartIndiaHackathon", count: "32 posts", category: "Coding" },
@@ -446,15 +528,15 @@ function HomeFeedContent() {
                   <button
                     key={item.tag}
                     onClick={() => router.push(`/?tag=${item.tag}`)}
-                    className="w-full flex items-center justify-between text-left group p-1.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/60 transition"
+                    className="w-full flex items-center justify-between text-left group p-1.5 rounded-xl hover:bg-[#EDE6DA] dark:hover:bg-[#2A241F] transition"
                   >
                     <div>
-                      <span className="font-semibold text-zinc-800 dark:text-zinc-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition block">
+                      <span className="font-semibold text-[#2C251F] dark:text-[#F6F2EC] group-hover:text-[#8C7A58] dark:group-hover:text-[#A8936E] transition block">
                         #{item.tag}
                       </span>
-                      <span className="text-[10px] text-zinc-400">{item.count}</span>
+                      <span className="text-[10px] text-[#8C7E70] dark:text-[#9F9385]">{item.count}</span>
                     </div>
-                    <span className="text-[10px] rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-zinc-500 dark:text-zinc-400">
+                    <span className="text-[10px] rounded-full bg-[#EDE6DA] dark:bg-[#2B2520] px-2.5 py-0.5 text-[#685E53] dark:text-[#D4C8B8]">
                       {item.category}
                     </span>
                   </button>
@@ -462,17 +544,17 @@ function HomeFeedContent() {
               </div>
             </div>
 
-            {/* Campus Verification Notice */}
-            <div className="rounded-2xl border border-zinc-200 bg-gradient-to-br from-indigo-50/50 to-violet-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
-              <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-400 font-bold text-xs">
-                <School className="h-4 w-4" />
+            {/* Campus Verification Notice - Rich Warm Contrast (No Blinding Glare) */}
+            <div className="rounded-3xl border border-[#DFD5C6] bg-[#ECE4D8] p-5 dark:border-[#3D352B] dark:bg-[#241F1A] shadow-xs">
+              <div className="flex items-center gap-2 text-[#2C251F] dark:text-[#F6F2EC] font-extrabold text-xs">
+                <School className="h-4 w-4 text-[#8C7A58] dark:text-[#A8936E]" />
                 <span>IPEC Campus Exclusive</span>
               </div>
-              <p className="mt-1.5 text-[11px] text-zinc-600 dark:text-zinc-400 leading-relaxed">
+              <p className="mt-2 text-xs text-[#5C5042] dark:text-[#C7BCB0] leading-relaxed">
                 Connect exclusively with verified Inderprastha Engineering College students, faculty, and alumni.
               </p>
-              <div className="mt-3 flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
-                <ShieldCheck className="h-3.5 w-3.5" />
+              <div className="mt-3.5 flex items-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-400 font-bold">
+                <ShieldCheck className="h-4 w-4" />
                 <span>Roll Number & ID Verified</span>
               </div>
             </div>

@@ -54,7 +54,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className="min-h-full flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100"
+        className="min-h-full flex flex-col bg-[#F6F1E9] dark:bg-[#171412] text-[#2C251F] dark:text-[#F6F2EC]"
         suppressHydrationWarning
       >
         <AuthProvider>

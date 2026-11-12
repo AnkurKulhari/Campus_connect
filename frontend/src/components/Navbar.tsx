@@ -8,13 +8,8 @@ import { useAuth } from "@/context/AuthContext";
 import { UserProfile } from "@/types";
 import {
   GraduationCap,
-  Home,
   Bell,
-  User as UserIcon,
   LogOut,
-  PlusCircle,
-  Users,
-  MessageSquare,
   Search,
   X,
   ShieldCheck,
@@ -22,12 +17,11 @@ import {
 } from "lucide-react";
 import { api } from "@/lib/api";
 
-export function Navbar({ onOpenCreatePost }: { onOpenCreatePost?: () => void }) {
+export function Navbar() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState<number>(0);
-  const [unreadMessages, setUnreadMessages] = useState<number>(0);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -41,12 +35,8 @@ export function Navbar({ onOpenCreatePost }: { onOpenCreatePost?: () => void }) 
 
     const fetchCounts = async () => {
       try {
-        const [notifRes, msgRes] = await Promise.all([
-          api.notifications.getUnreadCount(),
-          api.messages.getUnreadCount(),
-        ]);
+        const notifRes = await api.notifications.getUnreadCount();
         setUnreadCount(notifRes.unread_count);
-        setUnreadMessages(msgRes.unread_count);
       } catch {
         // Silently catch if not authorized
       }
@@ -101,39 +91,39 @@ export function Navbar({ onOpenCreatePost }: { onOpenCreatePost?: () => void }) 
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-zinc-200 bg-white/95 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/95">
+    <header className="sticky top-0 z-40 w-full border-b border-[#E6DED3] bg-[#F6F1E9]/95 backdrop-blur dark:border-[#383129] dark:bg-[#171412]/95 transition-colors">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-3 sm:px-6">
         {/* Brand */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <a
+          <Link
             href="/"
-            className="flex items-center gap-2 font-bold text-lg sm:text-xl tracking-tight text-zinc-900 dark:text-white"
+            className="flex items-center gap-2 font-black text-xl tracking-tight text-[#2C251F] dark:text-[#F6F2EC] hover:opacity-90 transition"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white shadow-sm shadow-indigo-500/20">
+            <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#8C7A58] text-white shadow-sm dark:bg-[#A8936E]">
               <GraduationCap className="h-5 w-5" />
             </div>
-            <span className="hidden xs:inline">
-              Campus<span className="text-indigo-600 dark:text-indigo-400">Connect</span>
+            <span className="font-extrabold tracking-tight">
+              campus<span className="text-[#8C7A58] dark:text-[#A8936E]">connect</span>
             </span>
-          </a>
-          <span className="hidden lg:inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60">
+          </Link>
+          <span className="hidden md:inline-flex items-center rounded-full bg-[#EDE6DA] px-2.5 py-0.5 text-[11px] font-semibold text-[#6D5D46] dark:bg-[#28231E] dark:text-[#D4C8B8] border border-[#DFD6C8] dark:border-[#3D352B]">
             IPEC Campus
           </span>
         </div>
 
-        {/* Global Student & Alumni Search (Lumina & Socially inspired) */}
+        {/* Global Student & Alumni Search (Center Pill - Goonly style) */}
         {user && (
-          <div ref={searchContainerRef} className="relative flex-1 max-w-xs md:max-w-sm mx-3 hidden sm:block">
+          <div ref={searchContainerRef} className="relative flex-1 max-w-xs md:max-w-md mx-3 hidden sm:block">
             <form onSubmit={handleSearchSubmit}>
               <div className="relative">
-                <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-zinc-400" />
+                <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-[#8C7E70] dark:text-[#9F9385]" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => setSearchFocused(true)}
                   placeholder="Search students, alumni, branch..."
-                  className="w-full rounded-full border border-zinc-200 bg-zinc-50 pl-9.5 pr-8 py-2 text-xs text-zinc-900 placeholder-zinc-400 transition-all focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-white dark:focus:bg-zinc-800 shadow-2xs"
+                  className="w-full rounded-full border border-[#DFD6C8] bg-[#EDE6DA]/70 pl-9.5 pr-8 py-2 text-xs text-[#2C251F] placeholder-[#8C7E70] transition-all focus:border-[#8C7A58] focus:bg-white focus:outline-none dark:border-[#383129] dark:bg-[#221E1A] dark:text-[#F6F2EC] dark:placeholder-[#9F9385] dark:focus:bg-[#1A1714] shadow-2xs"
                 />
                 {searchQuery && (
                   <button
@@ -142,7 +132,7 @@ export function Navbar({ onOpenCreatePost }: { onOpenCreatePost?: () => void }) 
                       setSearchQuery("");
                       setSearchResults([]);
                     }}
-                    className="absolute right-2.5 top-2.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                    className="absolute right-2.5 top-2.5 text-[#8C7E70] hover:text-[#2C251F] dark:hover:text-[#F6F2EC]"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
@@ -152,17 +142,17 @@ export function Navbar({ onOpenCreatePost }: { onOpenCreatePost?: () => void }) 
 
             {/* Live Search Floating Dropdown */}
             {searchFocused && searchQuery.trim().length >= 2 && (
-              <div className="absolute left-0 right-0 top-full mt-2 rounded-2xl border border-zinc-200 bg-white p-2 shadow-xl dark:border-zinc-800 dark:bg-zinc-900 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+              <div className="absolute left-0 right-0 top-full mt-2 rounded-2xl border border-[#DFD6C8] bg-white p-2 shadow-xl dark:border-[#383129] dark:bg-[#221E1A] z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#8C7E70]">
                   {isSearching ? "Searching..." : "Students & Alumni"}
                 </div>
 
                 {isSearching ? (
                   <div className="flex items-center justify-center p-4">
-                    <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
+                    <Loader2 className="h-4 w-4 animate-spin text-[#8C7A58]" />
                   </div>
                 ) : searchResults.length === 0 ? (
-                  <div className="p-3 text-center text-xs text-zinc-500">
+                  <div className="p-3 text-center text-xs text-[#8C7E70]">
                     No results found for &quot;{searchQuery}&quot;
                   </div>
                 ) : (
@@ -172,9 +162,9 @@ export function Navbar({ onOpenCreatePost }: { onOpenCreatePost?: () => void }) 
                         key={result.id}
                         href={`/profile/${result.username}`}
                         onClick={() => setSearchFocused(false)}
-                        className="flex items-center gap-2.5 rounded-xl p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition text-left"
+                        className="flex items-center gap-2.5 rounded-xl p-2 hover:bg-[#EDE6DA]/60 dark:hover:bg-[#2C2621] transition text-left"
                       >
-                        <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 font-bold text-xs text-white overflow-hidden">
+                        <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#8C7A58] font-bold text-xs text-white overflow-hidden">
                           {result.profile_picture ? (
                             <Image
                               src={result.profile_picture}
@@ -189,18 +179,16 @@ export function Navbar({ onOpenCreatePost }: { onOpenCreatePost?: () => void }) 
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1">
-                            <span className="font-semibold text-xs text-zinc-900 dark:text-white truncate">
+                            <span className="font-semibold text-xs text-[#2C251F] dark:text-[#F6F2EC] truncate">
                               {result.full_name}
                             </span>
                             {result.is_id_verified && (
-                              <ShieldCheck className="h-3 w-3 text-emerald-500 shrink-0" />
+                              <ShieldCheck className="h-3 w-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
                             )}
                           </div>
-                          <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 truncate">
+                          <div className="flex items-center gap-1.5 text-[11px] text-[#8C7E70] truncate">
                             <span>@{result.username}</span>
-                            {result.year && (
-                              <span>• {result.year}</span>
-                            )}
+                            {result.year && <span>• {result.year}</span>}
                           </div>
                         </div>
                       </Link>
@@ -208,11 +196,11 @@ export function Navbar({ onOpenCreatePost }: { onOpenCreatePost?: () => void }) 
                   </div>
                 )}
 
-                <div className="mt-1 pt-1 border-t border-zinc-100 dark:border-zinc-800">
+                <div className="mt-1 pt-1 border-t border-[#DFD6C8] dark:border-[#383129]">
                   <Link
                     href={`/search?q=${encodeURIComponent(searchQuery.trim())}`}
                     onClick={() => setSearchFocused(false)}
-                    className="block rounded-lg px-3 py-1.5 text-center text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+                    className="block rounded-lg px-3 py-1.5 text-center text-[11px] font-semibold text-[#8C7A58] dark:text-[#A8936E] hover:bg-[#EDE6DA]/60 dark:hover:bg-[#2C2621]"
                   >
                     View all results for &quot;{searchQuery}&quot; →
                   </Link>
@@ -222,136 +210,88 @@ export function Navbar({ onOpenCreatePost }: { onOpenCreatePost?: () => void }) 
           </div>
         )}
 
-        {/* Navigation */}
+        {/* Navigation - Streamlined without duplicate sidebar links */}
         {user ? (
-          <nav className="flex items-center gap-1 sm:gap-1.5">
+          <nav className="flex items-center gap-1.5 sm:gap-2">
             {/* Mobile Search Button */}
-            <a
+            <Link
               href="/search"
-              className={`sm:hidden flex items-center justify-center rounded-lg p-2 text-sm font-medium transition-colors ${
+              className={`sm:hidden flex items-center justify-center rounded-full p-2 text-sm font-medium transition-colors ${
                 pathname === "/search"
-                  ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-white"
-                  : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
+                  ? "bg-[#8C7A58] text-white"
+                  : "text-[#685E53] hover:bg-[#EDE6DA] dark:text-[#BDB1A3] dark:hover:bg-[#28231E]"
               }`}
               title="Search students"
             >
               <Search className="h-4 w-4" />
-            </a>
+            </Link>
 
-            <a
-              href="/"
-              className={`flex items-center gap-2 rounded-lg px-2.5 sm:px-3 py-2 text-sm font-medium transition-colors ${
-                pathname === "/"
-                  ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-white"
-                  : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
-              }`}
-            >
-              <Home className="h-4 w-4" />
-              <span className="hidden md:inline">Feed</span>
-            </a>
-
-            <a
-              href="/alumni"
-              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                pathname === "/alumni"
-                  ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-white"
-                  : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
-              }`}
-            >
-              <Users className="h-4 w-4 text-violet-500" />
-              <span className="hidden md:inline">Alumni Circle</span>
-            </a>
-
-            <a
+            {/* Notification Bell (Matches Goonly Top Bar Icon) */}
+            <Link
               href="/notifications"
-              className={`relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              className={`relative flex items-center justify-center rounded-full p-2 transition-colors ${
                 pathname === "/notifications"
-                  ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-white"
-                  : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
+                  ? "bg-[#8C7A58] text-white"
+                  : "text-[#685E53] hover:bg-[#EDE6DA] dark:text-[#BDB1A3] dark:hover:bg-[#28231E]"
               }`}
+              title="Notifications"
             >
-              <Bell className="h-4 w-4" />
-              <span className="hidden md:inline">Notifications</span>
+              <Bell className="h-4.5 w-4.5" />
               {unreadCount > 0 && (
-                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
+                <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#E15241] px-1 text-[10px] font-bold text-white shadow-xs">
                   {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
               )}
-            </a>
+            </Link>
 
-            <a
-              href="/messages"
-              className={`relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                pathname === "/messages"
-                  ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-white"
-                  : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
-              }`}
-            >
-              <MessageSquare className="h-4 w-4" />
-              <span className="hidden md:inline">Messages</span>
-              {unreadMessages > 0 && (
-                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 px-1 text-[10px] font-bold text-white">
-                  {unreadMessages > 99 ? "99+" : unreadMessages}
-                </span>
-              )}
-            </a>
-
-            <a
+            {/* User Profile Pill */}
+            <Link
               href={`/profile/${user.username}`}
-              className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 rounded-full pl-1.5 pr-3 py-1 text-xs font-semibold border transition ${
                 pathname.startsWith("/profile")
-                  ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-white"
-                  : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
+                  ? "bg-[#8C7A58] text-white border-[#8C7A58]"
+                  : "bg-[#EDE6DA]/60 border-[#DFD6C8] text-[#2C251F] hover:bg-[#EDE6DA] dark:bg-[#241F1A] dark:border-[#383129] dark:text-[#F6F2EC] dark:hover:bg-[#2A241E]"
               }`}
             >
-              <div className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 font-bold text-[10px] text-indigo-700 overflow-hidden dark:bg-indigo-950 dark:text-indigo-300">
+              <div className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#8C7A58] font-bold text-[11px] text-white overflow-hidden shadow-2xs">
                 {user.profile_picture ? (
                   <Image
                     src={user.profile_picture}
                     alt={user.username}
                     fill
-                    sizes="24px"
+                    sizes="28px"
                     className="object-cover"
                   />
                 ) : (
                   user.full_name.charAt(0).toUpperCase()
                 )}
               </div>
-              <span className="hidden md:inline">@{user.username}</span>
-            </a>
+              <span className="hidden sm:inline">@{user.username}</span>
+            </Link>
 
-            {onOpenCreatePost && !user.is_alumni && user.year !== "Alumni" && (
-              <button
-                onClick={onOpenCreatePost}
-                className="ml-1 hidden sm:flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition"
-              >
-                <PlusCircle className="h-4 w-4" />
-                <span>Post</span>
-              </button>
-            )}
-
+            {/* Logout button */}
             <button
               onClick={logout}
               title="Log out"
-              className="ml-1 rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white transition"
+              className="rounded-full p-2 text-[#8C7E70] hover:bg-[#EDE6DA] hover:text-[#2C251F] dark:text-[#A09485] dark:hover:bg-[#28231E] dark:hover:text-[#F6F2EC] transition"
             >
               <LogOut className="h-4 w-4" />
             </button>
           </nav>
         ) : (
           <div className="flex items-center gap-3">
-            <a
+            <Link
               href="/login"
-              className="rounded-lg px-3.5 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition"
+              className="rounded-full px-4 py-2 text-xs font-semibold text-[#2C251F] hover:bg-[#EDE6DA] dark:text-[#F6F2EC] dark:hover:bg-[#28231E] transition"
             >
               Sign In
-            </a>
-            <a
+            </Link>
+            <Link
               href="/register"
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition"
+              className="rounded-full bg-[#8C7A58] px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#796847] dark:bg-[#A8936E] dark:hover:bg-[#97825E] transition"
             >
               Join Campus
-            </a>
+            </Link>
           </div>
         )}
       </div>

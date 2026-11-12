@@ -217,40 +217,40 @@ function MessagesContent() {
 
   return (
     <div className="mx-auto max-w-5xl px-2 sm:px-4 py-4 sm:py-6 h-[calc(100vh-5rem)]">
-      <div className="flex h-full overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex h-full overflow-hidden rounded-3xl border border-[#E6DED3] bg-[#FAF7F2] shadow-xs dark:border-[#383129] dark:bg-[#221E1A]">
         {/* Left Column: Conversation List */}
         <div
-          className={`w-full md:w-80 lg:w-96 flex-col border-r border-zinc-200 dark:border-zinc-800 ${
+          className={`w-full md:w-80 lg:w-96 flex-col border-r border-[#E6DED3] dark:border-[#383129] ${
             activeConv ? "hidden md:flex" : "flex"
           }`}
         >
           {/* Header & Search */}
-          <div className="p-4 border-b border-zinc-100 dark:border-zinc-800/80">
-            <h1 className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-indigo-600" />
+          <div className="p-4 border-b border-[#E6DED3] dark:border-[#383129]">
+            <h1 className="text-lg font-extrabold text-[#2C251F] dark:text-[#F6F2EC] flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-[#8C7A58] dark:text-[#A8936E]" />
               <span>Direct Messages</span>
             </h1>
             <div className="relative mt-3">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-[#8C7E70]" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search conversations..."
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-9 pr-3 py-1.5 text-xs text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                className="w-full rounded-full border border-[#DFD5C6] bg-white pl-9 pr-3 py-1.5 text-xs text-[#2C251F] placeholder-[#8C7E70] focus:border-[#8C7A58] focus:outline-none dark:border-[#383129] dark:bg-[#1A1714] dark:text-[#F6F2EC]"
               />
             </div>
           </div>
 
           {/* Conversation List Scrollable */}
-          <div className="flex-1 overflow-y-auto divide-y divide-zinc-100 dark:divide-zinc-800/50">
+          <div className="flex-1 overflow-y-auto divide-y divide-[#EDE6DA] dark:divide-[#2E2822]">
             {loadingConvs ? (
               <div className="flex h-48 items-center justify-center">
-                <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
+                <Loader2 className="h-6 w-6 animate-spin text-[#8C7A58]" />
               </div>
             ) : filteredConversations.length === 0 ? (
-              <div className="p-8 text-center text-zinc-400">
-                <MessageSquare className="mx-auto h-8 w-8 opacity-40 mb-2" />
+              <div className="p-8 text-center text-[#8C7E70]">
+                <MessageSquare className="mx-auto h-8 w-8 opacity-40 mb-2 text-[#8C7A58]" />
                 <p className="text-xs">
                   {searchQuery
                     ? "No matching conversations."
@@ -268,14 +268,14 @@ function MessagesContent() {
                       setActiveConv(conv);
                       router.replace(`/messages?id=${conv.id}`, { scroll: false });
                     }}
-                    className={`w-full flex items-start gap-3 p-3.5 text-left transition hover:bg-zinc-50 dark:hover:bg-zinc-800/50 ${
+                    className={`w-full flex items-start gap-3 p-3.5 text-left transition hover:bg-[#EDE6DA]/60 dark:hover:bg-[#2A241F] ${
                       isSelected
-                        ? "bg-indigo-50/70 dark:bg-zinc-800"
+                        ? "bg-[#EDE6DA] dark:bg-[#2C2621]"
                         : ""
                     }`}
                   >
                     {/* Avatar */}
-                    <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 font-bold text-sm text-white overflow-hidden shadow-xs">
+                    <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#8C7A58] font-bold text-sm text-white overflow-hidden shadow-2xs">
                       {p.profile_picture ? (
                         <Image
                           src={p.profile_picture}
@@ -292,31 +292,31 @@ function MessagesContent() {
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1">
-                        <span className="font-semibold text-xs text-zinc-900 dark:text-white truncate">
+                        <span className="font-bold text-xs text-[#2C251F] dark:text-[#F6F2EC] truncate">
                           {p.full_name}
                         </span>
-                        <span className="text-[10px] text-zinc-400 shrink-0">
+                        <span className="text-[10px] text-[#8C7E70] dark:text-[#9F9385] shrink-0">
                           {conv.last_message
                             ? formatConvTime(conv.last_message.created_at)
                             : ""}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 mt-0.5">
+                      <div className="flex items-center gap-1.5 text-[11px] text-[#8C7E70] mt-0.5">
                         <span className="truncate">@{p.username}</span>
                         {p.year && (
-                          <span className="rounded bg-zinc-100 dark:bg-zinc-800 px-1 py-0.2 text-[9px] font-medium text-zinc-600 dark:text-zinc-300 shrink-0">
+                          <span className="rounded-full bg-[#EDE6DA] dark:bg-[#2A241E] px-1.5 py-0.2 text-[9px] font-semibold text-[#685E53] dark:text-[#D4C8B8] shrink-0">
                             {p.year}
                           </span>
                         )}
                       </div>
 
                       <div className="flex items-center justify-between gap-2 mt-1">
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                        <p className="text-xs text-[#685E53] dark:text-[#A09485] truncate">
                           {conv.last_message?.content || "Started conversation"}
                         </p>
                         {conv.unread_count > 0 && (
-                          <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 px-1 text-[10px] font-bold text-white shrink-0">
+                          <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[#E15241] px-1 text-[10px] font-bold text-white shrink-0 shadow-2xs">
                             {conv.unread_count}
                           </span>
                         )}
@@ -331,25 +331,25 @@ function MessagesContent() {
 
         {/* Right Column: Active Chat Window */}
         <div
-          className={`flex-1 flex flex-col h-full bg-zinc-50/50 dark:bg-zinc-950/40 ${
+          className={`flex-1 flex flex-col h-full bg-[#EDE6DA]/30 dark:bg-[#1A1714] ${
             activeConv ? "flex" : "hidden md:flex"
           }`}
         >
           {activeConv ? (
             <>
               {/* Chat Header */}
-              <div className="flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900 shadow-2xs">
+              <div className="flex items-center justify-between border-b border-[#E6DED3] bg-[#FAF7F2] px-4 py-3 dark:border-[#383129] dark:bg-[#221E1A] shadow-2xs">
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setActiveConv(null)}
-                    className="md:hidden rounded-lg p-1 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    className="md:hidden rounded-full p-1.5 text-[#8C7E70] hover:bg-[#EDE6DA] dark:hover:bg-[#2A241E]"
                   >
                     <ArrowLeft className="h-5 w-5" />
                   </button>
 
                   <Link
                     href={`/profile/${activeConv.participant.username}`}
-                    className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 font-bold text-sm text-white overflow-hidden shadow-xs"
+                    className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#8C7A58] font-bold text-sm text-white overflow-hidden shadow-2xs"
                   >
                     {activeConv.participant.profile_picture ? (
                       <Image
@@ -368,7 +368,7 @@ function MessagesContent() {
                     <div className="flex items-center gap-1.5">
                       <Link
                         href={`/profile/${activeConv.participant.username}`}
-                        className="font-bold text-xs sm:text-sm text-zinc-900 hover:underline dark:text-white"
+                        className="font-bold text-xs sm:text-sm text-[#2C251F] hover:underline dark:text-[#F6F2EC]"
                       >
                         {activeConv.participant.full_name}
                       </Link>
@@ -379,15 +379,15 @@ function MessagesContent() {
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 text-[11px] text-zinc-400">
+                    <div className="flex items-center gap-2 text-[11px] text-[#8C7E70] dark:text-[#9F9385]">
                       <span>@{activeConv.participant.username}</span>
                       {activeConv.participant.is_alumni || activeConv.participant.year === "Alumni" ? (
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-violet-50 px-1.5 py-0.2 text-[10px] font-semibold text-violet-700 dark:bg-violet-950/60 dark:text-violet-300">
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-[#EDE6DA] px-2 py-0.2 text-[10px] font-semibold text-[#8C7A58] dark:bg-[#2B2520] dark:text-[#D4C8B8]">
                           <GraduationCap className="h-2.5 w-2.5" />
                           <span>Alumni</span>
                         </span>
                       ) : activeConv.participant.year ? (
-                        <span className="rounded bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.2 text-[10px] text-zinc-600 dark:text-zinc-300">
+                        <span className="rounded-full bg-[#EDE6DA] dark:bg-[#2A241E] px-2 py-0.2 text-[10px] font-semibold text-[#685E53] dark:text-[#D4C8B8]">
                           {activeConv.participant.year}
                         </span>
                       ) : null}
@@ -399,16 +399,16 @@ function MessagesContent() {
                 <div className="relative">
                   <button
                     onClick={() => setMenuOpen(!menuOpen)}
-                    className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                    className="rounded-full p-1.5 text-[#8C7E70] hover:bg-[#EDE6DA] hover:text-[#2C251F] dark:hover:bg-[#2A241E] dark:hover:text-[#F6F2EC]"
                   >
                     <MoreVertical className="h-4 w-4" />
                   </button>
 
                   {menuOpen && (
-                    <div className="absolute right-0 top-full mt-1 w-44 rounded-xl border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-900 z-20">
+                    <div className="absolute right-0 top-full mt-1 w-44 rounded-2xl border border-[#DFD5C6] bg-white py-1 shadow-lg dark:border-[#383129] dark:bg-[#221E1A] z-20">
                       <Link
                         href={`/profile/${activeConv.participant.username}`}
-                        className="block px-4 py-2 text-xs text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                        className="block px-4 py-2 text-xs text-[#2C251F] hover:bg-[#EDE6DA] dark:text-[#F6F2EC] dark:hover:bg-[#2A241E]"
                         onClick={() => setMenuOpen(false)}
                       >
                         View Full Profile
@@ -418,7 +418,7 @@ function MessagesContent() {
                           setMenuOpen(false);
                           handleBlockUser();
                         }}
-                        className="w-full flex items-center gap-1.5 px-4 py-2 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
+                        className="w-full flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
                       >
                         <Ban className="h-3.5 w-3.5" />
                         <span>Block User</span>
@@ -432,13 +432,13 @@ function MessagesContent() {
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {loadingMessages ? (
                   <div className="flex h-48 items-center justify-center">
-                    <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
+                    <Loader2 className="h-6 w-6 animate-spin text-[#8C7A58]" />
                   </div>
                 ) : messages.length === 0 ? (
-                  <div className="flex h-full flex-col items-center justify-center text-center text-zinc-400 py-12">
-                    <MessageSquare className="h-10 w-10 opacity-30 mb-2" />
-                    <p className="text-xs font-medium">No messages in this conversation yet.</p>
-                    <p className="text-[11px] text-zinc-400 mt-0.5">
+                  <div className="flex h-full flex-col items-center justify-center text-center text-[#8C7E70] py-12">
+                    <MessageSquare className="h-10 w-10 opacity-30 mb-2 text-[#8C7A58]" />
+                    <p className="text-xs font-bold text-[#2C251F] dark:text-[#F6F2EC]">No messages in this conversation yet.</p>
+                    <p className="text-[11px] text-[#8C7E70] mt-0.5">
                       Send a message to introduce yourself, discuss projects, or ask questions!
                     </p>
                   </div>
@@ -453,20 +453,20 @@ function MessagesContent() {
                         <div
                           className={`max-w-[78%] sm:max-w-[70%] rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed shadow-2xs whitespace-pre-wrap break-words ${
                             isMe
-                              ? "bg-indigo-600 text-white rounded-tr-xs"
-                              : "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200/80 dark:border-zinc-700/60 rounded-tl-xs"
+                              ? "bg-[#8C7A58] text-white rounded-tr-xs"
+                              : "bg-white dark:bg-[#221E1A] text-[#2C251F] dark:text-[#F6F2EC] border border-[#DFD5C6] dark:border-[#383129] rounded-tl-xs"
                           }`}
                         >
                           {msg.content}
                         </div>
-                        <div className="flex items-center gap-1 mt-1 px-1 text-[10px] text-zinc-400">
+                        <div className="flex items-center gap-1 mt-1 px-1 text-[10px] text-[#8C7E70]">
                           <span>{formatMessageTime(msg.created_at)}</span>
                           {isMe && (
                             <span>
                               {msg.is_read ? (
-                                <CheckCheck className="h-3 w-3 text-indigo-600 dark:text-indigo-400" />
+                                <CheckCheck className="h-3 w-3 text-[#8C7A58] dark:text-[#A8936E]" />
                               ) : (
-                                <Check className="h-3 w-3 text-zinc-400" />
+                                <Check className="h-3 w-3 text-[#8C7E70]" />
                               )}
                             </span>
                           )}
@@ -480,7 +480,7 @@ function MessagesContent() {
 
               {/* Error Callout */}
               {error && (
-                <div className="mx-4 mb-2 flex items-center gap-2 rounded-lg bg-red-50 p-2 text-xs text-red-600 dark:bg-red-950/40 dark:text-red-400">
+                <div className="mx-4 mb-2 flex items-center gap-2 rounded-2xl bg-red-50 p-2 text-xs text-red-600 dark:bg-red-950/40 dark:text-red-400">
                   <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -489,7 +489,7 @@ function MessagesContent() {
               {/* Chat Input Bar */}
               <form
                 onSubmit={handleSendMessage}
-                className="flex items-center gap-2 border-t border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900"
+                className="flex items-center gap-2 border-t border-[#E6DED3] bg-[#FAF7F2] p-3 dark:border-[#383129] dark:bg-[#221E1A]"
               >
                 <input
                   ref={inputRef}
@@ -498,12 +498,12 @@ function MessagesContent() {
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder="Type a message (Enter to send)..."
                   maxLength={2000}
-                  className="flex-1 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-xs sm:text-sm text-zinc-900 placeholder-zinc-400 focus:border-indigo-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                  className="flex-1 rounded-full border border-[#DFD5C6] bg-white px-4 py-2.5 text-xs sm:text-sm text-[#2C251F] placeholder-[#8C7E70] focus:border-[#8C7A58] focus:outline-none dark:border-[#383129] dark:bg-[#1A1714] dark:text-[#F6F2EC]"
                 />
                 <button
                   type="submit"
                   disabled={!inputText.trim() || sending}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-xs transition hover:bg-indigo-500 disabled:opacity-40"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#8C7A58] text-white shadow-xs transition hover:bg-[#796847] disabled:opacity-40"
                 >
                   {sending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -516,13 +516,13 @@ function MessagesContent() {
           ) : (
             /* Empty State when no conversation selected */
             <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 dark:bg-zinc-800 dark:text-indigo-400 mb-4 shadow-xs">
+              <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-[#EDE6DA] text-[#8C7A58] dark:bg-[#2A241E] dark:text-[#A8936E] mb-4 shadow-xs">
                 <MessageSquare className="h-8 w-8" />
               </div>
-              <h2 className="text-base font-bold text-zinc-900 dark:text-white">
+              <h2 className="text-base font-extrabold text-[#2C251F] dark:text-[#F6F2EC]">
                 Your Direct Messages
               </h2>
-              <p className="mt-1 text-xs text-zinc-500 max-w-sm leading-relaxed">
+              <p className="mt-1 text-xs text-[#8C7E70] max-w-sm leading-relaxed">
                 Send private messages to batchmates, reach out to alumni for career advice, or collaborate with team members on hackathons and college projects.
               </p>
             </div>

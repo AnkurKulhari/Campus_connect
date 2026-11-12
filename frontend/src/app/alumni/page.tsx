@@ -94,36 +94,36 @@ export default function AlumniCirclePage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      {/* Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-900 via-indigo-950 to-purple-950 p-6 sm:p-10 text-white shadow-xl">
+      {/* Header Banner - Warm Mocha / Espresso */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#2C241D] via-[#382E25] to-[#45392E] p-6 sm:p-10 text-white shadow-xl">
         <div className="relative z-10 max-w-2xl">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur-md text-indigo-200 border border-white/10 mb-4">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur-md text-[#D8C9B5] border border-white/10 mb-4">
             <GraduationCap className="h-4 w-4" />
             <span>IPEC Alumni Network</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
             Alumni Circle
           </h1>
-          <p className="mt-2 text-sm sm:text-base text-indigo-200/90 leading-relaxed">
+          <p className="mt-2 text-sm sm:text-base text-[#D8C9B5] leading-relaxed">
             Connect with graduated seniors from Inderprastha Engineering College. Find career guidance, discover industry opportunities, and expand your professional network.
           </p>
         </div>
 
         {/* Decorative background glow */}
-        <div className="absolute -right-10 -bottom-10 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
-        <div className="absolute right-20 top-0 h-40 w-40 rounded-full bg-purple-500/20 blur-2xl" />
+        <div className="absolute -right-10 -bottom-10 h-64 w-64 rounded-full bg-[#8C7A58]/20 blur-3xl" />
+        <div className="absolute right-20 top-0 h-40 w-40 rounded-full bg-[#A8936E]/20 blur-2xl" />
       </div>
 
       {/* Controls: Search & Branch Pills */}
       <div className="mt-8 space-y-4">
         <div className="relative">
-          <Search className="absolute left-4 top-3.5 h-4 w-4 text-zinc-400" />
+          <Search className="absolute left-4 top-3.5 h-4 w-4 text-[#8C7E70]" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search alumni by name, username, company, or skills..."
-            className="w-full rounded-2xl border border-zinc-200 bg-white pl-11 pr-4 py-3 text-sm text-zinc-900 placeholder-zinc-400 shadow-xs focus:border-indigo-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
+            className="w-full rounded-full border border-[#DFD5C6] bg-[#FAF7F2] pl-11 pr-4 py-3 text-xs text-[#2C251F] placeholder-[#8C7E70] shadow-2xs focus:border-[#8C7A58] focus:outline-none dark:border-[#383129] dark:bg-[#221E1A] dark:text-[#F6F2EC]"
           />
         </div>
 
@@ -135,10 +135,10 @@ export default function AlumniCirclePage() {
               <button
                 key={pill}
                 onClick={() => setSelectedBranch(pill)}
-                className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+                className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold transition ${
                   isSelected
-                    ? "bg-indigo-600 text-white shadow-xs"
-                    : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
+                    ? "bg-[#8C7A58] text-white shadow-2xs"
+                    : "bg-[#FAF7F2] text-[#685E53] border border-[#E6DED3] hover:bg-[#EDE6DA] dark:border-[#383129] dark:bg-[#221E1A] dark:text-[#C7BCB0]"
                 }`}
               >
                 {pill}
@@ -149,7 +149,7 @@ export default function AlumniCirclePage() {
       </div>
 
       {/* Results Header */}
-      <div className="mt-6 flex items-center justify-between text-xs text-zinc-500 font-medium">
+      <div className="mt-6 flex items-center justify-between text-xs text-[#8C7E70] font-medium">
         <span>
           Showing {alumni.length} of {total} Alumni
         </span>
@@ -158,16 +158,16 @@ export default function AlumniCirclePage() {
       {/* Alumni Grid */}
       {loading ? (
         <div className="mt-12 flex flex-col items-center justify-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-          <p className="text-xs text-zinc-500">Connecting to Alumni Circle...</p>
+          <Loader2 className="h-8 w-8 animate-spin text-[#8C7A58]" />
+          <p className="text-xs text-[#8C7E70]">Connecting to Alumni Circle...</p>
         </div>
       ) : alumni.length === 0 ? (
-        <div className="mt-12 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-800 p-12 text-center bg-white dark:bg-zinc-900">
-          <GraduationCap className="mx-auto h-12 w-12 text-zinc-400" />
-          <h3 className="mt-3 text-base font-bold text-zinc-900 dark:text-white">
+        <div className="mt-12 rounded-3xl border border-dashed border-[#DFD5C6] dark:border-[#383129] p-12 text-center bg-[#FAF7F2] dark:bg-[#221E1A]">
+          <GraduationCap className="mx-auto h-12 w-12 text-[#8C7E70]" />
+          <h3 className="mt-3 text-base font-bold text-[#2C251F] dark:text-[#F6F2EC]">
             No Alumni Found
           </h3>
-          <p className="mt-1 text-xs text-zinc-500 max-w-sm mx-auto">
+          <p className="mt-1 text-xs text-[#8C7E70] max-w-sm mx-auto">
             {search || selectedBranch !== "All"
               ? "Try adjusting your search query or branch filter."
               : "As graduates register with Alumni status, they will appear here in the Alumni Circle."}
@@ -178,14 +178,14 @@ export default function AlumniCirclePage() {
           {alumni.map((alumnus) => (
             <div
               key={alumnus.id}
-              className="flex flex-col justify-between rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 hover:border-indigo-300 dark:hover:border-zinc-700 transition"
+              className="flex flex-col justify-between rounded-3xl border border-[#E6DED3] bg-[#FAF7F2] p-5 shadow-xs dark:border-[#383129] dark:bg-[#221E1A] hover:border-[#8C7A58] dark:hover:border-[#A8936E] transition"
             >
               <div>
                 {/* Avatar & Verification */}
                 <div className="flex items-start justify-between gap-3">
                   <Link
                     href={`/profile/${alumnus.username}`}
-                    className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 font-bold text-lg text-white overflow-hidden shadow-sm"
+                    className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#8C7A58] font-bold text-lg text-white overflow-hidden shadow-2xs"
                   >
                     {alumnus.profile_picture ? (
                       <Image
@@ -203,7 +203,7 @@ export default function AlumniCirclePage() {
                   {alumnus.is_id_verified && (
                     <span
                       title="Verified College ID"
-                      className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
+                      className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
                     >
                       <ShieldCheck className="h-3 w-3" />
                       <span>Verified</span>
@@ -215,16 +215,16 @@ export default function AlumniCirclePage() {
                 <div className="mt-3">
                   <Link
                     href={`/profile/${alumnus.username}`}
-                    className="font-bold text-zinc-900 hover:underline dark:text-white block truncate"
+                    className="font-bold text-[#2C251F] hover:underline dark:text-[#F6F2EC] block truncate"
                   >
                     {alumnus.full_name}
                   </Link>
-                  <span className="text-xs text-zinc-400 block truncate">
+                  <span className="text-xs text-[#8C7E70] dark:text-[#9F9385] block truncate">
                     @{alumnus.username}
                   </span>
 
-                  <div className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:bg-violet-950/40 dark:text-violet-300">
-                    <GraduationCap className="h-3.5 w-3.5" />
+                  <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#EDE6DA] px-2.5 py-0.5 text-[11px] font-semibold text-[#685E53] dark:bg-[#2B2520] dark:text-[#D4C8B8]">
+                    <GraduationCap className="h-3.5 w-3.5 text-[#8C7A58]" />
                     <span>
                       Alumni {alumnus.branch ? `• ${alumnus.branch.replace(/\(.*?\)/g, "").trim()}` : ""}
                     </span>
@@ -233,20 +233,20 @@ export default function AlumniCirclePage() {
 
                 {/* Bio */}
                 {alumnus.bio && (
-                  <p className="mt-3 text-xs text-zinc-600 dark:text-zinc-300 line-clamp-2 leading-relaxed">
+                  <p className="mt-3 text-xs text-[#685E53] dark:text-[#C7BCB0] line-clamp-2 leading-relaxed">
                     {alumnus.bio}
                   </p>
                 )}
               </div>
 
               {/* Action Buttons */}
-              <div className="mt-5 pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
+              <div className="mt-5 pt-4 border-t border-[#EDE6DA] dark:border-[#2E2822] space-y-2">
                 {alumnus.linkedin_url ? (
                   <a
                     href={alumnus.linkedin_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-blue-600/10 py-2 text-xs font-semibold text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 hover:bg-blue-600 hover:text-white transition"
+                    className="w-full flex items-center justify-center gap-1.5 rounded-full bg-[#0077b5]/10 py-2 text-xs font-semibold text-[#0077b5] dark:bg-[#0077b5]/20 dark:text-blue-300 hover:bg-[#0077b5] hover:text-white transition"
                   >
                     <LinkedinIcon className="h-3.5 w-3.5" />
                     <span>Connect on LinkedIn</span>
@@ -256,7 +256,7 @@ export default function AlumniCirclePage() {
                 <div className="flex items-center gap-2">
                   <Link
                     href={`/profile/${alumnus.username}`}
-                    className="flex-1 rounded-xl border border-zinc-200 py-1.5 text-center text-xs font-semibold text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 transition"
+                    className="flex-1 rounded-full border border-[#DFD5C6] bg-white py-1.5 text-center text-xs font-semibold text-[#2C251F] hover:bg-[#EDE6DA] dark:border-[#383129] dark:bg-[#1A1714] dark:text-[#F6F2EC] dark:hover:bg-[#241F1A] transition"
                   >
                     View Profile
                   </Link>
@@ -266,17 +266,17 @@ export default function AlumniCirclePage() {
                       <Link
                         href={`/messages?user=${alumnus.username}`}
                         title="Direct Message"
-                        className="flex items-center justify-center rounded-xl border border-zinc-200 px-2.5 py-1.5 text-zinc-600 hover:bg-zinc-100 hover:text-indigo-600 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 transition"
+                        className="flex items-center justify-center rounded-full border border-[#DFD5C6] bg-white p-2 text-[#8C7E70] hover:bg-[#EDE6DA] dark:border-[#383129] dark:bg-[#1A1714] dark:text-[#C7BCB0] dark:hover:bg-[#241F1A] transition"
                       >
                         <MessageSquare className="h-4 w-4" />
                       </Link>
 
                       <button
                         onClick={() => handleFollowToggle(alumnus.username)}
-                        className={`flex items-center justify-center gap-1 rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
+                        className={`flex items-center justify-center gap-1 rounded-full px-4 py-1.5 text-xs font-semibold transition ${
                           alumnus.is_following
-                            ? "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
-                            : "bg-indigo-600 text-white hover:bg-indigo-500 shadow-xs"
+                            ? "bg-[#EDE6DA] text-[#685E53] hover:bg-[#E0D7C8] dark:bg-[#2B2520] dark:text-[#BDB1A3]"
+                            : "bg-[#8C7A58] text-white hover:bg-[#796847] shadow-2xs"
                         }`}
                       >
                         {alumnus.is_following ? (
@@ -306,7 +306,7 @@ export default function AlumniCirclePage() {
           <button
             onClick={() => fetchAlumni(search, selectedBranch, page + 1, true)}
             disabled={loadingMore}
-            className="inline-flex items-center gap-2 rounded-xl bg-zinc-100 px-5 py-2.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition"
+            className="inline-flex items-center gap-2 rounded-full border border-[#DFD5C6] bg-[#FAF7F2] px-6 py-2.5 text-xs font-bold text-[#685E53] hover:bg-[#EDE6DA] dark:border-[#383129] dark:bg-[#221E1A] dark:text-[#C7BCB0] transition"
           >
             {loadingMore && <Loader2 className="h-4 w-4 animate-spin" />}
             <span>Load More Alumni</span>

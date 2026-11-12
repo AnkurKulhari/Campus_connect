@@ -24,25 +24,25 @@ export function CreatePostBox({
 
   if (user.is_alumni || user.year === "Alumni") {
     return (
-      <div className="rounded-xl border border-indigo-100 bg-gradient-to-r from-indigo-50/70 to-violet-50/70 p-4 dark:border-indigo-900/40 dark:bg-zinc-900 shadow-xs">
+      <div className="rounded-3xl border border-[#E6DED3] bg-[#EDE6DA]/70 p-4 dark:border-[#383129] dark:bg-[#221E1A] shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white shadow-sm">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#8C7A58] text-white shadow-sm">
             <GraduationCap className="h-5 w-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold text-[#2C251F] dark:text-[#F6F2EC] flex items-center gap-2">
               <span>Alumni Circle Mode</span>
-              <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+              <span className="rounded-full bg-[#EDE6DA] px-2 py-0.5 text-[10px] font-semibold text-[#8C7A58] dark:bg-[#2B2520] dark:text-[#D4C8B8]">
                 Read-Only
               </span>
             </h3>
-            <p className="mt-0.5 text-xs text-zinc-600 dark:text-zinc-400">
+            <p className="mt-0.5 text-xs text-[#685E53] dark:text-[#A09485]">
               Welcome back, graduate! As an alumnus, your account has browse and networking access. Publishing new posts is reserved for currently enrolled students.
             </p>
           </div>
           <a
             href="/alumni"
-            className="hidden sm:inline-flex shrink-0 items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 transition shadow-xs"
+            className="hidden sm:inline-flex shrink-0 items-center gap-1 rounded-full bg-[#8C7A58] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#796847] transition shadow-xs"
           >
             Alumni Circle →
           </a>
@@ -99,10 +99,10 @@ export function CreatePostBox({
   };
 
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 transition hover:border-zinc-300 dark:hover:border-zinc-700">
+    <div className="rounded-3xl border border-[#E6DED3] bg-[#FAF7F2] p-4 sm:p-5 shadow-xs dark:border-[#383129] dark:bg-[#221E1A] transition">
       <form onSubmit={handleSubmit}>
         <div className="flex gap-3.5">
-          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 font-bold text-white overflow-hidden shadow-xs">
+          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#8C7A58] font-bold text-white overflow-hidden shadow-xs">
             {user.profile_picture ? (
               <Image
                 src={user.profile_picture}
@@ -116,31 +116,33 @@ export function CreatePostBox({
             )}
           </div>
           <div className="flex-1">
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="What's happening on campus? Share projects, ask seniors, or announce events..."
-              rows={3}
-              maxLength={1000}
-              className="w-full resize-none border-0 bg-transparent p-0 text-sm text-zinc-900 placeholder-zinc-400 focus:ring-0 focus:outline-none dark:text-white"
-            />
+            <div className="rounded-2xl border border-[#E0D7CA] bg-white dark:border-[#383129] dark:bg-[#1A1714] p-3 shadow-2xs">
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="What's happening on campus? Share projects, ask seniors, or announce events..."
+                rows={3}
+                maxLength={1000}
+                className="w-full resize-none border-0 bg-transparent p-0 text-sm text-[#2C251F] placeholder-[#8C7E70] focus:ring-0 focus:outline-none dark:text-[#F6F2EC] dark:placeholder-[#9F9385]"
+              />
 
-            {/* Quick Topic Tags Helper */}
-            <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-              {["#Hackathon", "#Placements", "#Notes", "#Society"].map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => {
-                    if (!content.includes(tag)) {
-                      setContent((prev) => (prev ? `${prev} ${tag}` : tag));
-                    }
-                  }}
-                  className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-2.5 py-0.5 text-[11px] font-medium text-zinc-500 dark:text-zinc-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/40 dark:hover:text-indigo-400 transition"
-                >
-                  {tag}
-                </button>
-              ))}
+              {/* Quick Topic Tags Helper */}
+              <div className="mt-2 flex items-center gap-1.5 flex-wrap pt-2 border-t border-[#F0EAE1] dark:border-[#28221D]">
+                {["#Hackathon", "#Placements", "#Notes", "#Society"].map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => {
+                      if (!content.includes(tag)) {
+                        setContent((prev) => (prev ? `${prev} ${tag}` : tag));
+                      }
+                    }}
+                    className="rounded-full bg-[#EDE6DA] dark:bg-[#2A241E] px-2.5 py-0.5 text-[11px] font-medium text-[#685E53] dark:text-[#C7BCB0] hover:bg-[#8C7A58] hover:text-white dark:hover:bg-[#8C7A58] dark:hover:text-white transition"
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Image Preview Grid */}
@@ -149,7 +151,7 @@ export function CreatePostBox({
                 {previews.map((src, idx) => (
                   <div
                     key={idx}
-                    className="relative aspect-square rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800"
+                    className="relative aspect-square rounded-xl overflow-hidden border border-[#E0D7CA] dark:border-[#383129] bg-[#EDE6DA] dark:bg-[#2A241E]"
                   >
                     <Image
                       src={src}
@@ -176,7 +178,7 @@ export function CreatePostBox({
             )}
 
             {/* Action Bar */}
-            <div className="mt-3 flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800/80 pt-3">
+            <div className="mt-3 flex items-center justify-between pt-1">
               <div className="flex items-center gap-2">
                 <input
                   type="file"
@@ -190,21 +192,21 @@ export function CreatePostBox({
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={files.length >= 5 || isSubmitting}
-                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition disabled:opacity-40"
+                  className="flex items-center gap-1.5 rounded-full bg-[#EDE6DA] hover:bg-[#E2D8C8] px-3 py-1.5 text-xs font-semibold text-[#685E53] dark:bg-[#2A241E] dark:hover:bg-[#342D26] dark:text-[#D4C8B8] transition disabled:opacity-40"
                 >
-                  <ImageIcon className="h-4 w-4 text-indigo-500" />
+                  <ImageIcon className="h-4 w-4 text-[#8C7A58] dark:text-[#A8936E]" />
                   <span>Media ({files.length}/5)</span>
                 </button>
               </div>
 
               <div className="flex items-center gap-3">
-                <span className="text-[11px] text-zinc-400">
+                <span className="text-[11px] text-[#8C7E70] dark:text-[#9F9385]">
                   {content.length}/1000
                 </span>
                 <button
                   type="submit"
                   disabled={(!content.trim() && files.length === 0) || isSubmitting}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-500 disabled:opacity-40 transition"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#8C7A58] hover:bg-[#796847] px-6 py-2 text-xs font-bold text-white shadow-xs disabled:opacity-40 transition"
                 >
                   {isSubmitting ? (
                     <>
