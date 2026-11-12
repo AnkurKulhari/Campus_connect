@@ -4,13 +4,14 @@ import React, { useState, useEffect, use } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Post } from "@/types";
+import { Post, UserProfile } from "@/types";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { FormattedContent } from "@/components/FormattedContent";
 import { CommentSection } from "@/components/CommentSection";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { ReportModal } from "@/components/ReportModal";
+import { PostMediaCarousel } from "@/components/PostMediaCarousel";
 import {
   ArrowLeft,
   Heart,
@@ -19,6 +20,18 @@ import {
   Trash2,
   Loader2,
   Flag,
+  Share2,
+  Compass,
+  GraduationCap,
+  Bell,
+  Search,
+  School,
+  ShieldCheck,
+  Flame,
+  UserPlus,
+  UserCheck,
+  User as UserIcon,
+  MessageSquare,
 } from "lucide-react";
 
 export default function PostDetailPage({
@@ -31,6 +44,7 @@ export default function PostDetailPage({
   const { user } = useAuth();
 
   const [post, setPost] = useState<Post | null>(null);
+  const [authorProfile, setAuthorProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,10 +52,12 @@ export default function PostDetailPage({
   const [likeCount, setLikeCount] = useState(0);
   const [commentCount, setCommentCount] = useState(0);
   const [isLiking, setIsLiking] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -51,6 +67,14 @@ export default function PostDetailPage({
         setLiked(data.is_liked_by_me);
         setLikeCount(data.like_count);
         setCommentCount(data.comment_count);
+
+        // Fetch author's profile for the right sidebar
+        try {
+          const profileData = await api.users.getProfile(data.author.username);
+          setAuthorProfile(profileData);
+        } catch {
+          // Author profile load failure is non-blocking
+        }
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Failed to load post.");
       } finally {
@@ -86,6 +110,49 @@ export default function PostDetailPage({
     }
   };
 
+  const handleToggleFollow = async () => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    if (!authorProfile || isFollowLoading) return;
+
+    setIsFollowLoading(true);
+    const prevFollowing = authorProfile.is_following;
+    const prevCount = authorProfile.followers_count;
+
+    setAuthorProfile({
+      ...authorProfile,
+      is_following: !prevFollowing,
+      followers_count: prevFollowing ? prevCount - 1 : prevCount + 1,
+    });
+
+    try {
+      const res = await api.users.toggleFollow(authorProfile.username);
+      setAuthorProfile((prev) =>
+        prev
+          ? {
+              ...prev,
+              is_following: res.is_following,
+              followers_count: res.followers_count,
+            }
+          : prev
+      );
+    } catch {
+      setAuthorProfile((prev) =>
+        prev
+          ? {
+              ...prev,
+              is_following: prevFollowing,
+              followers_count: prevCount,
+            }
+          : prev
+      );
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!post) return;
     setDeleting(true);
@@ -95,6 +162,16 @@ export default function PostDetailPage({
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "Failed to delete post");
       setDeleting(false);
+    }
+  };
+
+  const handleShare = async () => {
+    if (typeof window === "undefined") return;
+    const url = window.location.href;
+    if (navigator.clipboard) {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -108,13 +185,13 @@ export default function PostDetailPage({
 
   if (error || !post) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-16 text-center">
-        <p className="text-sm font-semibold text-slate-900 dark:text-white">
-          {error || "Post not found."}
+      <div className="mx-auto max-w-2xl px-4 py-20 text-center">
+        <p className="text-base font-semibold text-slate-900 dark:text-white">
+          {error || "Post not found or has been deleted."}
         </p>
         <Link
           href="/"
-          className="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition"
+          className="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-sm"
         >
           <ArrowLeft className="h-4 w-4" />
           <span>Back to Feed</span>
@@ -133,170 +210,425 @@ export default function PostDetailPage({
   });
 
   return (
-    <div className="mx-auto max-w-2xl px-4 sm:px-6 py-6">
-      {/* Header bar */}
-      <div className="flex items-center gap-3 mb-4">
-        <button
-          onClick={() => router.back()}
-          className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-          title="Back"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <h1 className="text-lg font-bold text-slate-900 dark:text-white">Post</h1>
-      </div>
-
-      <article className="rounded-2xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
-        {/* Author Header */}
-        <div className="flex items-center justify-between p-5 pb-4">
-          <div className="flex items-center gap-3">
-            <Link
-              href={`/profile/${post.author.username}`}
-              className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-600 font-bold text-white overflow-hidden shadow-2xs"
+    <div className="mx-auto max-w-7xl px-3 sm:px-6 py-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left Sidebar: Campus Navigation */}
+        <aside className="hidden lg:block lg:col-span-3 space-y-4">
+          <div className="sticky top-20 space-y-4">
+            {/* Quick Back Button */}
+            <button
+              onClick={() => router.back()}
+              className="w-full flex items-center gap-2.5 rounded-2xl border border-slate-200/80 bg-white px-4 py-3 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-[#131B2E] dark:text-slate-200 dark:hover:bg-slate-800 shadow-xs transition"
             >
-              {post.author.profile_picture ? (
-                <Image
-                  src={post.author.profile_picture}
-                  alt={post.author.username}
-                  fill
-                  sizes="44px"
-                  className="object-cover"
-                />
-              ) : (
-                post.author.full_name.charAt(0).toUpperCase()
-              )}
-            </Link>
-            <div>
-              <Link
-                href={`/profile/${post.author.username}`}
-                className="font-bold text-base text-slate-900 hover:underline dark:text-white block leading-tight"
-              >
-                {post.author.full_name}
-              </Link>
-              <span className="text-xs text-slate-400">
-                @{post.author.username}
-              </span>
+              <ArrowLeft className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <span>Back to Previous Page</span>
+            </button>
+
+            {/* Navigation Pills */}
+            <div className="rounded-3xl border border-slate-200/80 bg-white p-3 shadow-xs dark:border-slate-800 dark:bg-[#131B2E]">
+              <nav className="space-y-1">
+                <Link
+                  href="/"
+                  className="flex items-center gap-3 rounded-2xl px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800/80 transition"
+                >
+                  <Compass className="h-4 w-4 text-blue-500" />
+                  <span>Timeline</span>
+                </Link>
+
+                <Link
+                  href="/alumni"
+                  className="flex items-center gap-3 rounded-2xl px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800/80 transition"
+                >
+                  <GraduationCap className="h-4 w-4 text-indigo-500" />
+                  <span>Alumni Circle</span>
+                </Link>
+
+                <Link
+                  href="/messages"
+                  className="flex items-center gap-3 rounded-2xl px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800/80 transition"
+                >
+                  <MessageSquare className="h-4 w-4 text-blue-500" />
+                  <span>Messages</span>
+                </Link>
+
+                <Link
+                  href="/notifications"
+                  className="flex items-center gap-3 rounded-2xl px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800/80 transition"
+                >
+                  <Bell className="h-4 w-4 text-amber-500" />
+                  <span>Notifications</span>
+                </Link>
+
+                <Link
+                  href="/search"
+                  className="flex items-center gap-3 rounded-2xl px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800/80 transition"
+                >
+                  <Search className="h-4 w-4 text-emerald-500" />
+                  <span>Find Students</span>
+                </Link>
+
+                {user && (
+                  <Link
+                    href={`/profile/${user.username}`}
+                    className="flex items-center gap-3 rounded-2xl px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800/80 transition"
+                  >
+                    <UserIcon className="h-4 w-4" />
+                    <span>My Profile</span>
+                  </Link>
+                )}
+              </nav>
+            </div>
+
+            {/* Campus Verification Badge */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-900 p-5 text-white shadow-md border border-blue-500/30">
+              <div className="relative z-10">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-bold text-white border border-white/20">
+                  <School className="h-3 w-3 text-blue-200" />
+                  <span>IPEC Campus Exclusive</span>
+                </div>
+                <p className="mt-2 text-xs text-blue-100 leading-relaxed font-normal">
+                  Authentic discussion exclusively among verified IPEC students and graduates.
+                </p>
+                <div className="mt-3 inline-flex items-center gap-1 text-[11px] text-emerald-300 font-bold">
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  <span>ID Card Verified Network</span>
+                </div>
+              </div>
             </div>
           </div>
+        </aside>
 
-          {user && (
-            <div className="relative">
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                <MoreVertical className="h-4 w-4" />
-              </button>
-              {menuOpen && (
-                <div className="absolute right-0 mt-1 w-36 rounded-xl border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800 z-10">
-                  {user.username === post.author.username ? (
-                    <button
-                      onClick={() => {
-                        setMenuOpen(false);
-                        setShowDeleteModal(true);
-                      }}
-                      className="flex w-full items-center gap-2 px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      <span>Delete</span>
-                    </button>
+        {/* Center Main Column: Post & Instagram-Style Media Carousel */}
+        <main className="col-span-12 lg:col-span-9 xl:col-span-6 space-y-4">
+          {/* Header bar on mobile */}
+          <div className="flex items-center justify-between px-1">
+            <button
+              onClick={() => router.back()}
+              className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back</span>
+            </button>
+            <span className="text-xs font-semibold text-slate-400">Post Details</span>
+          </div>
+
+          <article className="rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-[#131B2E] overflow-hidden">
+            {/* Author Header */}
+            <div className="flex items-center justify-between p-4 sm:p-5 pb-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <Link
+                  href={`/profile/${post.author.username}`}
+                  onContextMenu={(e) => e.preventDefault()}
+                  className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-600 font-bold text-white overflow-hidden shadow-2xs select-none"
+                >
+                  {post.author.profile_picture ? (
+                    <>
+                      <Image
+                        src={post.author.profile_picture}
+                        alt={post.author.username}
+                        fill
+                        draggable={false}
+                        sizes="48px"
+                        className="object-cover pointer-events-none select-none"
+                      />
+                      <div className="absolute inset-0 z-10" onContextMenu={(e) => e.preventDefault()} />
+                    </>
                   ) : (
-                    <button
-                      onClick={() => {
-                        setMenuOpen(false);
-                        setShowReportModal(true);
-                      }}
-                      className="flex w-full items-center gap-2 px-3 py-1.5 text-xs font-medium text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40"
+                    post.author.full_name.charAt(0).toUpperCase()
+                  )}
+                </Link>
+
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <Link
+                      href={`/profile/${post.author.username}`}
+                      className="font-extrabold text-sm text-slate-900 hover:text-blue-600 dark:text-white dark:hover:text-blue-400 truncate leading-tight transition"
                     >
-                      <Flag className="h-3.5 w-3.5" />
-                      <span>Report Post</span>
-                    </button>
+                      {post.author.full_name}
+                    </Link>
+                    {post.author.is_id_verified && (
+                      <span title="Verified Student ID">
+                        <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-400 truncate mt-0.5">
+                    <span>@{post.author.username}</span>
+                    {post.author.year && (
+                      <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.2 text-[10px] font-semibold text-slate-600 dark:text-slate-300 shrink-0">
+                        {post.author.year}
+                      </span>
+                    )}
+                    {post.author.branch && (
+                      <span className="truncate">
+                        • {post.author.branch.replace(/\(.*?\)/g, "").trim()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Dropdown Menu */}
+              {user && (
+                <div className="relative">
+                  <button
+                    onClick={() => setMenuOpen(!menuOpen)}
+                    className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </button>
+                  {menuOpen && (
+                    <div className="absolute right-0 mt-1 w-36 rounded-2xl border border-slate-200 bg-white py-1 shadow-xl dark:border-slate-800 dark:bg-slate-900 z-30 animate-in fade-in duration-100">
+                      {user.username === post.author.username ? (
+                        <button
+                          onClick={() => {
+                            setMenuOpen(false);
+                            setShowDeleteModal(true);
+                          }}
+                          className="flex w-full items-center gap-2 px-3.5 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          <span>Delete Post</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setMenuOpen(false);
+                            setShowReportModal(true);
+                          }}
+                          className="flex w-full items-center gap-2 px-3.5 py-2 text-xs font-semibold text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40"
+                        >
+                          <Flag className="h-3.5 w-3.5" />
+                          <span>Report Post</span>
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
             </div>
-          )}
-        </div>
 
-        {/* Content */}
-        {post.content && (
-          <div className="px-5 pb-4 text-base text-slate-900 dark:text-slate-100 leading-relaxed">
-            <FormattedContent text={post.content} />
-          </div>
-        )}
-
-        {/* Media Attachments - Full uncropped view */}
-        {post.media && post.media.length > 0 && (
-          <div className="space-y-3 px-5 pb-4">
-            {post.media.map((item) => (
-              <div
-                key={item.id}
-                className="relative rounded-2xl overflow-hidden bg-slate-950/5 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex justify-center"
-              >
-                {item.media_type === "video" ? (
-                  <video
-                    src={item.cloudinary_url}
-                    controls
-                    className="w-full max-h-[640px] rounded-2xl object-contain select-none"
-                  />
-                ) : (
-                  <div
-                    onContextMenu={(e) => e.preventDefault()}
-                    className="relative w-full flex justify-center select-none"
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={item.cloudinary_url}
-                      alt="Post media"
-                      draggable={false}
-                      onDragStart={(e) => e.preventDefault()}
-                      className="max-h-[640px] w-auto max-w-full rounded-2xl object-contain transition duration-200 pointer-events-none select-none"
-                    />
-                    {/* Invisible Protective Shield Overlay */}
-                    <div
-                      className="absolute inset-0 z-10"
-                      onContextMenu={(e) => e.preventDefault()}
-                    />
-                  </div>
-                )}
+            {/* Post Caption / Text */}
+            {post.content && (
+              <div className="px-4 sm:px-5 pb-3.5 text-sm sm:text-base text-slate-900 dark:text-slate-100 leading-relaxed">
+                <FormattedContent text={post.content} />
               </div>
-            ))}
+            )}
+
+            {/* Instagram-Style Multi-Photo Carousel */}
+            {post.media && post.media.length > 0 && (
+              <div className="px-4 sm:px-5 pb-4">
+                <PostMediaCarousel media={post.media} />
+              </div>
+            )}
+
+            {/* Date / Timestamp */}
+            <div className="px-4 sm:px-5 py-2.5 border-t border-slate-100 dark:border-slate-800/80 text-[11px] text-slate-400">
+              {formattedDate}
+            </div>
+
+            {/* Action Bar: Like, Comments, Share */}
+            <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-t border-slate-100 dark:border-slate-800/80 text-xs">
+              <div className="flex items-center gap-6">
+                <button
+                  onClick={handleLike}
+                  className={`flex items-center gap-1.5 font-bold transition ${
+                    liked
+                      ? "text-rose-600 dark:text-rose-500"
+                      : "text-slate-600 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400"
+                  }`}
+                >
+                  <Heart className={`h-4.5 w-4.5 ${liked ? "fill-current" : ""}`} />
+                  <span>{likeCount} {likeCount === 1 ? "Like" : "Likes"}</span>
+                </button>
+
+                <div className="flex items-center gap-1.5 font-bold text-slate-600 dark:text-slate-400">
+                  <MessageCircle className="h-4.5 w-4.5" />
+                  <span>{commentCount} {commentCount === 1 ? "Comment" : "Comments"}</span>
+                </div>
+              </div>
+
+              <button
+                onClick={handleShare}
+                className="flex items-center gap-1.5 font-semibold text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition"
+              >
+                <Share2 className="h-4 w-4" />
+                <span>{copied ? "Link Copied!" : "Share"}</span>
+              </button>
+            </div>
+
+            {/* Comments Section */}
+            <div className="border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40 p-1">
+              <CommentSection
+                postId={post.id}
+                onCommentCountChange={(count) => setCommentCount(count)}
+              />
+            </div>
+          </article>
+        </main>
+
+        {/* Right Sidebar: Author Profile Card & Trending Topics */}
+        <aside className="hidden xl:block xl:col-span-3 space-y-4">
+          <div className="sticky top-20 space-y-4">
+            {/* About the Author Card */}
+            <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-[#131B2E]">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-extrabold text-xs text-slate-900 dark:text-white uppercase tracking-wider">
+                  Author Info
+                </h3>
+                <Link
+                  href={`/profile/${post.author.username}`}
+                  className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  View Profile →
+                </Link>
+              </div>
+
+              <div className="flex items-start gap-3.5">
+                <Link
+                  href={`/profile/${post.author.username}`}
+                  onContextMenu={(e) => e.preventDefault()}
+                  className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-blue-600 font-bold text-lg text-white overflow-hidden shadow-2xs select-none"
+                >
+                  {post.author.profile_picture ? (
+                    <>
+                      <Image
+                        src={post.author.profile_picture}
+                        alt={post.author.username}
+                        fill
+                        draggable={false}
+                        sizes="56px"
+                        className="object-cover pointer-events-none select-none"
+                      />
+                      <div className="absolute inset-0 z-10" onContextMenu={(e) => e.preventDefault()} />
+                    </>
+                  ) : (
+                    post.author.full_name.charAt(0).toUpperCase()
+                  )}
+                </Link>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1">
+                    <Link
+                      href={`/profile/${post.author.username}`}
+                      className="font-extrabold text-sm text-slate-900 dark:text-white truncate hover:underline"
+                    >
+                      {post.author.full_name}
+                    </Link>
+                    {post.author.is_id_verified && (
+                      <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-400 truncate">@{post.author.username}</p>
+
+                  <div className="mt-1.5 inline-block rounded-full bg-blue-50 dark:bg-blue-950/60 px-2.5 py-0.5 text-[10px] font-semibold text-blue-700 dark:text-blue-300">
+                    {post.author.year || "Student"} {post.author.branch ? `• ${post.author.branch.replace(/\(.*?\)/g, "").trim()}` : ""}
+                  </div>
+                </div>
+              </div>
+
+              {authorProfile?.bio && (
+                <p className="mt-3 text-xs text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
+                  {authorProfile.bio}
+                </p>
+              )}
+
+              {/* Author Stats Row */}
+              {authorProfile && (
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-around text-center text-xs">
+                  <div>
+                    <span className="font-extrabold text-slate-900 dark:text-white block">
+                      {authorProfile.posts_count}
+                    </span>
+                    <span className="text-[10px] text-slate-400">Posts</span>
+                  </div>
+                  <div>
+                    <span className="font-extrabold text-slate-900 dark:text-white block">
+                      {authorProfile.followers_count}
+                    </span>
+                    <span className="text-[10px] text-slate-400">Followers</span>
+                  </div>
+                  <div>
+                    <span className="font-extrabold text-slate-900 dark:text-white block">
+                      {authorProfile.following_count}
+                    </span>
+                    <span className="text-[10px] text-slate-400">Following</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Follow / Message Button */}
+              {user && user.username !== post.author.username && authorProfile && (
+                <div className="mt-4 flex items-center gap-2">
+                  <button
+                    onClick={handleToggleFollow}
+                    disabled={isFollowLoading}
+                    className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition shadow-2xs ${
+                      authorProfile.is_following
+                        ? "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
+                        : "bg-blue-600 text-white hover:bg-blue-700"
+                    }`}
+                  >
+                    {authorProfile.is_following ? (
+                      <>
+                        <UserCheck className="h-3.5 w-3.5" />
+                        <span>Following</span>
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="h-3.5 w-3.5" />
+                        <span>Follow</span>
+                      </>
+                    )}
+                  </button>
+
+                  <Link
+                    href={`/messages?user=${post.author.username}`}
+                    title="Send Message"
+                    className="rounded-xl border border-slate-200 bg-white p-2 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 transition"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Trending on Campus */}
+            <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-[#131B2E]">
+              <div className="flex items-center gap-2 text-slate-900 dark:text-white mb-3">
+                <Flame className="h-4 w-4 text-orange-500" />
+                <h3 className="font-extrabold text-xs uppercase tracking-wider">
+                  Trending on Campus
+                </h3>
+              </div>
+
+              <div className="space-y-1.5 text-xs">
+                {[
+                  { tag: "Placements2026", category: "Career" },
+                  { tag: "SmartIndiaHackathon", category: "Coding" },
+                  { tag: "SemesterExams", category: "Academics" },
+                  { tag: "IPEC_CSI", category: "Society" },
+                  { tag: "TechFest2026", category: "Event" },
+                ].map((item) => (
+                  <button
+                    key={item.tag}
+                    onClick={() => router.push(`/?tag=${item.tag}`)}
+                    className="w-full flex items-center justify-between text-left group p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition"
+                  >
+                    <span className="font-semibold text-xs text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                      #{item.tag}
+                    </span>
+                    <span className="text-[10px] rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-slate-500 dark:text-slate-400 font-medium">
+                      {item.category}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-        )}
-
-        {/* Date / Timestamp */}
-        <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-400">
-          {formattedDate}
-        </div>
-
-        {/* Stats & Actions */}
-        <div className="flex items-center gap-8 px-5 py-3.5 border-t border-slate-100 dark:border-slate-800 text-sm">
-          <button
-            onClick={handleLike}
-            className={`flex items-center gap-2 font-medium transition ${
-              liked
-                ? "text-rose-600 dark:text-rose-500"
-                : "text-slate-600 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400"
-            }`}
-          >
-            <Heart className={`h-5 w-5 ${liked ? "fill-current" : ""}`} />
-            <span>{likeCount}</span>
-          </button>
-
-          <div className="flex items-center gap-2 font-medium text-slate-600 dark:text-slate-400">
-            <MessageCircle className="h-5 w-5" />
-            <span>{commentCount}</span>
-          </div>
-        </div>
-
-        {/* Comments Section directly below */}
-        <div className="border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
-          <CommentSection
-            postId={post.id}
-            onCommentCountChange={(count) => setCommentCount(count)}
-          />
-        </div>
-      </article>
+        </aside>
+      </div>
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal
