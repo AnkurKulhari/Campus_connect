@@ -102,6 +102,14 @@ export interface PaginatedAlumni {
   has_next: boolean;
 }
 
+export interface PaginatedUserSearch {
+  users: UserProfile[];
+  total: number;
+  page: number;
+  page_size: number;
+  has_next: boolean;
+}
+
 export interface ConversationParticipant {
   id: number;
   username: string;

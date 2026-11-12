@@ -134,3 +134,83 @@ def get_alumni_circle(
         "page_size": page_size,
         "has_next": (offset + len(alumni_users)) < total,
     }
+
+
+def search_users(
+    query_str: str | None,
+    role: str | None,
+    branch: str | None,
+    page: int,
+    page_size: int,
+    current_user_id: int | None,
+    db: Session,
+) -> dict:
+    """Search registered students and alumni across name, username, branch, and bio."""
+    query = select(User).where(User.is_verified == True)
+
+    if query_str and query_str.strip():
+        term = f"%{query_str.strip().lower()}%"
+        query = query.where(
+            or_(
+                func.lower(User.full_name).ilike(term),
+                func.lower(User.username).ilike(term),
+                func.lower(User.branch).ilike(term),
+                func.lower(User.course).ilike(term),
+                func.lower(User.bio).ilike(term),
+                func.lower(User.year).ilike(term),
+            )
+        )
+
+    if role == "students":
+        query = query.where(
+            User.is_alumni == False,
+            or_(User.year == None, User.year != "Alumni")
+        )
+    elif role == "alumni":
+        query = query.where(
+            or_(User.is_alumni == True, User.year == "Alumni")
+        )
+
+    if branch and branch != "All":
+        query = query.where(User.branch.ilike(f"%{branch.strip()}%"))
+
+    total = db.scalar(select(func.count()).select_from(query.subquery())) or 0
+    offset = (page - 1) * page_size
+    matched_users = db.scalars(
+        query.order_by(User.is_id_verified.desc(), User.created_at.desc())
+        .offset(offset)
+        .limit(page_size)
+    ).all()
+
+    user_profiles = [
+        _build_profile_response(u, current_user_id, db)
+        for u in matched_users
+    ]
+
+    return {
+        "users": user_profiles,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "has_next": (offset + len(matched_users)) < total,
+    }
+
+
+def get_suggested_users(current_user_id: int, limit: int, db: Session) -> list[dict]:
+    """Return top suggested peers/seniors from campus that current user is not yet following."""
+    following_ids_subq = (
+        select(Follow.following_id).where(Follow.follower_id == current_user_id)
+    )
+
+    suggested = db.scalars(
+        select(User)
+        .where(
+            User.id != current_user_id,
+            User.is_verified == True,
+            User.id.not_in(following_ids_subq),
+        )
+        .order_by(User.is_id_verified.desc(), User.created_at.desc())
+        .limit(limit)
+    ).all()
+
+    return [_build_profile_response(u, current_user_id, db) for u in suggested]

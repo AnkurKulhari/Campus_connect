@@ -8,6 +8,7 @@ import {
   PaginatedFollowUsers,
   PaginatedNotifications,
   PaginatedAlumni,
+  PaginatedUserSearch,
   Conversation,
   DirectMessage,
 } from "@/types";
@@ -325,6 +326,19 @@ export const api = {
       request<PaginatedFollowUsers>(
         `/users/${username}/following?page=${page}&page_size=${pageSize}`
       ),
+
+    search: (q = "", role = "all", branch = "All", page = 1, pageSize = 20) => {
+      const params = new URLSearchParams();
+      if (q) params.append("q", q);
+      if (role && role !== "all") params.append("role", role);
+      if (branch && branch !== "All") params.append("branch", branch);
+      params.append("page", page.toString());
+      params.append("page_size", pageSize.toString());
+      return request<PaginatedUserSearch>(`/users/search?${params.toString()}`);
+    },
+
+    getSuggestions: (limit = 6) =>
+      request<UserProfile[]>(`/users/suggestions?limit=${limit}`),
   },
 
   notifications: {

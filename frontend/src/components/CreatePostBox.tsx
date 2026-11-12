@@ -99,16 +99,16 @@ export function CreatePostBox({
   };
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 transition hover:border-zinc-300 dark:hover:border-zinc-700">
       <form onSubmit={handleSubmit}>
-        <div className="flex gap-3">
-          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 font-bold text-indigo-700 overflow-hidden dark:bg-indigo-950 dark:text-indigo-300">
+        <div className="flex gap-3.5">
+          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 font-bold text-white overflow-hidden shadow-xs">
             {user.profile_picture ? (
               <Image
                 src={user.profile_picture}
                 alt={user.full_name}
                 fill
-                sizes="40px"
+                sizes="44px"
                 className="object-cover"
               />
             ) : (
@@ -119,11 +119,29 @@ export function CreatePostBox({
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="What's happening on campus?"
+              placeholder="What's happening on campus? Share projects, ask seniors, or announce events..."
               rows={3}
               maxLength={1000}
               className="w-full resize-none border-0 bg-transparent p-0 text-sm text-zinc-900 placeholder-zinc-400 focus:ring-0 focus:outline-none dark:text-white"
             />
+
+            {/* Quick Topic Tags Helper */}
+            <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+              {["#Hackathon", "#Placements", "#Notes", "#Society"].map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => {
+                    if (!content.includes(tag)) {
+                      setContent((prev) => (prev ? `${prev} ${tag}` : tag));
+                    }
+                  }}
+                  className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-2.5 py-0.5 text-[11px] font-medium text-zinc-500 dark:text-zinc-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/40 dark:hover:text-indigo-400 transition"
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
 
             {/* Image Preview Grid */}
             {previews.length > 0 && (

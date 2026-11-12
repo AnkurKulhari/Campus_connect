@@ -44,3 +44,11 @@ class PaginatedAlumniResponse(BaseModel):
     page: int
     page_size: int
     has_next: bool
+
+
+class PaginatedUserSearchResponse(BaseModel):
+    users: list[UserProfileResponse]
+    total: int
+    page: int
+    page_size: int
+    has_next: bool

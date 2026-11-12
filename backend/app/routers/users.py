@@ -1,12 +1,15 @@
 from fastapi import APIRouter, Depends, Query, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
 
-from app.schemas.user import UserProfileResponse, UserProfileUpdate, PaginatedAlumniResponse
+from app.schemas.user import (
+    UserProfileResponse, UserProfileUpdate,
+    PaginatedAlumniResponse, PaginatedUserSearchResponse
+)
 from app.schemas.follow import FollowToggleResponse, PaginatedFollowUsersResponse
 from app.models.user import User
 from app.services.user_service import (
     get_my_profile, update_my_profile, get_user_profile,
-    update_avatar, get_alumni_circle
+    update_avatar, get_alumni_circle, search_users, get_suggested_users
 )
 from app.services.follow_service import toggle_follow, get_followers, get_following
 from app.auth.jwt import get_current_user
@@ -74,6 +77,30 @@ def get_alumni_directory(
 ):
     """Retrieve alumni circle directory with optional search and branch filter."""
     return get_alumni_circle(search, branch, page, page_size, current_user.id, db)
+
+
+@router.get("/search", response_model=PaginatedUserSearchResponse)
+def search_students(
+    q: str | None = Query(default=None),
+    role: str | None = Query(default="all"),
+    branch: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=50),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Search students and alumni by name, username, branch, course, or bio."""
+    return search_users(q, role, branch, page, page_size, current_user.id, db)
+
+
+@router.get("/suggestions", response_model=list[UserProfileResponse])
+def get_suggestions(
+    limit: int = Query(default=6, ge=1, le=20),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Get suggested peers/seniors from campus to connect with."""
+    return get_suggested_users(current_user.id, limit, db)
 
 
 @router.get("/{username}", response_model=UserProfileResponse)
