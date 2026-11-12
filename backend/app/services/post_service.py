@@ -76,6 +76,16 @@ def create_post(
     if not post_data.content and not files:
         raise HTTPException(status_code=400, detail="A post must have text content or at least one media file.")
 
+    # Disallow posts that consist solely of hashtags without any message or media
+    if not files and post_data.content:
+        import re
+        text_without_tags = re.sub(r"#\w+", "", post_data.content).strip()
+        if not text_without_tags:
+            raise HTTPException(
+                status_code=400,
+                detail="A post cannot consist only of hashtags. Please add a message, question, or discussion context."
+            )
+
     if len(files) > MAX_MEDIA_PER_POST:
         raise HTTPException(status_code=400, detail=f"You can attach at most {MAX_MEDIA_PER_POST} files per post.")
 

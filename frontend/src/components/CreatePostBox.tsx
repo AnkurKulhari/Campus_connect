@@ -5,7 +5,25 @@ import Image from "next/image";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { Post } from "@/types";
-import { Image as ImageIcon, X, Loader2, Sparkles, GraduationCap } from "lucide-react";
+import {
+  Image as ImageIcon,
+  X,
+  Loader2,
+  Sparkles,
+  GraduationCap,
+  Check,
+  AlertCircle,
+  Tag,
+} from "lucide-react";
+
+const POPULAR_TAGS = [
+  "#Hackathon",
+  "#Placements",
+  "#Notes",
+  "#Events",
+  "#Projects",
+  "#Society",
+];
 
 export function CreatePostBox({
   onPostCreated,
@@ -18,7 +36,9 @@ export function CreatePostBox({
   const [previews, setPreviews] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   if (!user) return null;
 
@@ -51,6 +71,35 @@ export function CreatePostBox({
     );
   }
 
+  // Check whether tag is present in content
+  const isTagActive = (tag: string) => {
+    const escapedTag = tag.replace("#", "");
+    const regex = new RegExp(`(^|\\s)#${escapedTag}\\b`, "i");
+    return regex.test(content);
+  };
+
+  // Toggle tag on or off in the textarea
+  const handleTagToggle = (tag: string) => {
+    const escapedTag = tag.replace("#", "");
+    const regex = new RegExp(`(^|\\s)#${escapedTag}\\b`, "i");
+
+    if (regex.test(content)) {
+      // Remove tag
+      const updated = content
+        .replace(regex, " ")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+      setContent(updated);
+    } else {
+      // Append tag
+      const updated = content.trim() ? `${content.trim()} ${tag}` : tag;
+      setContent(updated);
+    }
+
+    if (error) setError(null);
+    textareaRef.current?.focus();
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
 
@@ -74,9 +123,20 @@ export function CreatePostBox({
     setPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // Check if content consists ONLY of hashtags
+  const textWithoutTags = content.replace(/#\w+/g, "").trim();
+  const hasOnlyTags = content.trim().length > 0 && textWithoutTags.length === 0;
+  const isPostEmpty = !content.trim() && files.length === 0;
+  const isInvalidHashtagOnly = hasOnlyTags && files.length === 0;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim() && files.length === 0) return;
+    if (isPostEmpty) return;
+
+    if (isInvalidHashtagOnly) {
+      setError("Please add a question or description — posts cannot consist only of hashtags.");
+      return;
+    }
 
     setIsSubmitting(true);
     setError(null);
@@ -115,33 +175,58 @@ export function CreatePostBox({
               user.full_name.charAt(0).toUpperCase()
             )}
           </div>
+
           <div className="flex-1">
             <div className="rounded-2xl border border-slate-200 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900/60 p-3 shadow-2xs">
               <textarea
+                ref={textareaRef}
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
+                onChange={(e) => {
+                  setContent(e.target.value);
+                  if (error) setError(null);
+                }}
                 placeholder="What's happening on campus? Share projects, ask seniors, or announce events..."
                 rows={3}
                 maxLength={1000}
                 className="w-full resize-none border-0 bg-transparent p-0 text-sm text-slate-900 placeholder-slate-400 focus:ring-0 focus:outline-none dark:text-white dark:placeholder-slate-500"
               />
 
-              {/* Quick Topic Tags Helper */}
-              <div className="mt-2 flex items-center gap-1.5 flex-wrap pt-2 border-t border-slate-200/60 dark:border-slate-800">
-                {["#Hackathon", "#Placements", "#Notes", "#Society"].map((tag) => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => {
-                      if (!content.includes(tag)) {
-                        setContent((prev) => (prev ? `${prev} ${tag}` : tag));
-                      }
-                    }}
-                    className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-[11px] font-medium text-slate-600 dark:text-slate-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/40 dark:hover:text-blue-400 transition"
-                  >
-                    {tag}
-                  </button>
-                ))}
+              {/* Quick Topic Tags Helper - Interactive Toggles */}
+              <div className="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-800">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-1 flex items-center gap-1">
+                    <Tag className="h-3 w-3" />
+                    <span>Topics:</span>
+                  </span>
+                  {POPULAR_TAGS.map((tag) => {
+                    const active = isTagActive(tag);
+                    return (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => handleTagToggle(tag)}
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium transition cursor-pointer select-none ${
+                          active
+                            ? "bg-blue-600 text-white shadow-xs font-semibold"
+                            : "bg-slate-200/70 text-slate-700 hover:bg-slate-300/80 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                        }`}
+                      >
+                        {active && <Check className="h-3 w-3" />}
+                        <span>{tag}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Validation Notice: Post cannot consist solely of hashtags */}
+                {isInvalidHashtagOnly && (
+                  <div className="mt-2 flex items-center gap-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 px-2.5 py-1 text-[11px] text-amber-700 dark:text-amber-300 animate-in fade-in duration-150">
+                    <AlertCircle className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                    <span>
+                      Please add a message, question, or media — posts cannot consist only of hashtags.
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -172,9 +257,10 @@ export function CreatePostBox({
             )}
 
             {error && (
-              <p className="mt-2 text-xs text-red-600 dark:text-red-400">
-                {error}
-              </p>
+              <div className="mt-2.5 flex items-center gap-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 p-2 text-xs text-rose-600 dark:text-rose-400">
+                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                <span>{error}</span>
+              </div>
             )}
 
             {/* Action Bar */}
@@ -205,8 +291,8 @@ export function CreatePostBox({
                 </span>
                 <button
                   type="submit"
-                  disabled={(!content.trim() && files.length === 0) || isSubmitting}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-blue-600 hover:bg-blue-700 px-6 py-2 text-xs font-bold text-white shadow-xs disabled:opacity-40 transition"
+                  disabled={isPostEmpty || isInvalidHashtagOnly || isSubmitting}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-blue-600 hover:bg-blue-700 px-6 py-2 text-xs font-bold text-white shadow-xs disabled:opacity-40 disabled:cursor-not-allowed transition"
                 >
                   {isSubmitting ? (
                     <>
