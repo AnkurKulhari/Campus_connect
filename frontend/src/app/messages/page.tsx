@@ -92,6 +92,8 @@ function MessagesContent() {
 
   const maxKnownMsgIdRef = useRef<number>(0);
   const isConversationsInitializedRef = useRef<boolean>(false);
+  const fetchSeqRef = useRef<number>(0);
+  const isSendingRef = useRef<boolean>(false);
 
   useEffect(() => {
     setSoundOn(isSoundEnabled());
@@ -110,8 +112,12 @@ function MessagesContent() {
   // Fetch messages for active conversation
   const fetchActiveMessages = useCallback(async (convId: number, isInitial = false) => {
     if (isInitial) setLoadingMessages(true);
+    const seq = ++fetchSeqRef.current;
     try {
       const msgs = await api.messages.getMessages(convId);
+
+      // If a newer fetch or send operation has started, drop this stale response!
+      if (seq !== fetchSeqRef.current) return;
       
       // Check for incoming new messages during polling
       if (!isInitial && msgs.length > 0) {
@@ -156,7 +162,24 @@ function MessagesContent() {
           )
         );
       }
-      setMessages(msgs);
+
+      // Preserve any in-flight optimistic messages (id < 0) so they never vanish
+      setMessages((prev) => {
+        const pending = prev.filter((m) => m.id < 0);
+        if (pending.length === 0) return msgs;
+        const stillPending = pending.filter(
+          (opt) =>
+            !msgs.some(
+              (m) =>
+                m.id === opt.id ||
+                (m.sender_id === opt.sender_id &&
+                  m.content === opt.content &&
+                  Math.abs(new Date(m.created_at).getTime() - new Date(opt.created_at).getTime()) < 30000)
+            )
+        );
+        return [...msgs, ...stillPending];
+      });
+
       if (isInitial) {
         setTimeout(() => scrollToBottom(false), 50);
       }
@@ -339,9 +362,10 @@ function MessagesContent() {
       window.dispatchEvent(new Event("campusconnect-unread-update"));
     }
 
-    // Poll for new messages every 4 seconds in the active conversation
+    // Poll for new messages every 4 seconds in the active conversation (skip while sending)
     const interval = setInterval(() => {
       if (typeof document !== "undefined" && document.hidden) return;
+      if (isSendingRef.current) return;
       fetchActiveMessages(activeConv.id, false);
     }, 4000);
 
@@ -363,6 +387,10 @@ function MessagesContent() {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeConv || !inputText.trim()) return;
+
+    // Invalidate any in-flight background polls and pause active chat poll
+    fetchSeqRef.current++;
+    isSendingRef.current = true;
 
     const textToSend = inputText.trim();
     setInputText("");
@@ -411,10 +439,19 @@ function MessagesContent() {
       latestMessageIdRef.current = newMsg.id;
       maxKnownMsgIdRef.current = Math.max(maxKnownMsgIdRef.current, newMsg.id);
 
-      // Replace optimistic placeholder with confirmed server message
-      setMessages((prev) =>
-        prev.map((m) => (m.id === tempId ? newMsg : m))
-      );
+      // Invalidate any older in-flight fetches again
+      fetchSeqRef.current++;
+
+      // Safely replace optimistic placeholder with confirmed server message
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === newMsg.id)) {
+          return prev.filter((m) => m.id !== tempId);
+        }
+        if (prev.some((m) => m.id === tempId)) {
+          return prev.map((m) => (m.id === tempId ? newMsg : m));
+        }
+        return [...prev, newMsg];
+      });
 
       setConversations((prev) =>
         prev.map((c) =>
@@ -438,6 +475,8 @@ function MessagesContent() {
       // Rollback failed optimistic message
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
       setInputText(textToSend); // Restore unsent message
+    } finally {
+      isSendingRef.current = false;
     }
   };
 
