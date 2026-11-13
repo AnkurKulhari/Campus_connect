@@ -73,6 +73,7 @@ function MessagesContent() {
   const [isUnsending, setIsUnsending] = useState(false);
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [isBlocking, setIsBlocking] = useState(false);
+  const [pressingMsgId, setPressingMsgId] = useState<number | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -83,6 +84,8 @@ function MessagesContent() {
   const handledParamRef = useRef<string | null>(null);
   const currentConvIdRef = useRef<number | null>(null);
   const latestMessageIdRef = useRef<number | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setSoundOn(isSoundEnabled());
@@ -342,6 +345,56 @@ function MessagesContent() {
       setCopiedId(null);
       setSelectedMsgId(null);
     }, 1800);
+  };
+
+  // Mobile Long-Press gesture with 8px scroll cancellation (prevents accidental triggers during scrolling)
+  const handleTouchStart = (msg: DirectMessage, e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+    setPressingMsgId(msg.id);
+
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+    }
+
+    // 400ms intentional hold threshold
+    longPressTimerRef.current = setTimeout(() => {
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        try {
+          navigator.vibrate(35);
+        } catch {}
+      }
+      setActiveMsgAction(msg);
+      setPressingMsgId(null);
+      longPressTimerRef.current = null;
+    }, 400);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const touch = e.touches[0];
+    const dx = Math.abs(touch.clientX - touchStartRef.current.x);
+    const dy = Math.abs(touch.clientY - touchStartRef.current.y);
+
+    // If movement exceeds 8px in any direction, the user is scrolling: cancel long press immediately!
+    if (dx > 8 || dy > 8) {
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+      }
+      setPressingMsgId(null);
+      touchStartRef.current = null;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    // If finger was lifted before 400ms, it was a normal tap or scroll finish: cancel!
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    setPressingMsgId(null);
+    touchStartRef.current = null;
   };
 
   const handleBlockUser = () => {
@@ -897,14 +950,17 @@ function MessagesContent() {
 
                           {/* Message Bubble with Integrated Inline Timestamp (WhatsApp / Telegram style) */}
                           <div
-                            role="button"
-                            tabIndex={0}
-                            onClick={() => {
-                              if (typeof window !== "undefined" && window.innerWidth < 640) {
-                                setActiveMsgAction(msg);
-                              }
+                            onTouchStart={(e) => handleTouchStart(msg, e)}
+                            onTouchMove={handleTouchMove}
+                            onTouchEnd={handleTouchEnd}
+                            onTouchCancel={handleTouchEnd}
+                            onContextMenu={(e) => {
+                              e.preventDefault();
+                              setActiveMsgAction(msg);
                             }}
-                            className={`cursor-pointer max-w-[82%] sm:max-w-[72%] px-3.5 py-1.5 text-xs sm:text-sm leading-relaxed shadow-2xs whitespace-pre-wrap break-words active:scale-[0.99] transition select-text ${
+                            className={`max-w-[82%] sm:max-w-[72%] px-3.5 py-1.5 text-xs sm:text-sm leading-relaxed shadow-2xs whitespace-pre-wrap break-words select-text transition-all ${
+                              pressingMsgId === msg.id ? "scale-[0.97] opacity-90 " : ""
+                            }${
                               isMe
                                 ? `bg-blue-600 text-white rounded-2xl ${
                                     isSameSenderAsPrev ? "rounded-tr-xs" : ""
