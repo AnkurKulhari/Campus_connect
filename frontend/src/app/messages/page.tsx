@@ -790,7 +790,7 @@ function MessagesContent() {
               )}
 
               {/* Message List - Single Pure Scroll Container */}
-              <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 overscroll-contain">
+              <div className="flex-1 overflow-y-auto p-3 sm:p-4 overscroll-contain">
                 {loadingMessages ? (
                   <div className="flex h-48 items-center justify-center">
                     <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
@@ -827,10 +827,29 @@ function MessagesContent() {
                   visibleMessages.map((msg, index) => {
                     const isMe = user && msg.sender_id === user.id;
                     const prevMsg = visibleMessages[index - 1];
+                    const nextMsg = visibleMessages[index + 1];
+
                     const isNewDay =
                       !prevMsg ||
                       new Date(msg.created_at).toDateString() !==
                         new Date(prevMsg.created_at).toDateString();
+
+                    const isSameSenderAsPrev =
+                      !isNewDay &&
+                      prevMsg &&
+                      prevMsg.sender_id === msg.sender_id &&
+                      Math.abs(new Date(msg.created_at).getTime() - new Date(prevMsg.created_at).getTime()) < 2 * 60 * 1000;
+
+                    const nextIsNewDay =
+                      nextMsg &&
+                      new Date(nextMsg.created_at).toDateString() !==
+                        new Date(msg.created_at).toDateString();
+
+                    const isSameSenderAsNext =
+                      !nextIsNewDay &&
+                      nextMsg &&
+                      nextMsg.sender_id === msg.sender_id &&
+                      Math.abs(new Date(nextMsg.created_at).getTime() - new Date(msg.created_at).getTime()) < 2 * 60 * 1000;
 
                     return (
                       <React.Fragment key={msg.id}>
@@ -844,103 +863,99 @@ function MessagesContent() {
                         )}
 
                         <div
-                          className={`group flex flex-col ${
-                            isMe ? "items-end" : "items-start"
-                          }`}
+                          className={`group flex items-end gap-1.5 ${
+                            isMe ? "justify-end" : "justify-start"
+                          } ${isSameSenderAsNext ? "mb-1" : "mb-3"}`}
                         >
-                          <div className="flex items-end gap-1.5 max-w-[85%] sm:max-w-[75%]">
-                            {/* Desktop Hover Action Toolbar */}
-                            {isMe && (
-                              <div className="hidden sm:flex opacity-0 group-hover:opacity-100 items-center gap-1 mb-1 transition">
-                                <button
-                                  type="button"
-                                  onClick={() => handleCopyText(msg.id, msg.content)}
-                                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/50 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition"
-                                  title={copiedId === msg.id ? "Copied!" : "Copy text"}
-                                  aria-label="Copy message"
-                                >
-                                  {copiedId === msg.id ? (
-                                    <Check className="h-3 w-3 text-emerald-600" />
-                                  ) : (
-                                    <Copy className="h-3 w-3" />
-                                  )}
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteMessage(msg.id)}
-                                  className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
-                                  title="Unsend message"
-                                  aria-label="Unsend message"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </button>
-                              </div>
-                            )}
+                          {/* Desktop Hover Action Toolbar for Sent Messages (Left of Bubble) */}
+                          {isMe && (
+                            <div className="hidden sm:flex opacity-0 group-hover:opacity-100 items-center gap-0.5 mb-1 transition">
+                              <button
+                                type="button"
+                                onClick={() => handleCopyText(msg.id, msg.content)}
+                                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/50 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition"
+                                title={copiedId === msg.id ? "Copied!" : "Copy text"}
+                                aria-label="Copy message"
+                              >
+                                {copiedId === msg.id ? (
+                                  <Check className="h-3 w-3 text-emerald-600" />
+                                ) : (
+                                  <Copy className="h-3 w-3" />
+                                )}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteMessage(msg.id)}
+                                className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
+                                title="Unsend message"
+                                aria-label="Unsend message"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            </div>
+                          )}
 
-                            {/* Message Bubble - Tap to reveal actions on mobile */}
-                            <div
-                              role="button"
-                              tabIndex={0}
-                              onClick={() => {
-                                if (typeof window !== "undefined" && window.innerWidth < 640) {
-                                  setActiveMsgAction(msg);
-                                }
-                              }}
-                              className={`cursor-pointer rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed shadow-2xs whitespace-pre-wrap break-words active:scale-[0.99] transition-transform select-text ${
-                                isMe
-                                  ? "bg-blue-600 text-white rounded-tr-xs"
-                                  : "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800 rounded-tl-xs"
+                          {/* Message Bubble with Integrated Inline Timestamp (WhatsApp / Telegram style) */}
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => {
+                              if (typeof window !== "undefined" && window.innerWidth < 640) {
+                                setActiveMsgAction(msg);
+                              }
+                            }}
+                            className={`cursor-pointer max-w-[82%] sm:max-w-[72%] px-3.5 py-1.5 text-xs sm:text-sm leading-relaxed shadow-2xs whitespace-pre-wrap break-words active:scale-[0.99] transition select-text ${
+                              isMe
+                                ? `bg-blue-600 text-white rounded-2xl ${
+                                    isSameSenderAsPrev ? "rounded-tr-xs" : ""
+                                  } ${isSameSenderAsNext ? "rounded-br-xs" : ""}`
+                                : `bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200/90 dark:border-slate-800 rounded-2xl ${
+                                    isSameSenderAsPrev ? "rounded-tl-xs" : ""
+                                  } ${isSameSenderAsNext ? "rounded-bl-xs" : ""}`
+                            }`}
+                          >
+                            <span className="align-middle">{msg.content}</span>
+                            {/* Integrated Timestamp & Read Receipts */}
+                            <span
+                              className={`float-right ml-2.5 translate-y-0.5 inline-flex items-center gap-0.5 text-[10px] select-none shrink-0 ${
+                                isMe ? "text-blue-100/80" : "text-slate-400 dark:text-slate-500"
                               }`}
                             >
-                              {msg.content}
-                            </div>
-
-                            {/* Desktop Hover Action Toolbar for Received Messages */}
-                            {!isMe && (
-                              <div className="hidden sm:flex opacity-0 group-hover:opacity-100 items-center gap-1 mb-1 transition">
-                                <button
-                                  type="button"
-                                  onClick={() => handleCopyText(msg.id, msg.content)}
-                                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/50 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition"
-                                  title={copiedId === msg.id ? "Copied!" : "Copy text"}
-                                  aria-label="Copy message"
-                                >
-                                  {copiedId === msg.id ? (
-                                    <Check className="h-3 w-3 text-emerald-600" />
+                              <span>{formatMessageTime(msg.created_at)}</span>
+                              {isMe && (
+                                <span>
+                                  {msg.id < 0 ? (
+                                    <span className="inline-block animate-pulse text-[9px] text-blue-200">
+                                      •
+                                    </span>
+                                  ) : msg.is_read ? (
+                                    <CheckCheck className="h-3 w-3 text-blue-200" />
                                   ) : (
-                                    <Copy className="h-3 w-3" />
+                                    <Check className="h-3 w-3 text-blue-200/70" />
                                   )}
-                                </button>
-                              </div>
-                            )}
+                                </span>
+                              )}
+                            </span>
                           </div>
 
-                          <div className="flex items-center gap-1.5 mt-0.5 px-1 text-[10px] text-slate-400">
-                            <span>{formatMessageTime(msg.created_at)}</span>
-                            {isMe && (
-                              <span>
-                                {msg.id < 0 ? (
-                                  <span className="inline-block animate-pulse text-[9px] text-blue-400 dark:text-blue-300">
-                                    Sending...
-                                  </span>
-                                ) : msg.is_read ? (
-                                  <CheckCheck className="h-3 w-3 text-blue-500" />
+                          {/* Desktop Hover Action Toolbar for Received Messages (Right of Bubble) */}
+                          {!isMe && (
+                            <div className="hidden sm:flex opacity-0 group-hover:opacity-100 items-center gap-0.5 mb-1 transition">
+                              <button
+                                type="button"
+                                onClick={() => handleCopyText(msg.id, msg.content)}
+                                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/50 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition"
+                                title={copiedId === msg.id ? "Copied!" : "Copy text"}
+                                aria-label="Copy message"
+                              >
+                                {copiedId === msg.id ? (
+                                  <Check className="h-3 w-3 text-emerald-600" />
                                 ) : (
-                                  <Check className="h-3 w-3 text-slate-400" />
+                                  <Copy className="h-3 w-3" />
                                 )}
-                              </span>
-                            )}
-                            {/* Always visible mobile trigger button */}
-                            <button
-                              type="button"
-                              onClick={() => setActiveMsgAction(msg)}
-                              className="sm:hidden p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 active:bg-slate-200 dark:active:bg-slate-800 transition min-h-[32px] min-w-[32px] flex items-center justify-center"
-                              title="Message options"
-                              aria-label="Message options"
-                            >
-                              <MoreVertical className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </React.Fragment>
                     );
