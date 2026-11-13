@@ -15,10 +15,10 @@ if is_pooler:
     engine = create_engine(
         raw_db_url,
         pool_pre_ping=True,
-        pool_size=10,
-        max_overflow=10,
+        pool_size=5,
+        max_overflow=5,
         pool_timeout=15,
-        pool_recycle=300,
+        pool_recycle=120,
         connect_args={"connect_timeout": 10},
     )
 else:

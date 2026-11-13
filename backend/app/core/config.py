@@ -31,13 +31,17 @@ class Settings(BaseSettings):
 
     @property
     def normalized_database_url(self) -> str:
+        import re
         url = self.DATABASE_URL
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql://", 1)
         # Automatically redirect Supabase pooler from port 5432 (Session Mode, max 15 clients)
         # to port 6543 (Transaction Mode) to eliminate EMAXCONNSESSION errors under concurrency
-        if "pooler.supabase.com:5432" in url:
-            url = url.replace("pooler.supabase.com:5432", "pooler.supabase.com:6543")
+        if "pooler.supabase.com" in url:
+            if ":5432" in url:
+                url = url.replace(":5432", ":6543")
+            elif ":6543" not in url:
+                url = re.sub(r"(pooler\.supabase\.com)(?=[/?]|$)", r"\1:6543", url)
         return url
 
     model_config = SettingsConfigDict(

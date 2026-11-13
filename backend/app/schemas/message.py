@@ -42,6 +42,7 @@ class ConversationParticipant(BaseModel):
     year: str | None = None
     is_alumni: bool = False
     is_id_verified: bool = False
+    is_following: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 

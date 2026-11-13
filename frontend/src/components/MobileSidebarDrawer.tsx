@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
@@ -33,6 +34,11 @@ export function MobileSidebarDrawer({ isOpen, onClose }: MobileSidebarDrawerProp
   const { user, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const [unreadMsgs, setUnreadMsgs] = useState(0);
   const [unreadNotifs, setUnreadNotifs] = useState(0);
@@ -114,14 +120,14 @@ export function MobileSidebarDrawer({ isOpen, onClose }: MobileSidebarDrawerProp
     }
   };
 
-  if (!isOpen || !user) return null;
+  if (!isOpen || !user || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 lg:hidden flex">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] lg:hidden flex">
       {/* Dimmed backdrop overlay */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+        className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
         aria-hidden="true"
       />
 
@@ -472,6 +478,7 @@ export function MobileSidebarDrawer({ isOpen, onClose }: MobileSidebarDrawerProp
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

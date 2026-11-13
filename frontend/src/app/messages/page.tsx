@@ -21,6 +21,7 @@ import {
   CheckCheck,
   Loader2,
   AlertCircle,
+  UserPlus,
 } from "lucide-react";
 
 function MessagesContent() {
@@ -40,9 +41,12 @@ function MessagesContent() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [dmTab, setDmTab] = useState<"following" | "requests">("following");
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const handledParamRef = useRef<string | null>(null);
+  const currentConvIdRef = useRef<number | null>(null);
 
   const scrollToBottom = (smooth = true) => {
     messagesEndRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto" });
@@ -62,22 +66,28 @@ function MessagesContent() {
     }
   }, []);
 
-  // Initial load
-  useEffect(() => {
-    if (!user) return;
-    fetchConversations();
-  }, [user, fetchConversations]);
-
-  // Handle URL query params (?user= or ?id=)
+  // Initial load and URL query param resolution (only runs once per param change)
   useEffect(() => {
     if (!user) return;
 
-    const handleParamStart = async () => {
+    let isMounted = true;
+    const init = async () => {
+      const convList = await fetchConversations();
+      if (!isMounted) return;
+
+      const paramKey = `${idParam || ""}_${userParam || ""}`;
+      if (handledParamRef.current === paramKey) return;
+      handledParamRef.current = paramKey;
+
       if (idParam) {
         const targetId = parseInt(idParam, 10);
-        const found = conversations.find((c) => c.id === targetId);
+        const found = convList.find((c) => c.id === targetId);
         if (found) {
+          currentConvIdRef.current = found.id;
           setActiveConv(found);
+          if (found.participant.is_following === false) {
+            setDmTab("requests");
+          }
           return;
         }
       }
@@ -85,17 +95,27 @@ function MessagesContent() {
       if (userParam && userParam !== user.username) {
         try {
           const conv = await api.messages.startConversation(userParam);
+          if (!isMounted) return;
+          currentConvIdRef.current = conv.id;
           setActiveConv(conv);
-          // Refresh list to include new conversation
-          fetchConversations();
+          if (conv.participant.is_following === false) {
+            setDmTab("requests");
+          }
+          setConversations((prev) =>
+            prev.some((c) => c.id === conv.id) ? prev : [conv, ...prev]
+          );
         } catch (err) {
           console.error("Failed to open conversation with user:", err);
         }
       }
     };
 
-    handleParamStart();
-  }, [userParam, idParam, user, conversations, fetchConversations]);
+    init();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user, idParam, userParam, fetchConversations]);
 
   // Fetch messages for active conversation
   const fetchActiveMessages = useCallback(async (convId: number, isInitial = false) => {
@@ -115,22 +135,30 @@ function MessagesContent() {
 
   // When active conversation changes
   useEffect(() => {
-    if (!activeConv) return;
-    fetchActiveMessages(activeConv.id, true);
+    if (!activeConv) {
+      currentConvIdRef.current = null;
+      return;
+    }
+
+    const isDifferentConv = currentConvIdRef.current !== activeConv.id;
+    currentConvIdRef.current = activeConv.id;
+
+    fetchActiveMessages(activeConv.id, isDifferentConv);
     inputRef.current?.focus();
 
-    // Mark unread as 0 locally
+    // Silently mark unread as 0 locally
     setConversations((prev) =>
-      prev.map((c) => (c.id === activeConv.id ? { ...c, unread_count: 0 } : c))
+      prev.map((c) => (c.id === activeConv.id && c.unread_count > 0 ? { ...c, unread_count: 0 } : c))
     );
 
-    // Poll for new messages every 3.5 seconds
+    // Poll for new messages every 8 seconds (only when tab is visible)
     const interval = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
       fetchActiveMessages(activeConv.id, false);
-    }, 3500);
+    }, 8000);
 
     return () => clearInterval(interval);
-  }, [activeConv, fetchActiveMessages]);
+  }, [activeConv?.id, fetchActiveMessages]);
 
   // Scroll to bottom when message list expands
   useEffect(() => {
@@ -201,6 +229,15 @@ function MessagesContent() {
     );
   });
 
+  const followingConvs = filteredConversations.filter(
+    (c) => c.participant.is_following !== false
+  );
+  const requestConvs = filteredConversations.filter(
+    (c) => c.participant.is_following === false
+  );
+  const displayedConversations =
+    dmTab === "following" ? followingConvs : requestConvs;
+
   const formatMessageTime = (dateStr: string) => {
     const d = new Date(dateStr);
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -245,6 +282,34 @@ function MessagesContent() {
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
               />
             </div>
+            {/* DM Category Tabs: Following vs Requests */}
+            <div className="flex items-center gap-1 mt-3 p-1 rounded-xl bg-slate-100 dark:bg-slate-800">
+              <button
+                type="button"
+                onClick={() => setDmTab("following")}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition ${
+                  dmTab === "following"
+                    ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                }`}
+              >
+                Following ({followingConvs.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setDmTab("requests")}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition relative ${
+                  dmTab === "requests"
+                    ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                }`}
+              >
+                Requests ({requestConvs.length})
+                {requestConvs.some((c) => c.unread_count > 0) && (
+                  <span className="inline-block w-2 h-2 rounded-full bg-rose-500 ml-1.5 align-middle" />
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Conversation List Scrollable */}
@@ -253,17 +318,19 @@ function MessagesContent() {
               <div className="flex h-48 items-center justify-center">
                 <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
               </div>
-            ) : filteredConversations.length === 0 ? (
+            ) : displayedConversations.length === 0 ? (
               <div className="p-8 text-center text-slate-400">
                 <MessageSquare className="mx-auto h-8 w-8 opacity-40 mb-2 text-slate-400" />
                 <p className="text-xs">
                   {searchQuery
                     ? "No matching conversations."
-                    : "No conversations yet. Visit student profiles or Alumni Circle to start a chat!"}
+                    : dmTab === "requests"
+                    ? "No message requests. Direct messages from classmates outside your following list will appear here."
+                    : "No conversations with classmates you follow yet. Visit student profiles or Alumni Circle to connect!"}
                 </p>
               </div>
             ) : (
-              filteredConversations.map((conv) => {
+              displayedConversations.map((conv) => {
                 const isSelected = activeConv?.id === conv.id;
                 const p = conv.participant;
                 return (
@@ -436,6 +503,51 @@ function MessagesContent() {
                   )}
                 </div>
               </div>
+
+              {/* Message Request / Follow Back Banner */}
+              {activeConv.participant.is_following === false && (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900/60 px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <UserPlus className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <p className="text-xs text-amber-900 dark:text-amber-200">
+                      <span className="font-bold">@{activeConv.participant.username}</span> is not in your following list.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          const res = await api.users.toggleFollow(activeConv.participant.username);
+                          setActiveConv({
+                            ...activeConv,
+                            participant: { ...activeConv.participant, is_following: res.is_following },
+                          });
+                          setConversations((prev) =>
+                            prev.map((c) =>
+                              c.id === activeConv.id
+                                ? { ...c, participant: { ...c.participant, is_following: res.is_following } }
+                                : c
+                            )
+                          );
+                        } catch (err) {
+                          console.error("Failed to follow back:", err);
+                        }
+                      }}
+                      className="flex-1 sm:flex-initial rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700 transition shadow-2xs"
+                    >
+                      Follow Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleBlockUser}
+                      className="flex-1 sm:flex-initial rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
+                    >
+                      Block
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Message List */}
               <div className="flex-1 overflow-y-auto p-4 space-y-3">

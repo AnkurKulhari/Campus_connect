@@ -5,6 +5,7 @@ from sqlalchemy import select, func, or_, and_
 
 from app.models.user import User
 from app.models.message import Conversation, Message, BlockedUser
+from app.models.follow import Follow
 from app.utils.moderation import assert_safe_content
 
 
@@ -59,6 +60,14 @@ def list_conversations(current_user: User, db: Session) -> list[dict]:
         if not other_user:
             continue
 
+        # Check if current_user follows other_user
+        is_following_participant = db.scalar(
+            select(Follow.id).where(
+                Follow.follower_id == current_user.id,
+                Follow.following_id == other_user.id,
+            )
+        ) is not None
+
         last_msg = db.scalar(
             select(Message)
             .where(Message.conversation_id == conv.id)
@@ -86,6 +95,7 @@ def list_conversations(current_user: User, db: Session) -> list[dict]:
                 "year": other_user.year,
                 "is_alumni": other_user.is_alumni,
                 "is_id_verified": other_user.is_id_verified,
+                "is_following": is_following_participant,
             },
             "last_message": {
                 "id": last_msg.id,
@@ -175,6 +185,36 @@ def start_conversation_with_user(username: str, initial_message: str | None, cur
     if _is_blocked(current_user.id, target_user.id, db):
         raise HTTPException(status_code=403, detail="Cannot message this user.")
 
+    # Check if a conversation already exists
+    u1, u2 = min(current_user.id, target_user.id), max(current_user.id, target_user.id)
+    existing_conv = db.scalar(
+        select(Conversation.id).where(
+            Conversation.user1_id == u1,
+            Conversation.user2_id == u2,
+        )
+    )
+
+    is_following_target = db.scalar(
+        select(Follow.id).where(
+            Follow.follower_id == current_user.id,
+            Follow.following_id == target_user.id,
+        )
+    ) is not None
+
+    is_followed_by_target = db.scalar(
+        select(Follow.id).where(
+            Follow.follower_id == target_user.id,
+            Follow.following_id == current_user.id,
+        )
+    ) is not None
+
+    # Anti-Spam DM Gate: New conversations require follow connection
+    if not existing_conv and not (is_following_target or is_followed_by_target):
+        raise HTTPException(
+            status_code=403,
+            detail=f"You must follow @{username} to send them a direct message."
+        )
+
     conv = get_or_create_conversation(current_user.id, target_user.id, db)
 
     last_msg = None
@@ -193,6 +233,7 @@ def start_conversation_with_user(username: str, initial_message: str | None, cur
             "year": target_user.year,
             "is_alumni": target_user.is_alumni,
             "is_id_verified": target_user.is_id_verified,
+            "is_following": is_following_target,
         },
         "last_message": {
             "id": last_msg.id,

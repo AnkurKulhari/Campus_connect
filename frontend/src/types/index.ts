@@ -129,6 +129,7 @@ export interface ConversationParticipant {
   year?: string | null;
   is_alumni?: boolean;
   is_id_verified?: boolean;
+  is_following?: boolean;
 }
 
 export interface LastMessage {
