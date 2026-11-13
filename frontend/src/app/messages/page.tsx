@@ -1232,7 +1232,7 @@ function MessagesContent() {
                       handleSendMessage(e);
                     }
                   }}
-                  placeholder="Type a message (Shift+Enter for newline)..."
+                  placeholder="Type a message..."
                   maxLength={2000}
                   className="flex-1 max-h-32 resize-none rounded-2xl border border-slate-200 bg-slate-50 px-3.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 overflow-y-auto leading-relaxed"
                 />
