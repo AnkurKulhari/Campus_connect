@@ -57,7 +57,6 @@ function MessagesContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loadingConvs, setLoadingConvs] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
-  const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [dmTab, setDmTab] = useState<"following" | "requests">("following");
@@ -65,6 +64,7 @@ function MessagesContent() {
   const [inChatSearchOpen, setInChatSearchOpen] = useState(false);
   const [inChatSearchQuery, setInChatSearchQuery] = useState("");
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [selectedMsgId, setSelectedMsgId] = useState<number | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -226,22 +226,59 @@ function MessagesContent() {
     scrollToBottom(true);
   }, [messages.length]);
 
+  // 0ms Latency Optimistic Send
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeConv || !inputText.trim() || sending) return;
+    if (!activeConv || !inputText.trim()) return;
 
     const textToSend = inputText.trim();
     setInputText("");
-    setSending(true);
     setError(null);
 
+    // Optimistic temporary message
+    const tempId = -Date.now();
+    const optimisticMsg: DirectMessage = {
+      id: tempId,
+      conversation_id: activeConv.id,
+      sender_id: user?.id || 0,
+      receiver_id: activeConv.participant.id,
+      content: textToSend,
+      is_read: false,
+      created_at: new Date().toISOString(),
+    };
+
+    // Instant 0ms UI update
+    setMessages((prev) => [...prev, optimisticMsg]);
+    playMessageSentSound();
+
+    // Optimistically update conversation snippet in left list
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.id === activeConv.id
+          ? {
+              ...c,
+              last_message: {
+                id: tempId,
+                sender_id: user?.id || 0,
+                content: textToSend,
+                is_read: false,
+                created_at: optimisticMsg.created_at,
+              },
+              last_message_at: optimisticMsg.created_at,
+            }
+          : c
+      )
+    );
+
     try {
-      playMessageSentSound();
       const newMsg = await api.messages.sendMessage(activeConv.id, textToSend);
       latestMessageIdRef.current = newMsg.id;
-      setMessages((prev) => [...prev, newMsg]);
 
-      // Update conversation in list
+      // Replace optimistic placeholder with confirmed server message
+      setMessages((prev) =>
+        prev.map((m) => (m.id === tempId ? newMsg : m))
+      );
+
       setConversations((prev) =>
         prev.map((c) =>
           c.id === activeConv.id
@@ -261,9 +298,9 @@ function MessagesContent() {
       );
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to send message.");
+      // Rollback failed optimistic message
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
       setInputText(textToSend); // Restore unsent message
-    } finally {
-      setSending(false);
     }
   };
 
@@ -272,6 +309,7 @@ function MessagesContent() {
     try {
       await api.messages.deleteMessage(msgId);
       setMessages((prev) => prev.filter((m) => m.id !== msgId));
+      setSelectedMsgId(null);
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "Failed to unsend message.");
     }
@@ -280,7 +318,10 @@ function MessagesContent() {
   const handleCopyText = (msgId: number, text: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(msgId);
-    setTimeout(() => setCopiedId(null), 2000);
+    setTimeout(() => {
+      setCopiedId(null);
+      setSelectedMsgId(null);
+    }, 1800);
   };
 
   const handleBlockUser = async () => {
@@ -355,11 +396,19 @@ function MessagesContent() {
 
   return (
     <div
-      className={`mx-auto max-w-5xl px-2 sm:px-4 py-3 sm:py-6 h-[calc(100vh-4.5rem)] sm:h-[calc(100vh-5rem)] ${
-        activeConv ? "pb-0" : "pb-16 md:pb-0"
+      className={`mx-auto max-w-5xl h-[calc(100dvh-4rem)] md:h-[calc(100dvh-5rem)] ${
+        activeConv
+          ? "p-0 md:px-4 md:py-6"
+          : "px-2 sm:px-4 py-3 sm:py-6 pb-20 md:pb-6"
       }`}
     >
-      <div className="flex h-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <div
+        className={`flex h-full overflow-hidden bg-white dark:bg-slate-900 ${
+          activeConv
+            ? "rounded-none md:rounded-2xl border-0 md:border md:border-slate-200 md:dark:border-slate-800 shadow-none md:shadow-xs"
+            : "rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs"
+        }`}
+      >
         {/* Left Column: Conversation List */}
         <div
           className={`w-full md:w-80 lg:w-96 flex-col border-r border-slate-200 dark:border-slate-800 ${
@@ -502,23 +551,25 @@ function MessagesContent() {
           </div>
         </div>
 
-        {/* Right Column: Active Chat Window */}
+        {/* Right Column: Active Chat Window (Mobile Full Viewport & Desktop Embedded) */}
         <div
-          className={`flex-1 flex flex-col h-full bg-slate-50/50 dark:bg-slate-950 ${
-            activeConv ? "flex" : "hidden md:flex"
+          className={`flex-col h-full bg-slate-50/50 dark:bg-slate-950 ${
+            activeConv
+              ? "fixed inset-0 z-50 flex h-[100dvh] md:static md:z-auto md:flex-1 md:h-full"
+              : "hidden md:flex md:flex-1"
           }`}
         >
           {activeConv ? (
             <>
               {/* Chat Header */}
-              <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
-                <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between border-b border-slate-200 bg-white px-3 sm:px-4 py-2.5 sm:py-3 dark:border-slate-800 dark:bg-slate-900 shadow-2xs shrink-0">
+                <div className="flex items-center gap-2.5 sm:gap-3">
                   <button
                     onClick={() => {
                       setActiveConv(null);
                       router.replace("/messages", { scroll: false });
                     }}
-                    className="md:hidden rounded-full p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 min-h-[44px] min-w-[44px] flex items-center justify-center -ml-1"
+                    className="md:hidden rounded-full p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 min-h-[44px] min-w-[44px] flex items-center justify-center -ml-1"
                     aria-label="Back to conversations"
                   >
                     <ArrowLeft className="h-5 w-5" />
@@ -526,7 +577,7 @@ function MessagesContent() {
 
                   <Link
                     href={`/profile/${activeConv.participant.username}`}
-                    className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-600 font-bold text-sm text-white overflow-hidden shadow-2xs"
+                    className="relative flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full bg-blue-600 font-bold text-sm text-white overflow-hidden shadow-2xs"
                   >
                     {activeConv.participant.profile_picture ? (
                       <Image
@@ -556,15 +607,15 @@ function MessagesContent() {
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-2 text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400">
                       <span>@{activeConv.participant.username}</span>
                       {activeConv.participant.is_alumni || activeConv.participant.year === "Alumni" ? (
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-blue-50 px-2 py-0.2 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-blue-50 px-2 py-0.2 text-[9px] sm:text-[10px] font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
                           <GraduationCap className="h-2.5 w-2.5" />
                           <span>Alumni</span>
                         </span>
                       ) : activeConv.participant.year ? (
-                        <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.2 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+                        <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.2 text-[9px] sm:text-[10px] font-semibold text-slate-600 dark:text-slate-300">
                           {activeConv.participant.year}
                         </span>
                       ) : null}
@@ -573,14 +624,14 @@ function MessagesContent() {
                 </div>
 
                 {/* Chat Action Icons (Search, Sound, Options) */}
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-0.5 sm:gap-1">
                   {/* Search toggle in chat */}
                   <button
                     onClick={() => {
                       setInChatSearchOpen(!inChatSearchOpen);
                       if (inChatSearchOpen) setInChatSearchQuery("");
                     }}
-                    className={`rounded-full p-2 transition ${
+                    className={`rounded-full p-2 transition min-h-[44px] min-w-[44px] flex items-center justify-center ${
                       inChatSearchOpen
                         ? "bg-blue-50 text-blue-600 dark:bg-slate-800 dark:text-blue-400"
                         : "text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
@@ -594,7 +645,7 @@ function MessagesContent() {
                   {/* Sound Toggle */}
                   <button
                     onClick={toggleSound}
-                    className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition"
+                    className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition min-h-[44px] min-w-[44px] flex items-center justify-center"
                     title={soundOn ? "Mute chat sounds" : "Enable chat sounds"}
                     aria-label={soundOn ? "Mute sounds" : "Enable sounds"}
                   >
@@ -609,7 +660,7 @@ function MessagesContent() {
                   <div className="relative">
                     <button
                       onClick={() => setMenuOpen(!menuOpen)}
-                      className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                      className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 min-h-[44px] min-w-[44px] flex items-center justify-center"
                       aria-label="More options"
                     >
                       <MoreVertical className="h-4 w-4" />
@@ -642,7 +693,7 @@ function MessagesContent() {
 
               {/* In-Chat Search Bar */}
               {inChatSearchOpen && (
-                <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2 dark:border-slate-800 dark:bg-slate-900/90 animate-in fade-in duration-150">
+                <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2 dark:border-slate-800 dark:bg-slate-900/90 animate-in fade-in duration-150 shrink-0">
                   <Search className="h-3.5 w-3.5 text-slate-400" />
                   <input
                     type="text"
@@ -662,7 +713,7 @@ function MessagesContent() {
                       setInChatSearchOpen(false);
                       setInChatSearchQuery("");
                     }}
-                    className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                    className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 min-h-[36px] min-w-[36px] flex items-center justify-center"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -671,7 +722,7 @@ function MessagesContent() {
 
               {/* Message Request / Follow Back Banner */}
               {activeConv.participant.is_following === false && (
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900/60 px-4 py-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900/60 px-4 py-3 shrink-0">
                   <div className="flex items-center gap-2">
                     <UserPlus className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
                     <p className="text-xs text-amber-900 dark:text-amber-200">
@@ -714,8 +765,8 @@ function MessagesContent() {
                 </div>
               )}
 
-              {/* Message List */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              {/* Message List - Single Pure Scroll Container */}
+              <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 overscroll-contain">
                 {loadingMessages ? (
                   <div className="flex h-48 items-center justify-center">
                     <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
@@ -774,9 +825,9 @@ function MessagesContent() {
                           }`}
                         >
                           <div className="flex items-end gap-1.5 max-w-[85%] sm:max-w-[75%]">
-                            {/* Action Toolbar on Hover (Unsend / Copy) */}
+                            {/* Desktop Hover Action Toolbar */}
                             {isMe && (
-                              <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 mb-1 transition">
+                              <div className="hidden sm:flex opacity-0 group-hover:opacity-100 items-center gap-1 mb-1 transition">
                                 <button
                                   type="button"
                                   onClick={() => handleCopyText(msg.id, msg.content)}
@@ -802,9 +853,10 @@ function MessagesContent() {
                               </div>
                             )}
 
-                            {/* Bubble */}
+                            {/* Message Bubble - Tap to reveal mobile action bar */}
                             <div
-                              className={`rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed shadow-2xs whitespace-pre-wrap break-words ${
+                              onClick={() => setSelectedMsgId(selectedMsgId === msg.id ? null : msg.id)}
+                              className={`cursor-pointer rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed shadow-2xs whitespace-pre-wrap break-words active:scale-[0.99] transition-transform select-text ${
                                 isMe
                                   ? "bg-blue-600 text-white rounded-tr-xs"
                                   : "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800 rounded-tl-xs"
@@ -813,9 +865,9 @@ function MessagesContent() {
                               {msg.content}
                             </div>
 
-                            {/* Action Toolbar for Received Messages (Copy) */}
+                            {/* Desktop Hover Action Toolbar for Received Messages */}
                             {!isMe && (
-                              <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 mb-1 transition">
+                              <div className="hidden sm:flex opacity-0 group-hover:opacity-100 items-center gap-1 mb-1 transition">
                                 <button
                                   type="button"
                                   onClick={() => handleCopyText(msg.id, msg.content)}
@@ -833,11 +885,57 @@ function MessagesContent() {
                             )}
                           </div>
 
+                          {/* Mobile Action Bar when message is tapped */}
+                          {selectedMsgId === msg.id && (
+                            <div className="sm:hidden flex items-center gap-2 mt-1.5 bg-slate-900 text-white dark:bg-slate-800 rounded-full px-3 py-1 text-[11px] font-semibold shadow-lg animate-in fade-in zoom-in-95">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCopyText(msg.id, msg.content);
+                                }}
+                                className="flex items-center gap-1 hover:text-blue-400 transition"
+                              >
+                                {copiedId === msg.id ? (
+                                  <>
+                                    <Check className="h-3.5 w-3.5 text-emerald-400" />
+                                    <span className="text-emerald-400">Copied!</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="h-3.5 w-3.5" />
+                                    <span>Copy</span>
+                                  </>
+                                )}
+                              </button>
+                              {isMe && (
+                                <>
+                                  <span className="text-slate-600">|</span>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteMessage(msg.id);
+                                    }}
+                                    className="flex items-center gap-1 text-rose-400 hover:text-rose-300 transition"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                    <span>Unsend</span>
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          )}
+
                           <div className="flex items-center gap-1 mt-0.5 px-1 text-[10px] text-slate-400">
                             <span>{formatMessageTime(msg.created_at)}</span>
                             {isMe && (
                               <span>
-                                {msg.is_read ? (
+                                {msg.id < 0 ? (
+                                  <span className="inline-block animate-pulse text-[9px] text-blue-400 dark:text-blue-300">
+                                    Sending...
+                                  </span>
+                                ) : msg.is_read ? (
                                   <CheckCheck className="h-3 w-3 text-blue-500" />
                                 ) : (
                                   <Check className="h-3 w-3 text-slate-400" />
@@ -855,16 +953,16 @@ function MessagesContent() {
 
               {/* Error Callout */}
               {error && (
-                <div className="mx-4 mb-2 flex items-center gap-2 rounded-xl bg-rose-50 p-2 text-xs text-rose-600 dark:bg-rose-950/40 dark:text-rose-400">
+                <div className="mx-4 mb-2 flex items-center gap-2 rounded-xl bg-rose-50 p-2 text-xs text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 shrink-0">
                   <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                   <span>{error}</span>
                 </div>
               )}
 
-              {/* Chat Input Bar */}
+              {/* Chat Input Bar (Sticky at bottom, zero double scrollbar) */}
               <form
                 onSubmit={handleSendMessage}
-                className="flex items-center gap-2 border-t border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900"
+                className="flex items-center gap-2 border-t border-slate-200 bg-white p-2.5 sm:p-3 pb-3 dark:border-slate-800 dark:bg-slate-900 shrink-0"
               >
                 <input
                   ref={inputRef}
@@ -873,19 +971,15 @@ function MessagesContent() {
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder="Type a message (Enter to send)..."
                   maxLength={2000}
-                  className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                  className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 />
                 <button
                   type="submit"
-                  disabled={!inputText.trim() || sending}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs transition hover:bg-blue-700 disabled:opacity-40"
+                  disabled={!inputText.trim()}
+                  className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs transition hover:bg-blue-700 disabled:opacity-40"
                   aria-label="Send message"
                 >
-                  {sending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
+                  <Send className="h-4 w-4" />
                 </button>
               </form>
             </>

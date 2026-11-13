@@ -21,6 +21,7 @@ import {
   ShieldCheck,
   AlertTriangle,
   MessageSquare,
+  LogOut,
 } from "lucide-react";
 import { LinkedinIcon } from "@/components/icons/LinkedinIcon";
 import { AuthGuard } from "@/components/AuthGuard";
@@ -28,7 +29,7 @@ import { AuthGuard } from "@/components/AuthGuard";
 export default function ProfilePage() {
   const params = useParams<{ username: string }>();
   const username = params.username;
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -238,13 +239,23 @@ export default function ProfilePage() {
                 )}
 
                 {profile.is_self ? (
-                  <button
-                    onClick={() => setEditOpen(true)}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 shadow-2xs transition"
-                  >
-                    <Edit3 className="h-3.5 w-3.5" />
-                    <span>Edit Profile</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setEditOpen(true)}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 shadow-2xs transition"
+                    >
+                      <Edit3 className="h-3.5 w-3.5" />
+                      <span>Edit Profile</span>
+                    </button>
+                    <button
+                      onClick={logout}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50/60 px-3.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-900/50 shadow-2xs transition"
+                      title="Log Out of CampusConnect"
+                    >
+                      <LogOut className="h-3.5 w-3.5" />
+                      <span>Log Out</span>
+                    </button>
+                  </div>
                 ) : (
                   <div className="flex items-center gap-2">
                     <Link

@@ -254,10 +254,10 @@ export function Navbar() {
               <Search className="h-4 w-4" />
             </Link>
 
-            {/* Direct Messages Button */}
+            {/* Direct Messages Button (Desktop only; on mobile it is in the bottom bar) */}
             <Link
               href="/messages"
-              className={`relative flex items-center justify-center rounded-full p-2 transition-colors min-h-[44px] min-w-[44px] ${
+              className={`hidden md:flex relative items-center justify-center rounded-full p-2 transition-colors min-h-[44px] min-w-[44px] ${
                 pathname.startsWith("/messages")
                   ? "bg-blue-600 text-white"
                   : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
@@ -272,10 +272,10 @@ export function Navbar() {
               )}
             </Link>
 
-            {/* Notification Bell */}
+            {/* Notification Bell (Desktop only; on mobile it is in the bottom bar) */}
             <Link
               href="/notifications"
-              className={`relative flex items-center justify-center rounded-full p-2 transition-colors min-h-[44px] min-w-[44px] ${
+              className={`hidden md:flex relative items-center justify-center rounded-full p-2 transition-colors min-h-[44px] min-w-[44px] ${
                 pathname === "/notifications"
                   ? "bg-blue-600 text-white"
                   : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
@@ -315,11 +315,11 @@ export function Navbar() {
               <span className="hidden sm:inline">@{user.username}</span>
             </Link>
 
-            {/* Logout button */}
+            {/* Logout button (Desktop only; on mobile it is inside the profile page) */}
             <button
               onClick={logout}
               title="Log out"
-              className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="hidden md:flex rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition min-h-[44px] min-w-[44px] items-center justify-center"
             >
               <LogOut className="h-4 w-4" />
             </button>
