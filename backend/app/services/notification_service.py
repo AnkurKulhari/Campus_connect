@@ -133,3 +133,23 @@ def mark_all_as_read(user_id: int, db: Session) -> dict:
     )
     db.commit()
     return {"message": "All notifications marked as read."}
+
+
+def delete_user_notification(notification_id: int, user_id: int, db: Session) -> dict:
+    notif = db.scalar(
+        select(Notification).where(
+            Notification.id == notification_id,
+            Notification.recipient_id == user_id,
+        )
+    )
+    if not notif:
+        raise HTTPException(status_code=404, detail="Notification not found.")
+    db.delete(notif)
+    db.commit()
+    return {"message": "Notification removed."}
+
+
+def clear_all_user_notifications(user_id: int, db: Session) -> dict:
+    db.execute(delete(Notification).where(Notification.recipient_id == user_id))
+    db.commit()
+    return {"message": "All notifications cleared."}

@@ -56,8 +56,12 @@ export function Navbar() {
     };
 
     fetchCounts();
+    window.addEventListener("campusconnect-unread-update", fetchCounts);
     const interval = setInterval(fetchCounts, 45000); // refresh every 45s
-    return () => clearInterval(interval);
+    return () => {
+      window.removeEventListener("campusconnect-unread-update", fetchCounts);
+      clearInterval(interval);
+    };
   }, [user]);
 
   // Live search preview

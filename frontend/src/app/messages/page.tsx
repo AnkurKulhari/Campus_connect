@@ -9,6 +9,13 @@ import { Conversation, DirectMessage } from "@/types";
 import { api } from "@/lib/api";
 import { AuthGuard } from "@/components/AuthGuard";
 import {
+  playMessageSentSound,
+  playMessageReceivedSound,
+  isSoundEnabled,
+  setSoundEnabled,
+} from "@/lib/sound";
+import { showBrowserNotification } from "@/lib/browserNotifications";
+import {
   MessageSquare,
   Send,
   Search,
@@ -22,7 +29,19 @@ import {
   Loader2,
   AlertCircle,
   UserPlus,
+  Volume2,
+  VolumeX,
+  Copy,
+  Trash2,
+  X,
+  Sparkles,
 } from "lucide-react";
+
+const STARTER_PROMPTS = [
+  "👋 Hey! Saw your profile on CampusConnect.",
+  "🤝 Hey, are you working on any hackathon projects?",
+  "📚 Hey, do you have notes for this semester?",
+];
 
 function MessagesContent() {
   const { user } = useAuth();
@@ -42,11 +61,26 @@ function MessagesContent() {
   const [error, setError] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [dmTab, setDmTab] = useState<"following" | "requests">("following");
+  const [soundOn, setSoundOn] = useState(true);
+  const [inChatSearchOpen, setInChatSearchOpen] = useState(false);
+  const [inChatSearchQuery, setInChatSearchQuery] = useState("");
+  const [copiedId, setCopiedId] = useState<number | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const handledParamRef = useRef<string | null>(null);
   const currentConvIdRef = useRef<number | null>(null);
+  const latestMessageIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    setSoundOn(isSoundEnabled());
+  }, []);
+
+  const toggleSound = () => {
+    const next = !soundOn;
+    setSoundOn(next);
+    setSoundEnabled(next);
+  };
 
   const scrollToBottom = (smooth = true) => {
     messagesEndRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto" });
@@ -122,6 +156,28 @@ function MessagesContent() {
     if (isInitial) setLoadingMessages(true);
     try {
       const msgs = await api.messages.getMessages(convId);
+      
+      // Check for incoming new messages during polling
+      if (!isInitial && msgs.length > 0) {
+        const newest = msgs[msgs.length - 1];
+        if (
+          latestMessageIdRef.current &&
+          newest.id > latestMessageIdRef.current &&
+          newest.sender_id !== user?.id
+        ) {
+          playMessageReceivedSound();
+          if (typeof document !== "undefined" && document.hidden) {
+            showBrowserNotification(`New message from @${activeConv?.participant.username || "classmate"}`, {
+              body: newest.content,
+              url: `/messages?id=${convId}`,
+            });
+          }
+        }
+      }
+
+      if (msgs.length > 0) {
+        latestMessageIdRef.current = msgs[msgs.length - 1].id;
+      }
       setMessages(msgs);
       if (isInitial) {
         setTimeout(() => scrollToBottom(false), 50);
@@ -131,7 +187,7 @@ function MessagesContent() {
     } finally {
       if (isInitial) setLoadingMessages(false);
     }
-  }, []);
+  }, [user?.id, activeConv?.participant.username]);
 
   // When active conversation changes
   useEffect(() => {
@@ -150,6 +206,11 @@ function MessagesContent() {
     setConversations((prev) =>
       prev.map((c) => (c.id === activeConv.id && c.unread_count > 0 ? { ...c, unread_count: 0 } : c))
     );
+
+    // Sync notification badges in navbar & mobile nav immediately
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("campusconnect-unread-update"));
+    }
 
     // Poll for new messages every 8 seconds (only when tab is visible)
     const interval = setInterval(() => {
@@ -175,7 +236,9 @@ function MessagesContent() {
     setError(null);
 
     try {
+      playMessageSentSound();
       const newMsg = await api.messages.sendMessage(activeConv.id, textToSend);
+      latestMessageIdRef.current = newMsg.id;
       setMessages((prev) => [...prev, newMsg]);
 
       // Update conversation in list
@@ -202,6 +265,22 @@ function MessagesContent() {
     } finally {
       setSending(false);
     }
+  };
+
+  const handleDeleteMessage = async (msgId: number) => {
+    if (!window.confirm("Unsend this message?")) return;
+    try {
+      await api.messages.deleteMessage(msgId);
+      setMessages((prev) => prev.filter((m) => m.id !== msgId));
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Failed to unsend message.");
+    }
+  };
+
+  const handleCopyText = (msgId: number, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(msgId);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   const handleBlockUser = async () => {
@@ -243,6 +322,21 @@ function MessagesContent() {
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
+  const formatDateDivider = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    if (d.toDateString() === today.toDateString()) return "Today";
+    if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
+    return d.toLocaleDateString(undefined, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
   const formatConvTime = (dateStr: string) => {
     const d = new Date(dateStr);
     const now = new Date();
@@ -252,6 +346,12 @@ function MessagesContent() {
     }
     return d.toLocaleDateString([], { month: "short", day: "numeric" });
   };
+
+  const visibleMessages = inChatSearchQuery.trim()
+    ? messages.filter((m) =>
+        m.content.toLowerCase().includes(inChatSearchQuery.toLowerCase())
+      )
+    : messages;
 
   return (
     <div
@@ -282,6 +382,7 @@ function MessagesContent() {
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
               />
             </div>
+
             {/* DM Category Tabs: Following vs Requests */}
             <div className="flex items-center gap-1 mt-3 p-1 rounded-xl bg-slate-100 dark:bg-slate-800">
               <button
@@ -471,38 +572,102 @@ function MessagesContent() {
                   </div>
                 </div>
 
-                {/* Chat Options */}
-                <div className="relative">
+                {/* Chat Action Icons (Search, Sound, Options) */}
+                <div className="flex items-center gap-1">
+                  {/* Search toggle in chat */}
                   <button
-                    onClick={() => setMenuOpen(!menuOpen)}
-                    className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                    onClick={() => {
+                      setInChatSearchOpen(!inChatSearchOpen);
+                      if (inChatSearchOpen) setInChatSearchQuery("");
+                    }}
+                    className={`rounded-full p-2 transition ${
+                      inChatSearchOpen
+                        ? "bg-blue-50 text-blue-600 dark:bg-slate-800 dark:text-blue-400"
+                        : "text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                    }`}
+                    title="Search in conversation"
+                    aria-label="Search conversation messages"
                   >
-                    <MoreVertical className="h-4 w-4" />
+                    <Search className="h-4 w-4" />
                   </button>
 
-                  {menuOpen && (
-                    <div className="absolute right-0 top-full mt-1 w-44 rounded-xl border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-800 dark:bg-slate-900 z-20">
-                      <Link
-                        href={`/profile/${activeConv.participant.username}`}
-                        className="block px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        View Full Profile
-                      </Link>
-                      <button
-                        onClick={() => {
-                          setMenuOpen(false);
-                          handleBlockUser();
-                        }}
-                        className="w-full flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
-                      >
-                        <Ban className="h-3.5 w-3.5" />
-                        <span>Block User</span>
-                      </button>
-                    </div>
-                  )}
+                  {/* Sound Toggle */}
+                  <button
+                    onClick={toggleSound}
+                    className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition"
+                    title={soundOn ? "Mute chat sounds" : "Enable chat sounds"}
+                    aria-label={soundOn ? "Mute sounds" : "Enable sounds"}
+                  >
+                    {soundOn ? (
+                      <Volume2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    ) : (
+                      <VolumeX className="h-4 w-4 text-slate-400" />
+                    )}
+                  </button>
+
+                  {/* More Menu */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setMenuOpen(!menuOpen)}
+                      className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                      aria-label="More options"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
+
+                    {menuOpen && (
+                      <div className="absolute right-0 top-full mt-1 w-44 rounded-xl border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-800 dark:bg-slate-900 z-20">
+                        <Link
+                          href={`/profile/${activeConv.participant.username}`}
+                          className="block px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
+                          onClick={() => setMenuOpen(false)}
+                        >
+                          View Full Profile
+                        </Link>
+                        <button
+                          onClick={() => {
+                            setMenuOpen(false);
+                            handleBlockUser();
+                          }}
+                          className="w-full flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                        >
+                          <Ban className="h-3.5 w-3.5" />
+                          <span>Block User</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
+
+              {/* In-Chat Search Bar */}
+              {inChatSearchOpen && (
+                <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2 dark:border-slate-800 dark:bg-slate-900/90 animate-in fade-in duration-150">
+                  <Search className="h-3.5 w-3.5 text-slate-400" />
+                  <input
+                    type="text"
+                    value={inChatSearchQuery}
+                    onChange={(e) => setInChatSearchQuery(e.target.value)}
+                    placeholder="Search messages in this chat..."
+                    autoFocus
+                    className="flex-1 bg-transparent text-xs text-slate-900 placeholder-slate-400 focus:outline-none dark:text-slate-100"
+                  />
+                  {inChatSearchQuery && (
+                    <span className="text-[10px] text-slate-400">
+                      {visibleMessages.length} found
+                    </span>
+                  )}
+                  <button
+                    onClick={() => {
+                      setInChatSearchOpen(false);
+                      setInChatSearchQuery("");
+                    }}
+                    className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
 
               {/* Message Request / Follow Back Banner */}
               {activeConv.participant.is_following === false && (
@@ -550,49 +715,138 @@ function MessagesContent() {
               )}
 
               {/* Message List */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              <div className="flex-1 overflow-y-auto p-4 space-y-2">
                 {loadingMessages ? (
                   <div className="flex h-48 items-center justify-center">
                     <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
                   </div>
-                ) : messages.length === 0 ? (
+                ) : visibleMessages.length === 0 ? (
                   <div className="flex h-full flex-col items-center justify-center text-center text-slate-400 py-12">
                     <MessageSquare className="h-10 w-10 opacity-30 mb-2 text-blue-500" />
-                    <p className="text-xs font-bold text-slate-900 dark:text-slate-100">No messages in this conversation yet.</p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      Send a message to introduce yourself, discuss projects, or ask questions!
+                    <p className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                      {inChatSearchQuery ? "No messages found matching search." : "No messages yet."}
                     </p>
+                    {!inChatSearchQuery && (
+                      <div className="mt-4 max-w-sm space-y-2">
+                        <div className="flex items-center justify-center gap-1.5 text-[11px] font-semibold text-slate-500 mb-2">
+                          <Sparkles className="h-3 w-3 text-blue-500" />
+                          <span>Campus Conversation Starters</span>
+                        </div>
+                        {STARTER_PROMPTS.map((prompt, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setInputText(prompt);
+                              inputRef.current?.focus();
+                            }}
+                            className="w-full text-left rounded-xl border border-slate-200/90 bg-white p-2.5 text-xs text-slate-700 hover:border-blue-500 hover:bg-blue-50/50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-400 transition"
+                          >
+                            {prompt}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ) : (
-                  messages.map((msg) => {
+                  visibleMessages.map((msg, index) => {
                     const isMe = user && msg.sender_id === user.id;
+                    const prevMsg = visibleMessages[index - 1];
+                    const isNewDay =
+                      !prevMsg ||
+                      new Date(msg.created_at).toDateString() !==
+                        new Date(prevMsg.created_at).toDateString();
+
                     return (
-                      <div
-                        key={msg.id}
-                        className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
-                      >
+                      <React.Fragment key={msg.id}>
+                        {/* Day Divider Pill */}
+                        {isNewDay && (
+                          <div className="my-3 flex items-center justify-center">
+                            <span className="rounded-full bg-slate-200/60 dark:bg-slate-800/80 px-3 py-0.5 text-[10px] font-bold text-slate-500 tracking-wider">
+                              {formatDateDivider(msg.created_at)}
+                            </span>
+                          </div>
+                        )}
+
                         <div
-                          className={`max-w-[78%] sm:max-w-[70%] rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed shadow-2xs whitespace-pre-wrap break-words ${
-                            isMe
-                              ? "bg-blue-600 text-white rounded-tr-xs"
-                              : "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800 rounded-tl-xs"
+                          className={`group flex flex-col ${
+                            isMe ? "items-end" : "items-start"
                           }`}
                         >
-                          {msg.content}
+                          <div className="flex items-end gap-1.5 max-w-[85%] sm:max-w-[75%]">
+                            {/* Action Toolbar on Hover (Unsend / Copy) */}
+                            {isMe && (
+                              <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 mb-1 transition">
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyText(msg.id, msg.content)}
+                                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/50 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition"
+                                  title={copiedId === msg.id ? "Copied!" : "Copy text"}
+                                  aria-label="Copy message"
+                                >
+                                  {copiedId === msg.id ? (
+                                    <Check className="h-3 w-3 text-emerald-600" />
+                                  ) : (
+                                    <Copy className="h-3 w-3" />
+                                  )}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteMessage(msg.id)}
+                                  className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
+                                  title="Unsend message"
+                                  aria-label="Unsend message"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </button>
+                              </div>
+                            )}
+
+                            {/* Bubble */}
+                            <div
+                              className={`rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed shadow-2xs whitespace-pre-wrap break-words ${
+                                isMe
+                                  ? "bg-blue-600 text-white rounded-tr-xs"
+                                  : "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800 rounded-tl-xs"
+                              }`}
+                            >
+                              {msg.content}
+                            </div>
+
+                            {/* Action Toolbar for Received Messages (Copy) */}
+                            {!isMe && (
+                              <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 mb-1 transition">
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyText(msg.id, msg.content)}
+                                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/50 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition"
+                                  title={copiedId === msg.id ? "Copied!" : "Copy text"}
+                                  aria-label="Copy message"
+                                >
+                                  {copiedId === msg.id ? (
+                                    <Check className="h-3 w-3 text-emerald-600" />
+                                  ) : (
+                                    <Copy className="h-3 w-3" />
+                                  )}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1 mt-0.5 px-1 text-[10px] text-slate-400">
+                            <span>{formatMessageTime(msg.created_at)}</span>
+                            {isMe && (
+                              <span>
+                                {msg.is_read ? (
+                                  <CheckCheck className="h-3 w-3 text-blue-500" />
+                                ) : (
+                                  <Check className="h-3 w-3 text-slate-400" />
+                                )}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1 mt-1 px-1 text-[10px] text-slate-400">
-                          <span>{formatMessageTime(msg.created_at)}</span>
-                          {isMe && (
-                            <span>
-                              {msg.is_read ? (
-                                <CheckCheck className="h-3 w-3 text-blue-500" />
-                              ) : (
-                                <Check className="h-3 w-3 text-slate-400" />
-                              )}
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                      </React.Fragment>
                     );
                   })
                 )}
@@ -625,6 +879,7 @@ function MessagesContent() {
                   type="submit"
                   disabled={!inputText.trim() || sending}
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs transition hover:bg-blue-700 disabled:opacity-40"
+                  aria-label="Send message"
                 >
                   {sending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

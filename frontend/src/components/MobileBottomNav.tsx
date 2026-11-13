@@ -48,9 +48,11 @@ function MobileBottomNavInner() {
     };
 
     fetchCounts();
+    window.addEventListener("campusconnect-unread-update", fetchCounts);
     const interval = setInterval(fetchCounts, 45000);
     return () => {
       isMounted = false;
+      window.removeEventListener("campusconnect-unread-update", fetchCounts);
       clearInterval(interval);
     };
   }, [user, pathname]);

@@ -12,7 +12,8 @@ from app.schemas.auth import MessageResponse as BasicMessageResponse
 from app.services.message_service import (
     list_conversations, get_conversation_messages,
     send_message, start_conversation_with_user,
-    get_total_unread_count, block_user, unblock_user
+    get_total_unread_count, block_user, unblock_user,
+    delete_message
 )
 
 router = APIRouter(prefix="/messages", tags=["Messages"])
@@ -88,3 +89,13 @@ def unblock(
 ):
     """Unblock a user."""
     return unblock_user(username, current_user, db)
+
+
+@router.delete("/{message_id}", response_model=BasicMessageResponse)
+def delete_chat_message(
+    message_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Unsend / delete a message sent by the current user."""
+    return delete_message(message_id, current_user, db)

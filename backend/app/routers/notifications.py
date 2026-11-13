@@ -14,6 +14,8 @@ from app.services.notification_service import (
     get_unread_count,
     mark_notification_as_read,
     mark_all_as_read,
+    delete_user_notification,
+    clear_all_user_notifications,
 )
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
@@ -57,3 +59,22 @@ def read_all_notifications(
 ):
     """Mark all notifications for current user as read."""
     return mark_all_as_read(current_user.id, db)
+
+
+@router.delete("/clear-all", response_model=MessageResponse)
+def clear_all(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Clear all notifications for the current user."""
+    return clear_all_user_notifications(current_user.id, db)
+
+
+@router.delete("/{notification_id}", response_model=MessageResponse)
+def delete_notification(
+    notification_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Delete an individual notification."""
+    return delete_user_notification(notification_id, current_user.id, db)

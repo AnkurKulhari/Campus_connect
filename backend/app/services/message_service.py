@@ -293,3 +293,30 @@ def unblock_user(username: str, current_user: User, db: Session):
         db.delete(block_entry)
         db.commit()
     return {"message": f"@{username} has been unblocked."}
+
+
+def delete_message(message_id: int, current_user: User, db: Session) -> dict:
+    msg = db.scalar(select(Message).where(Message.id == message_id))
+    if not msg:
+        raise HTTPException(status_code=404, detail="Message not found.")
+    if msg.sender_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only delete your own messages.")
+
+    conv_id = msg.conversation_id
+    db.delete(msg)
+    db.commit()
+
+    # Recalculate conversation's last_message_at if this was the latest message
+    latest_msg = db.scalar(
+        select(Message)
+        .where(Message.conversation_id == conv_id)
+        .order_by(Message.created_at.desc())
+    )
+    conv = db.scalar(select(Conversation).where(Conversation.id == conv_id))
+    if conv:
+        if latest_msg:
+            conv.last_message_at = latest_msg.created_at
+        db.commit()
+
+    return {"message": "Message deleted."}
+

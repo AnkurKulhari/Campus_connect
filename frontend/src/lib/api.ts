@@ -445,6 +445,16 @@ export const api = {
       request<{ message: string }>("/notifications/read-all", {
         method: "PATCH",
       }),
+
+    delete: (notificationId: number) =>
+      request<{ message: string }>(`/notifications/${notificationId}`, {
+        method: "DELETE",
+      }),
+
+    clearAll: () =>
+      request<{ message: string }>("/notifications/clear-all", {
+        method: "DELETE",
+      }),
   },
 
   messages: {
@@ -461,6 +471,11 @@ export const api = {
       request<DirectMessage>(`/messages/conversations/${conversationId}`, {
         method: "POST",
         body: JSON.stringify({ content }),
+      }),
+
+    deleteMessage: (messageId: number) =>
+      request<{ message: string }>(`/messages/${messageId}`, {
+        method: "DELETE",
       }),
 
     startConversation: (username: string, message?: string) =>
