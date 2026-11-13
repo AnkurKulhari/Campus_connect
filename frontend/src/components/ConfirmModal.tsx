@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { AlertTriangle, Loader2 } from "lucide-react";
 
 interface ConfirmModalProps {
@@ -28,10 +29,16 @@ export function ConfirmModal({
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
 
-  return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
       <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 transition-all scale-100">
         <div className="flex items-center gap-3">
           <div
@@ -58,7 +65,7 @@ export function ConfirmModal({
             type="button"
             onClick={onCancel}
             disabled={isLoading}
-            className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition disabled:opacity-50"
+            className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition disabled:opacity-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             {cancelText}
           </button>
@@ -66,7 +73,7 @@ export function ConfirmModal({
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold text-white shadow-xs transition disabled:opacity-50 ${
+            className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold text-white shadow-xs transition disabled:opacity-50 min-h-[44px] min-w-[44px] justify-center ${
               isDestructive
                 ? "bg-red-600 hover:bg-red-500"
                 : "bg-blue-600 hover:bg-blue-500"
@@ -83,6 +90,7 @@ export function ConfirmModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

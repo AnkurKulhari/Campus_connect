@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback, Suspense } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -66,10 +67,16 @@ function MessagesContent() {
   const [inChatSearchQuery, setInChatSearchQuery] = useState("");
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [selectedMsgId, setSelectedMsgId] = useState<number | null>(null);
+  const [activeMsgAction, setActiveMsgAction] = useState<DirectMessage | null>(null);
+  const [mounted, setMounted] = useState(false);
   const [msgIdToUnsend, setMsgIdToUnsend] = useState<number | null>(null);
   const [isUnsending, setIsUnsending] = useState(false);
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [isBlocking, setIsBlocking] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -870,9 +877,15 @@ function MessagesContent() {
                               </div>
                             )}
 
-                            {/* Message Bubble - Tap to reveal mobile action bar */}
+                            {/* Message Bubble - Tap to reveal actions on mobile */}
                             <div
-                              onClick={() => setSelectedMsgId(selectedMsgId === msg.id ? null : msg.id)}
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => {
+                                if (typeof window !== "undefined" && window.innerWidth < 640) {
+                                  setActiveMsgAction(msg);
+                                }
+                              }}
                               className={`cursor-pointer rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed shadow-2xs whitespace-pre-wrap break-words active:scale-[0.99] transition-transform select-text ${
                                 isMe
                                   ? "bg-blue-600 text-white rounded-tr-xs"
@@ -902,49 +915,7 @@ function MessagesContent() {
                             )}
                           </div>
 
-                          {/* Mobile Action Bar when message is tapped */}
-                          {selectedMsgId === msg.id && (
-                            <div className="sm:hidden flex items-center gap-2 mt-1.5 bg-slate-900 text-white dark:bg-slate-800 rounded-full px-3 py-1 text-[11px] font-semibold shadow-lg animate-in fade-in zoom-in-95">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleCopyText(msg.id, msg.content);
-                                }}
-                                className="flex items-center gap-1 hover:text-blue-400 transition"
-                              >
-                                {copiedId === msg.id ? (
-                                  <>
-                                    <Check className="h-3.5 w-3.5 text-emerald-400" />
-                                    <span className="text-emerald-400">Copied!</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Copy className="h-3.5 w-3.5" />
-                                    <span>Copy</span>
-                                  </>
-                                )}
-                              </button>
-                              {isMe && (
-                                <>
-                                  <span className="text-slate-600">|</span>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDeleteMessage(msg.id);
-                                    }}
-                                    className="flex items-center gap-1 text-rose-400 hover:text-rose-300 transition"
-                                  >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                    <span>Unsend</span>
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          )}
-
-                          <div className="flex items-center gap-1 mt-0.5 px-1 text-[10px] text-slate-400">
+                          <div className="flex items-center gap-1.5 mt-0.5 px-1 text-[10px] text-slate-400">
                             <span>{formatMessageTime(msg.created_at)}</span>
                             {isMe && (
                               <span>
@@ -959,6 +930,16 @@ function MessagesContent() {
                                 )}
                               </span>
                             )}
+                            {/* Always visible mobile trigger button */}
+                            <button
+                              type="button"
+                              onClick={() => setActiveMsgAction(msg)}
+                              className="sm:hidden p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 active:bg-slate-200 dark:active:bg-slate-800 transition min-h-[32px] min-w-[32px] flex items-center justify-center"
+                              title="Message options"
+                              aria-label="Message options"
+                            >
+                              <MoreVertical className="h-3.5 w-3.5" />
+                            </button>
                           </div>
                         </div>
                       </React.Fragment>
@@ -1015,6 +996,65 @@ function MessagesContent() {
             </div>
           )}
         </div>
+        {/* Mobile Message Actions Bottom Sheet (Portal) */}
+        {mounted && activeMsgAction && createPortal(
+          <div
+            className="fixed inset-0 z-[80] flex flex-col justify-end bg-black/60 backdrop-blur-xs p-3 sm:hidden animate-in fade-in duration-150"
+            onClick={() => setActiveMsgAction(null)}
+          >
+            <div
+              className="w-full rounded-3xl bg-white dark:bg-slate-900 p-4 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-2.5 animate-in slide-in-from-bottom-6 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Message snippet preview */}
+              <div className="px-3.5 py-2.5 text-xs text-slate-600 dark:text-slate-300 bg-slate-100/80 dark:bg-slate-800/80 rounded-2xl max-h-24 overflow-y-auto leading-relaxed">
+                {activeMsgAction.content}
+              </div>
+
+              <div className="space-y-2 pt-1">
+                {/* Copy Option */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleCopyText(activeMsgAction.id, activeMsgAction.content);
+                    setActiveMsgAction(null);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-sm font-semibold text-slate-800 dark:text-slate-100 transition min-h-[48px] active:scale-[0.99]"
+                >
+                  <Copy className="h-4 w-4 text-slate-500" />
+                  <span>{copiedId === activeMsgAction.id ? "Copied!" : "Copy Text"}</span>
+                </button>
+
+                {/* Unsend Option (if sent by me) */}
+                {user && activeMsgAction.sender_id === user.id && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const msgId = activeMsgAction.id;
+                      setActiveMsgAction(null);
+                      handleDeleteMessage(msgId);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 text-sm font-bold text-rose-600 dark:text-rose-400 transition min-h-[48px] active:scale-[0.99]"
+                  >
+                    <Trash2 className="h-4 w-4 text-rose-500" />
+                    <span>Unsend Message</span>
+                  </button>
+                )}
+
+                {/* Cancel Button */}
+                <button
+                  type="button"
+                  onClick={() => setActiveMsgAction(null)}
+                  className="w-full py-3 px-4 rounded-2xl border border-slate-200 dark:border-slate-800 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition min-h-[48px]"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
         {/* Unsend Message Custom Modal */}
         <ConfirmModal
           isOpen={msgIdToUnsend !== null}
