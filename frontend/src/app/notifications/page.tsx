@@ -82,7 +82,7 @@ export default function NotificationsPage() {
 
   return (
     <AuthGuard>
-      <div className="mx-auto max-w-2xl px-4 sm:px-6 py-8">
+      <div className="mx-auto max-w-2xl px-4 sm:px-6 py-6 sm:py-8 pb-24 lg:pb-8">
       <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 mb-6">
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-2xs">

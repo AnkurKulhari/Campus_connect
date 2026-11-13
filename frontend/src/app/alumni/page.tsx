@@ -93,7 +93,7 @@ export default function AlumniCirclePage() {
 
   return (
     <AuthGuard>
-      <div className="mx-auto max-w-5xl px-4 py-8">
+      <div className="mx-auto max-w-5xl px-4 py-6 sm:py-8 pb-24 lg:pb-8">
       {/* Header Banner - High contrast modern navy gradient */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 p-6 sm:p-10 text-white shadow-xl">
         <div className="relative z-10 max-w-2xl">

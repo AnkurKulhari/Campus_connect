@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { Post, PaginatedPosts, UserProfile } from "@/types";
+import { Post, PaginatedPosts, UserProfile, TrendingTopic } from "@/types";
 import { api } from "@/lib/api";
 import { PostCard } from "@/components/PostCard";
 import { CreatePostBox } from "@/components/CreatePostBox";
@@ -52,6 +52,7 @@ function HomeFeedContent() {
   const [selectedPill, setSelectedPill] = useState("all");
   const [posts, setPosts] = useState<Post[]>([]);
   const [suggestions, setSuggestions] = useState<UserProfile[]>([]);
+  const [trendingTopics, setTrendingTopics] = useState<TrendingTopic[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasNext, setHasNext] = useState(false);
@@ -92,18 +93,26 @@ function HomeFeedContent() {
     fetchPosts(activeTab, 1, false, tagParam);
   }, [activeTab, tagParam, fetchPosts]);
 
-  // Fetch Suggested Students & Alumni for Right Sidebar
+  // Fetch Suggested Students & Alumni and Trending Topics for Sidebar & Mobile Discovery
   useEffect(() => {
-    if (!user) return;
-    const loadSuggestions = async () => {
+    let isMounted = true;
+    const loadSidebarsData = async () => {
       try {
-        const res = await api.users.getSuggestions(5);
-        setSuggestions(res);
+        const [suggestRes, trendingRes] = await Promise.allSettled([
+          user ? api.users.getSuggestions(5) : Promise.resolve([]),
+          api.posts.getTrendingTopics(6),
+        ]);
+        if (!isMounted) return;
+        if (suggestRes.status === "fulfilled") setSuggestions(suggestRes.value || []);
+        if (trendingRes.status === "fulfilled") setTrendingTopics(trendingRes.value || []);
       } catch {
         // Silently catch
       }
     };
-    loadSuggestions();
+    loadSidebarsData();
+    return () => {
+      isMounted = false;
+    };
   }, [user]);
 
   // Fetch unread notification and message counts for Sidebar Badges
@@ -160,7 +169,7 @@ function HomeFeedContent() {
     : posts;
 
   return (
-    <div className="mx-auto max-w-7xl px-3 sm:px-6 py-6">
+    <div className="mx-auto max-w-7xl px-3 sm:px-6 py-4 sm:py-6 pb-24 lg:pb-8">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Sidebar: Student Profile & Navigation */}
         <aside className="hidden lg:block lg:col-span-3 space-y-4">
@@ -364,6 +373,44 @@ function HomeFeedContent() {
             })}
           </div>
 
+          {/* Mobile Trending Strip (Accessible on Mobile Devices) */}
+          {trendingTopics.length > 0 && (
+            <div className="xl:hidden flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none">
+              <div className="flex items-center gap-1 shrink-0 rounded-full bg-orange-50 px-2.5 py-1 text-[11px] font-bold text-orange-600 dark:bg-orange-950/40 dark:text-orange-400 border border-orange-200/50 dark:border-orange-900/50">
+                <Flame className="h-3 w-3" />
+                <span>Trending:</span>
+              </div>
+              {trendingTopics.map((topic) => {
+                const isSelected =
+                  tagParam?.toLowerCase() === topic.tag.toLowerCase();
+                return (
+                  <button
+                    key={topic.tag}
+                    onClick={() =>
+                      router.push(
+                        isSelected ? "/" : `/?tag=${encodeURIComponent(topic.tag)}`
+                      )
+                    }
+                    className={`shrink-0 flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold transition min-h-[32px] ${
+                      isSelected
+                        ? "bg-blue-600 text-white shadow-2xs"
+                        : "bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50 dark:border-slate-800 dark:bg-[#131B2E] dark:text-slate-300"
+                    }`}
+                  >
+                    <span>#{topic.tag}</span>
+                    <span
+                      className={`text-[10px] ${
+                        isSelected ? "text-blue-100" : "text-slate-400"
+                      }`}
+                    >
+                      {topic.post_count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {/* Active Tag Filter Banner */}
           {tagParam && (
             <div className="flex items-center justify-between rounded-2xl bg-blue-50 border border-blue-200 px-4 py-2.5 dark:bg-blue-950/40 dark:border-blue-900">
@@ -388,6 +435,77 @@ function HomeFeedContent() {
 
           {/* Create Post Widget */}
           {user && !tagParam && <CreatePostBox onPostCreated={handlePostCreated} />}
+
+          {/* Mobile Who to Connect With (Accessible on Mobile Devices) */}
+          {suggestions.length > 0 && !tagParam && (
+            <div className="xl:hidden rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-xs dark:border-slate-800 dark:bg-[#131B2E]">
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="flex items-center gap-1.5">
+                  <UserPlus className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                  <h3 className="font-extrabold text-xs text-slate-900 dark:text-white uppercase tracking-wider">
+                    Who to Connect With
+                  </h3>
+                </div>
+                <Link
+                  href="/search"
+                  className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  See all
+                </Link>
+              </div>
+
+              <div className="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-none">
+                {suggestions.map((peer) => (
+                  <div
+                    key={peer.id}
+                    className="shrink-0 w-36 rounded-xl border border-slate-100 dark:border-slate-800/80 bg-slate-50/60 dark:bg-slate-900/40 p-2.5 flex flex-col items-center text-center"
+                  >
+                    <Link href={`/profile/${peer.username}`} className="block">
+                      <div className="relative mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 font-bold text-xs text-white overflow-hidden shadow-2xs ring-2 ring-white dark:ring-slate-800">
+                        {peer.profile_picture ? (
+                          <Image
+                            src={peer.profile_picture}
+                            alt={peer.username}
+                            fill
+                            sizes="44px"
+                            className="object-cover"
+                          />
+                        ) : (
+                          peer.full_name.charAt(0).toUpperCase()
+                        )}
+                      </div>
+                      <p className="mt-1.5 font-bold text-xs text-slate-900 dark:text-white truncate max-w-[120px]">
+                        {peer.full_name}
+                      </p>
+                      <p className="text-[10px] text-slate-400 truncate max-w-[120px]">
+                        {peer.year || "Student"}
+                      </p>
+                    </Link>
+
+                    <div className="mt-2 flex items-center gap-1.5 w-full">
+                      <button
+                        onClick={() => handleSuggestionFollow(peer.username)}
+                        className={`flex-1 rounded-full py-1 text-[10px] font-bold transition min-h-[30px] ${
+                          peer.is_following
+                            ? "bg-slate-200/80 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                            : "bg-blue-600 text-white hover:bg-blue-700 shadow-2xs"
+                        }`}
+                      >
+                        {peer.is_following ? "Following" : "Follow"}
+                      </button>
+                      <Link
+                        href={`/messages?user=${peer.username}`}
+                        className="rounded-full p-1 text-slate-400 hover:text-blue-600 bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60"
+                        title="Message"
+                      >
+                        <MessageSquare className="h-3 w-3" />
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Posts Feed */}
           {loading ? (

@@ -221,7 +221,7 @@ export default function PostDetailPage({
 
   return (
     <AuthGuard>
-      <div className="mx-auto max-w-7xl px-3 sm:px-6 py-6">
+      <div className="mx-auto max-w-7xl px-3 sm:px-6 py-4 sm:py-6 pb-24 lg:pb-8">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Sidebar: Campus Navigation */}
         <aside className="hidden lg:block lg:col-span-3 space-y-4">

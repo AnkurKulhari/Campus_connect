@@ -144,7 +144,7 @@ export default function ProfilePage() {
 
   return (
     <AuthGuard>
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 py-8">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 py-6 sm:py-8 pb-24 lg:pb-8">
       {/* Profile Header Card */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">

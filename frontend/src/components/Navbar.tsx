@@ -14,14 +14,19 @@ import {
   X,
   ShieldCheck,
   Loader2,
+  Menu,
+  MessageSquare,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { MobileSidebarDrawer } from "./MobileSidebarDrawer";
 
 export function Navbar() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [unreadMsgsCount, setUnreadMsgsCount] = useState<number>(0);
+  const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -35,8 +40,16 @@ export function Navbar() {
 
     const fetchCounts = async () => {
       try {
-        const notifRes = await api.notifications.getUnreadCount();
-        setUnreadCount(notifRes.unread_count);
+        const [notifRes, msgRes] = await Promise.allSettled([
+          api.notifications.getUnreadCount(),
+          api.messages.getUnreadCount(),
+        ]);
+        if (notifRes.status === "fulfilled") {
+          setUnreadCount(notifRes.value.unread_count || 0);
+        }
+        if (msgRes.status === "fulfilled") {
+          setUnreadMsgsCount(msgRes.value.unread_count || 0);
+        }
       } catch {
         // Silently catch if not authorized
       }
@@ -93,8 +106,19 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/90 backdrop-blur dark:border-slate-800/80 dark:bg-[#0B0F19]/90 transition-colors">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-3 sm:px-6">
-        {/* Brand */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {/* Brand & Mobile Drawer Trigger */}
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          {user && (
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(true)}
+              className="lg:hidden rounded-xl p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition min-h-[44px] min-w-[44px] flex items-center justify-center -ml-1.5"
+              aria-label="Open sidebar menu and campus options"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          )}
+
           <Link
             href="/"
             className="flex items-center gap-2 font-black text-xl tracking-tight text-slate-900 dark:text-white hover:opacity-90 transition"
@@ -216,7 +240,7 @@ export function Navbar() {
             {/* Mobile Search Button */}
             <Link
               href="/search"
-              className={`sm:hidden flex items-center justify-center rounded-full p-2 text-sm font-medium transition-colors ${
+              className={`sm:hidden flex items-center justify-center rounded-full p-2 text-sm font-medium transition-colors min-h-[44px] min-w-[44px] ${
                 pathname === "/search"
                   ? "bg-blue-600 text-white"
                   : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
@@ -226,10 +250,28 @@ export function Navbar() {
               <Search className="h-4 w-4" />
             </Link>
 
+            {/* Direct Messages Button */}
+            <Link
+              href="/messages"
+              className={`relative flex items-center justify-center rounded-full p-2 transition-colors min-h-[44px] min-w-[44px] ${
+                pathname.startsWith("/messages")
+                  ? "bg-blue-600 text-white"
+                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+              }`}
+              title="Direct Messages"
+            >
+              <MessageSquare className="h-4.5 w-4.5" />
+              {unreadMsgsCount > 0 && (
+                <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white shadow-xs">
+                  {unreadMsgsCount > 99 ? "99+" : unreadMsgsCount}
+                </span>
+              )}
+            </Link>
+
             {/* Notification Bell */}
             <Link
               href="/notifications"
-              className={`relative flex items-center justify-center rounded-full p-2 transition-colors ${
+              className={`relative flex items-center justify-center rounded-full p-2 transition-colors min-h-[44px] min-w-[44px] ${
                 pathname === "/notifications"
                   ? "bg-blue-600 text-white"
                   : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
@@ -247,7 +289,7 @@ export function Navbar() {
             {/* User Profile Pill */}
             <Link
               href={`/profile/${user.username}`}
-              className={`flex items-center gap-2 rounded-full pl-1.5 pr-3 py-1 text-xs font-semibold border transition ${
+              className={`flex items-center gap-2 rounded-full pl-1.5 pr-3 py-1 text-xs font-semibold border transition min-h-[44px] ${
                 pathname.startsWith("/profile")
                   ? "bg-blue-600 text-white border-blue-600"
                   : "bg-slate-100/80 border-slate-200/80 text-slate-800 hover:bg-slate-200/70 dark:bg-slate-800/80 dark:border-slate-700/60 dark:text-slate-200 dark:hover:bg-slate-700"
@@ -273,7 +315,7 @@ export function Navbar() {
             <button
               onClick={logout}
               title="Log out"
-              className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition"
+              className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition min-h-[44px] min-w-[44px] flex items-center justify-center"
             >
               <LogOut className="h-4 w-4" />
             </button>
@@ -295,6 +337,12 @@ export function Navbar() {
           </div>
         )}
       </div>
+
+      {/* Mobile Drawer (Left & Right Sidebar Access for Mobile Devices) */}
+      <MobileSidebarDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+      />
     </header>
   );
 }

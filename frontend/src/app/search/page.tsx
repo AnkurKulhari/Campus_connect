@@ -104,7 +104,7 @@ function SearchContent() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:py-8 pb-24 lg:pb-8">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2.5">

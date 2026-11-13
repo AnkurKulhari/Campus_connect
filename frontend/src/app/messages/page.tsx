@@ -217,7 +217,11 @@ function MessagesContent() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-2 sm:px-4 py-4 sm:py-6 h-[calc(100vh-5rem)]">
+    <div
+      className={`mx-auto max-w-5xl px-2 sm:px-4 py-3 sm:py-6 h-[calc(100vh-4.5rem)] sm:h-[calc(100vh-5rem)] ${
+        activeConv ? "pb-0" : "pb-16 md:pb-0"
+      }`}
+    >
       <div className="flex h-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
         {/* Left Column: Conversation List */}
         <div
@@ -342,8 +346,12 @@ function MessagesContent() {
               <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => setActiveConv(null)}
-                    className="md:hidden rounded-full p-1.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    onClick={() => {
+                      setActiveConv(null);
+                      router.replace("/messages", { scroll: false });
+                    }}
+                    className="md:hidden rounded-full p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 min-h-[44px] min-w-[44px] flex items-center justify-center -ml-1"
+                    aria-label="Back to conversations"
                   >
                     <ArrowLeft className="h-5 w-5" />
                   </button>

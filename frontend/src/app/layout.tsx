@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { Navbar } from "@/components/Navbar";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { ClientOnly } from "@/components/ClientOnly";
 
 export const metadata: Metadata = {
@@ -60,7 +61,8 @@ export default function RootLayout({
         <AuthProvider>
           <ClientOnly>
             <Navbar />
-            <main className="flex-1">{children}</main>
+            <main className="flex-1 pb-16 lg:pb-0">{children}</main>
+            <MobileBottomNav />
           </ClientOnly>
         </AuthProvider>
       </body>
