@@ -87,6 +87,12 @@ function MessagesContent() {
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  const activeConvRef = useRef<Conversation | null>(null);
+  activeConvRef.current = activeConv;
+
+  const maxKnownMsgIdRef = useRef<number>(0);
+  const isConversationsInitializedRef = useRef<boolean>(false);
+
   useEffect(() => {
     setSoundOn(isSoundEnabled());
   }, []);
@@ -101,19 +107,128 @@ function MessagesContent() {
     messagesEndRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto" });
   };
 
-  // Fetch all conversations
-  const fetchConversations = useCallback(async () => {
+  // Fetch messages for active conversation
+  const fetchActiveMessages = useCallback(async (convId: number, isInitial = false) => {
+    if (isInitial) setLoadingMessages(true);
+    try {
+      const msgs = await api.messages.getMessages(convId);
+      
+      // Check for incoming new messages during polling
+      if (!isInitial && msgs.length > 0) {
+        const newest = msgs[msgs.length - 1];
+        if (
+          latestMessageIdRef.current &&
+          newest.id > latestMessageIdRef.current &&
+          newest.sender_id !== user?.id
+        ) {
+          playMessageReceivedSound();
+          if (typeof document !== "undefined" && document.hidden) {
+            showBrowserNotification(`New message from @${activeConvRef.current?.participant.username || "classmate"}`, {
+              body: newest.content,
+              url: `/messages?id=${convId}`,
+            });
+          }
+        }
+      }
+
+      if (msgs.length > 0) {
+        const newest = msgs[msgs.length - 1];
+        latestMessageIdRef.current = newest.id;
+        maxKnownMsgIdRef.current = Math.max(maxKnownMsgIdRef.current, newest.id);
+
+        // Keep conversation list snippet in sync with newest message
+        setConversations((prev) =>
+          prev.map((c) =>
+            c.id === convId
+              ? {
+                  ...c,
+                  last_message: {
+                    id: newest.id,
+                    sender_id: newest.sender_id,
+                    content: newest.content,
+                    is_read: true,
+                    created_at: newest.created_at,
+                  },
+                  last_message_at: newest.created_at,
+                  unread_count: 0,
+                }
+              : c
+          )
+        );
+      }
+      setMessages(msgs);
+      if (isInitial) {
+        setTimeout(() => scrollToBottom(false), 50);
+      }
+    } catch (err) {
+      console.error("Failed to load messages:", err);
+    } finally {
+      if (isInitial) setLoadingMessages(false);
+    }
+  }, [user?.id]);
+
+  // Fetch all conversations with live incoming message detection
+  const fetchConversations = useCallback(async (isInitial = false) => {
+    if (isInitial) setLoadingConvs(true);
     try {
       const convList = await api.messages.getConversations();
-      setConversations(convList);
-      return convList;
+
+      const highestMsgId = convList.reduce((max, c) => {
+        return c.last_message ? Math.max(max, c.last_message.id) : max;
+      }, 0);
+
+      if (!isConversationsInitializedRef.current) {
+        isConversationsInitializedRef.current = true;
+        maxKnownMsgIdRef.current = highestMsgId;
+      } else if (highestMsgId > maxKnownMsgIdRef.current) {
+        // Detect if any new incoming message arrived across any conversation
+        const incoming = convList.find(
+          (c) =>
+            c.last_message &&
+            c.last_message.id > maxKnownMsgIdRef.current &&
+            c.last_message.sender_id !== user?.id
+        );
+
+        if (incoming && incoming.last_message) {
+          if (currentConvIdRef.current === incoming.id) {
+            // Already inside this chat; refresh active messages immediately
+            fetchActiveMessages(incoming.id, false);
+          } else {
+            // Message in another chat or when on conversation list view
+            playMessageReceivedSound();
+            if (typeof document !== "undefined" && document.hidden) {
+              showBrowserNotification(
+                `New message from @${incoming.participant.username}`,
+                {
+                  body: incoming.last_message.content,
+                  url: `/messages?id=${incoming.id}`,
+                }
+              );
+            }
+          }
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new Event("campusconnect-unread-update"));
+          }
+        }
+        maxKnownMsgIdRef.current = Math.max(maxKnownMsgIdRef.current, highestMsgId);
+      }
+
+      // If active conversation is open, keep its local unread count 0
+      const adjustedList = convList.map((c) =>
+        currentConvIdRef.current && c.id === currentConvIdRef.current
+          ? { ...c, unread_count: 0 }
+          : c
+      );
+
+      setConversations(adjustedList);
+      return adjustedList;
     } catch (err) {
       console.error("Failed to fetch conversations:", err);
       return [];
     } finally {
-      setLoadingConvs(false);
+      if (isInitial) setLoadingConvs(false);
     }
-  }, []);
+  }, [user?.id, fetchActiveMessages]);
 
   // Initial load and URL query param resolution (only runs once per param change)
   useEffect(() => {
@@ -121,7 +236,7 @@ function MessagesContent() {
 
     let isMounted = true;
     const init = async () => {
-      const convList = await fetchConversations();
+      const convList = await fetchConversations(true);
       if (!isMounted) return;
 
       const paramKey = `${idParam || ""}_${userParam || ""}`;
@@ -166,43 +281,40 @@ function MessagesContent() {
     };
   }, [user, idParam, userParam, fetchConversations]);
 
-  // Fetch messages for active conversation
-  const fetchActiveMessages = useCallback(async (convId: number, isInitial = false) => {
-    if (isInitial) setLoadingMessages(true);
-    try {
-      const msgs = await api.messages.getMessages(convId);
-      
-      // Check for incoming new messages during polling
-      if (!isInitial && msgs.length > 0) {
-        const newest = msgs[msgs.length - 1];
-        if (
-          latestMessageIdRef.current &&
-          newest.id > latestMessageIdRef.current &&
-          newest.sender_id !== user?.id
-        ) {
-          playMessageReceivedSound();
-          if (typeof document !== "undefined" && document.hidden) {
-            showBrowserNotification(`New message from @${activeConv?.participant.username || "classmate"}`, {
-              body: newest.content,
-              url: `/messages?id=${convId}`,
-            });
-          }
-        }
-      }
+  // Continuous background polling for conversations list (active both when in chat and on list view)
+  useEffect(() => {
+    if (!user) return;
 
-      if (msgs.length > 0) {
-        latestMessageIdRef.current = msgs[msgs.length - 1].id;
+    let timeoutId: NodeJS.Timeout;
+    let isCancelled = false;
+
+    const scheduleNextPoll = () => {
+      const isHidden = typeof document !== "undefined" && document.hidden;
+      const delay = isHidden ? 15000 : 5000;
+
+      timeoutId = setTimeout(async () => {
+        if (isCancelled) return;
+        await fetchConversations(false);
+        if (!isCancelled) scheduleNextPoll();
+      }, delay);
+    };
+
+    scheduleNextPoll();
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden && !isCancelled) {
+        fetchConversations(false);
       }
-      setMessages(msgs);
-      if (isInitial) {
-        setTimeout(() => scrollToBottom(false), 50);
-      }
-    } catch (err) {
-      console.error("Failed to load messages:", err);
-    } finally {
-      if (isInitial) setLoadingMessages(false);
-    }
-  }, [user?.id, activeConv?.participant.username]);
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(timeoutId);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [user, fetchConversations]);
 
   // When active conversation changes
   useEffect(() => {
@@ -227,11 +339,11 @@ function MessagesContent() {
       window.dispatchEvent(new Event("campusconnect-unread-update"));
     }
 
-    // Poll for new messages every 8 seconds (only when tab is visible)
+    // Poll for new messages every 4 seconds in the active conversation
     const interval = setInterval(() => {
       if (typeof document !== "undefined" && document.hidden) return;
       fetchActiveMessages(activeConv.id, false);
-    }, 8000);
+    }, 4000);
 
     return () => clearInterval(interval);
   }, [activeConv?.id, fetchActiveMessages]);
@@ -297,6 +409,7 @@ function MessagesContent() {
     try {
       const newMsg = await api.messages.sendMessage(activeConv.id, textToSend);
       latestMessageIdRef.current = newMsg.id;
+      maxKnownMsgIdRef.current = Math.max(maxKnownMsgIdRef.current, newMsg.id);
 
       // Replace optimistic placeholder with confirmed server message
       setMessages((prev) =>
@@ -523,13 +636,16 @@ function MessagesContent() {
               <button
                 type="button"
                 onClick={() => setDmTab("following")}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition ${
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition relative ${
                   dmTab === "following"
                     ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                 }`}
               >
                 Following ({followingConvs.length})
+                {followingConvs.some((c) => c.unread_count > 0) && (
+                  <span className="inline-block w-2 h-2 rounded-full bg-rose-500 ml-1.5 align-middle" />
+                )}
               </button>
               <button
                 type="button"
@@ -600,10 +716,22 @@ function MessagesContent() {
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1">
-                        <span className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
+                        <span
+                          className={`text-xs truncate ${
+                            conv.unread_count > 0
+                              ? "font-extrabold text-blue-600 dark:text-blue-400"
+                              : "font-bold text-slate-900 dark:text-slate-100"
+                          }`}
+                        >
                           {p.full_name}
                         </span>
-                        <span className="text-[10px] text-slate-400 shrink-0">
+                        <span
+                          className={`text-[10px] shrink-0 ${
+                            conv.unread_count > 0
+                              ? "font-bold text-blue-600 dark:text-blue-400"
+                              : "text-slate-400"
+                          }`}
+                        >
                           {conv.last_message
                             ? formatConvTime(conv.last_message.created_at)
                             : ""}
@@ -620,7 +748,13 @@ function MessagesContent() {
                       </div>
 
                       <div className="flex items-center justify-between gap-2 mt-1">
-                        <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
+                        <p
+                          className={`text-xs truncate ${
+                            conv.unread_count > 0
+                              ? "font-bold text-slate-900 dark:text-slate-100"
+                              : "text-slate-600 dark:text-slate-400"
+                          }`}
+                        >
                           {conv.last_message?.content || "Started conversation"}
                         </p>
                         {conv.unread_count > 0 && (
