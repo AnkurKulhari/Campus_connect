@@ -94,6 +94,20 @@ def create_post(
     # Content moderation check for 18+ explicit content
     assert_safe_content(post_data.content, "Post")
 
+    # Idempotency Guard: prevent duplicate posts from double-clicks or client timeout retries
+    from datetime import timedelta
+    recent_duplicate = db.scalar(
+        select(Post)
+        .where(
+            Post.user_id == current_user.id,
+            Post.content == post_data.content,
+            Post.created_at >= datetime.now(UTC) - timedelta(seconds=60),
+        )
+        .order_by(Post.created_at.desc())
+    )
+    if recent_duplicate:
+        return _get_post_or_404(recent_duplicate.id, current_user.id, db)
+
     post = Post(user_id=current_user.id, content=post_data.content)
     db.add(post)
     db.flush()

@@ -41,6 +41,7 @@ export function CreatePostBox({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const lastSubmitTimeRef = useRef<number>(0);
 
   if (!user) return null;
 
@@ -155,6 +156,10 @@ export function CreatePostBox({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isPostEmpty) return;
+
+    const now = Date.now();
+    if (isSubmitting || now - lastSubmitTimeRef.current < 3000) return;
+    lastSubmitTimeRef.current = now;
 
     if (isInvalidHashtagOnly) {
       setError("Please add a question or description — posts cannot consist only of hashtags.");
