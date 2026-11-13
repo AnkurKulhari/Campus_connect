@@ -9,6 +9,7 @@ interface ConfirmModalProps {
   message: string;
   confirmText?: string;
   cancelText?: string;
+  loadingText?: string;
   isDestructive?: boolean;
   isLoading?: boolean;
   onConfirm: () => void;
@@ -21,6 +22,7 @@ export function ConfirmModal({
   message,
   confirmText = "Delete",
   cancelText = "Cancel",
+  loadingText,
   isDestructive = true,
   isLoading = false,
   onConfirm,
@@ -29,7 +31,7 @@ export function ConfirmModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
       <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 transition-all scale-100">
         <div className="flex items-center gap-3">
           <div
@@ -73,7 +75,7 @@ export function ConfirmModal({
             {isLoading ? (
               <>
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                <span>Deleting...</span>
+                <span>{loadingText || (isDestructive ? "Deleting..." : "Processing...")}</span>
               </>
             ) : (
               <span>{confirmText}</span>

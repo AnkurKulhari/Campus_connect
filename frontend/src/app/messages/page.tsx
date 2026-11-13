@@ -8,6 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Conversation, DirectMessage } from "@/types";
 import { api } from "@/lib/api";
 import { AuthGuard } from "@/components/AuthGuard";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import {
   playMessageSentSound,
   playMessageReceivedSound,
@@ -65,6 +66,10 @@ function MessagesContent() {
   const [inChatSearchQuery, setInChatSearchQuery] = useState("");
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [selectedMsgId, setSelectedMsgId] = useState<number | null>(null);
+  const [msgIdToUnsend, setMsgIdToUnsend] = useState<number | null>(null);
+  const [isUnsending, setIsUnsending] = useState(false);
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [isBlocking, setIsBlocking] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -304,14 +309,22 @@ function MessagesContent() {
     }
   };
 
-  const handleDeleteMessage = async (msgId: number) => {
-    if (!window.confirm("Unsend this message?")) return;
+  const handleDeleteMessage = (msgId: number) => {
+    setMsgIdToUnsend(msgId);
+  };
+
+  const confirmUnsend = async () => {
+    if (!msgIdToUnsend) return;
+    setIsUnsending(true);
     try {
-      await api.messages.deleteMessage(msgId);
-      setMessages((prev) => prev.filter((m) => m.id !== msgId));
+      await api.messages.deleteMessage(msgIdToUnsend);
+      setMessages((prev) => prev.filter((m) => m.id !== msgIdToUnsend));
       setSelectedMsgId(null);
+      setMsgIdToUnsend(null);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Failed to unsend message.");
+      setError(err instanceof Error ? err.message : "Failed to unsend message.");
+    } finally {
+      setIsUnsending(false);
     }
   };
 
@@ -324,20 +337,24 @@ function MessagesContent() {
     }, 1800);
   };
 
-  const handleBlockUser = async () => {
+  const handleBlockUser = () => {
     if (!activeConv) return;
-    const confirmBlock = window.confirm(
-      `Block @${activeConv.participant.username}? They won't be able to message you.`
-    );
-    if (!confirmBlock) return;
+    setMenuOpen(false);
+    setShowBlockModal(true);
+  };
 
+  const confirmBlock = async () => {
+    if (!activeConv) return;
+    setIsBlocking(true);
     try {
       await api.messages.blockUser(activeConv.participant.username);
-      alert(`@${activeConv.participant.username} has been blocked.`);
+      setShowBlockModal(false);
       setActiveConv(null);
       fetchConversations();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Failed to block user.");
+      setError(err instanceof Error ? err.message : "Failed to block user.");
+    } finally {
+      setIsBlocking(false);
     }
   };
 
@@ -998,6 +1015,33 @@ function MessagesContent() {
             </div>
           )}
         </div>
+        {/* Unsend Message Custom Modal */}
+        <ConfirmModal
+          isOpen={msgIdToUnsend !== null}
+          title="Unsend Message?"
+          message="This message will be permanently removed for everyone in this conversation."
+          confirmText="Unsend"
+          cancelText="Cancel"
+          loadingText="Unsending..."
+          isDestructive
+          isLoading={isUnsending}
+          onConfirm={confirmUnsend}
+          onCancel={() => setMsgIdToUnsend(null)}
+        />
+
+        {/* Block User Custom Modal */}
+        <ConfirmModal
+          isOpen={showBlockModal}
+          title={`Block @${activeConv?.participant.username}?`}
+          message="They will no longer be able to send you direct messages or see your active status."
+          confirmText="Block User"
+          cancelText="Cancel"
+          loadingText="Blocking..."
+          isDestructive
+          isLoading={isBlocking}
+          onConfirm={confirmBlock}
+          onCancel={() => setShowBlockModal(false)}
+        />
       </div>
     </div>
   );
