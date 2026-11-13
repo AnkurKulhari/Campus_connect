@@ -5,7 +5,7 @@ import Image from "next/image";
 import { UserProfile } from "@/types";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import { X, Loader2, Camera, Upload, Crop, ShieldCheck, GraduationCap, Lock } from "lucide-react";
+import { X, Loader2, Camera, Upload, Crop, Trash2, ShieldCheck, GraduationCap, Lock } from "lucide-react";
 import { LinkedinIcon } from "@/components/icons/LinkedinIcon";
 import { AvatarCropModal } from "@/components/AvatarCropModal";
 import { checkImageSafety } from "@/lib/nsfw";
@@ -33,10 +33,35 @@ export function EditProfileModal({
   const [cropModalOpen, setCropModalOpen] = useState(false);
 
   const [saving, setSaving] = useState(false);
+  const [isRemovingAvatar, setIsRemovingAvatar] = useState(false);
+  const [avatarRemoved, setAvatarRemoved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
+
+  const handleRemoveAvatar = async () => {
+    setIsRemovingAvatar(true);
+    setError(null);
+    try {
+      if (profile.profile_picture) {
+        const updated = await api.users.deleteAvatar();
+        onUpdated(updated);
+        try {
+          await refreshUser();
+        } catch {
+          // ignore
+        }
+      }
+      setAvatarFile(null);
+      setAvatarPreview(null);
+      setAvatarRemoved(true);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to remove profile photo.");
+    } finally {
+      setIsRemovingAvatar(false);
+    }
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -70,6 +95,7 @@ export function EditProfileModal({
   const handleCropDone = (croppedFile: File, croppedPreviewUrl: string) => {
     setAvatarFile(croppedFile);
     setAvatarPreview(croppedPreviewUrl);
+    setAvatarRemoved(false);
     setCropModalOpen(false);
   };
 
@@ -79,7 +105,7 @@ export function EditProfileModal({
     setError(null);
 
     try {
-      let currentPicUrl = profile.profile_picture;
+      let currentPicUrl = avatarRemoved ? null : profile.profile_picture;
 
       // 1. If an image file was cropped & selected, upload it directly to Cloudinary
       if (avatarFile) {
@@ -190,6 +216,23 @@ export function EditProfileModal({
                   >
                     <Crop className="h-3.5 w-3.5" />
                     <span>Crop photo</span>
+                  </button>
+                )}
+
+                {(avatarPreview || (!avatarRemoved && profile.profile_picture)) && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveAvatar}
+                    disabled={saving || isRemovingAvatar}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 hover:bg-rose-100/80 px-3.5 py-1.5 text-xs font-semibold text-rose-600 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 dark:text-rose-400 transition disabled:opacity-50"
+                    title="Remove current profile picture"
+                  >
+                    {isRemovingAvatar ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
+                    <span>Remove photo</span>
                   </button>
                 )}
               </div>

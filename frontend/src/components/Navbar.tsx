@@ -290,22 +290,30 @@ export function Navbar() {
               )}
             </Link>
 
-            {/* User Profile Pill */}
+            {/* User Profile Link (Clean circular PFP on mobile; full Pill on desktop) */}
             <Link
               href={`/profile/${user.username}`}
-              className={`flex items-center gap-2 rounded-full pl-1.5 pr-3 py-1 text-xs font-semibold border transition min-h-[44px] ${
+              className={`flex items-center sm:gap-2 rounded-full min-h-[44px] min-w-[44px] justify-center text-xs font-semibold border transition sm:min-w-0 sm:pl-1.5 sm:pr-3 sm:py-1 ${
                 pathname.startsWith("/profile")
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "bg-slate-100/80 border-slate-200/80 text-slate-800 hover:bg-slate-200/70 dark:bg-slate-800/80 dark:border-slate-700/60 dark:text-slate-200 dark:hover:bg-slate-700"
+                  ? "border-transparent sm:bg-blue-600 sm:text-white sm:border-blue-600"
+                  : "border-transparent bg-transparent text-slate-800 hover:bg-slate-100 sm:border-slate-200/80 sm:bg-slate-100/80 sm:hover:bg-slate-200/70 dark:text-slate-200 dark:hover:bg-slate-800/80 dark:sm:border-slate-700/60 dark:sm:bg-slate-800/80"
               }`}
+              title="View your profile"
+              aria-label="View profile"
             >
-              <div className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 font-bold text-[11px] text-white overflow-hidden shadow-2xs">
+              <div
+                className={`relative flex h-8 w-8 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 font-bold text-xs sm:text-[11px] text-white overflow-hidden shadow-2xs transition ${
+                  pathname.startsWith("/profile")
+                    ? "ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-slate-900"
+                    : "ring-1 ring-black/5 dark:ring-white/10"
+                }`}
+              >
                 {user.profile_picture ? (
                   <Image
                     src={user.profile_picture}
                     alt={user.username}
                     fill
-                    sizes="28px"
+                    sizes="32px"
                     className="object-cover"
                   />
                 ) : (

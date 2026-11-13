@@ -80,7 +80,7 @@ function MessagesContent() {
   }, []);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const handledParamRef = useRef<string | null>(null);
   const currentConvIdRef = useRef<number | null>(null);
   const latestMessageIdRef = useRef<number | null>(null);
@@ -215,7 +215,7 @@ function MessagesContent() {
     currentConvIdRef.current = activeConv.id;
 
     fetchActiveMessages(activeConv.id, isDifferentConv);
-    inputRef.current?.focus();
+    textareaRef.current?.focus();
 
     // Silently mark unread as 0 locally
     setConversations((prev) =>
@@ -241,6 +241,12 @@ function MessagesContent() {
     scrollToBottom(true);
   }, [messages.length]);
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInputText(e.target.value);
+    e.target.style.height = "auto";
+    e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
+  };
+
   // 0ms Latency Optimistic Send
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -248,6 +254,9 @@ function MessagesContent() {
 
     const textToSend = inputText.trim();
     setInputText("");
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
     setError(null);
 
     // Optimistic temporary message
@@ -866,7 +875,13 @@ function MessagesContent() {
                             type="button"
                             onClick={() => {
                               setInputText(prompt);
-                              inputRef.current?.focus();
+                              setTimeout(() => {
+                                if (textareaRef.current) {
+                                  textareaRef.current.style.height = "auto";
+                                  textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 128)}px`;
+                                  textareaRef.current.focus();
+                                }
+                              }, 0);
                             }}
                             className="w-full text-left rounded-xl border border-slate-200/90 bg-white p-2.5 text-xs text-slate-700 hover:border-blue-500 hover:bg-blue-50/50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-400 transition"
                           >
@@ -1028,24 +1043,30 @@ function MessagesContent() {
                 </div>
               )}
 
-              {/* Chat Input Bar (Sticky at bottom, zero double scrollbar) */}
+              {/* Chat Input Bar (Sticky at bottom, auto-expanding textarea) */}
               <form
                 onSubmit={handleSendMessage}
-                className="flex items-center gap-2 border-t border-slate-200 bg-white p-2.5 sm:p-3 pb-3 dark:border-slate-800 dark:bg-slate-900 shrink-0"
+                className="flex items-end gap-2 border-t border-slate-200 bg-white p-2.5 sm:p-3 pb-3 dark:border-slate-800 dark:bg-slate-900 shrink-0"
               >
-                <input
-                  ref={inputRef}
-                  type="text"
+                <textarea
+                  ref={textareaRef}
+                  rows={1}
                   value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  placeholder="Type a message (Enter to send)..."
+                  onChange={handleInputChange}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage(e);
+                    }
+                  }}
+                  placeholder="Type a message (Shift+Enter for newline)..."
                   maxLength={2000}
-                  className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                  className="flex-1 max-h-32 resize-none rounded-2xl border border-slate-200 bg-slate-50 px-3.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 overflow-y-auto leading-relaxed"
                 />
                 <button
                   type="submit"
                   disabled={!inputText.trim()}
-                  className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs transition hover:bg-blue-700 disabled:opacity-40"
+                  className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs transition hover:bg-blue-700 disabled:opacity-40 mb-0.5"
                   aria-label="Send message"
                 >
                   <Send className="h-4 w-4" />

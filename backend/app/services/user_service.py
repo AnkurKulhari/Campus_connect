@@ -119,6 +119,14 @@ def update_avatar(file: UploadFile, current_user: User, db: Session) -> dict:
     return _build_profile_response(current_user, current_user.id, db)
 
 
+def remove_avatar(current_user: User, db: Session) -> dict:
+    """Remove current user's profile picture, reverting to default initial avatar."""
+    current_user.profile_picture = None
+    db.commit()
+    db.refresh(current_user)
+    return _build_profile_response(current_user, current_user.id, db)
+
+
 def get_user_profile(username: str, current_user_id: int | None, db: Session) -> dict:
     user = db.scalar(select(User).where(User.username == username))
     if not user:

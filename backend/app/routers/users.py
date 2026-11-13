@@ -9,7 +9,7 @@ from app.schemas.follow import FollowToggleResponse, PaginatedFollowUsersRespons
 from app.models.user import User
 from app.services.user_service import (
     get_my_profile, update_my_profile, get_user_profile,
-    update_avatar, get_alumni_circle, search_users, get_suggested_users
+    update_avatar, remove_avatar, get_alumni_circle, search_users, get_suggested_users
 )
 from app.services.follow_service import toggle_follow, get_followers, get_following
 from app.auth.jwt import get_current_user
@@ -44,6 +44,15 @@ def upload_profile_picture(
 ):
     """Upload a new profile picture to Cloudinary and update current user."""
     return update_avatar(file, current_user, db)
+
+
+@router.delete("/me/avatar", response_model=UserProfileResponse)
+def delete_profile_picture(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Remove current user's profile picture and revert to default initials."""
+    return remove_avatar(current_user, db)
 
 
 @router.post("/me/id-card", response_model=UserProfileResponse)

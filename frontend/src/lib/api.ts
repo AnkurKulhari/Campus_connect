@@ -370,6 +370,11 @@ export const api = {
       });
     },
 
+    deleteAvatar: () =>
+      request<UserProfile>("/users/me/avatar", {
+        method: "DELETE",
+      }),
+
     uploadIdCard: (file: File) => {
       const formData = new FormData();
       formData.append("file", file);
