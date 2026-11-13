@@ -19,6 +19,7 @@ from app.services.post_service import (
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
 
+@router.post("", response_model=PostResponse, status_code=201)
 @router.post("/", response_model=PostResponse, status_code=201)
 def create(
     content: Annotated[str | None, Form()] = None,

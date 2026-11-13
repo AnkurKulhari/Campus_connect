@@ -93,13 +93,18 @@ async function request<T>(
     headers.set("Content-Type", "application/json");
   }
 
+  // Normalize endpoint: strip trailing slash from pathname to prevent Vercel 308 redirects and Mixed Content issues
+  const [pathname, queryString] = endpoint.split("?");
+  const cleanPath = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+  const normalizedEndpoint = queryString ? `${cleanPath}?${queryString}` : cleanPath;
+
   // Detect environment: on Vercel, use same-origin /api/proxy as primary URL to bypass Indian mobile cellular ISP blocks on *.up.railway.app
   const isVercelHost =
     typeof window !== "undefined" &&
     window.location.hostname.includes("vercel.app");
 
-  const primaryUrl = isVercelHost ? `/api/proxy${endpoint}` : `${API_BASE}${endpoint}`;
-  const secondaryUrl = isVercelHost ? `${API_BASE}${endpoint}` : `/api/proxy${endpoint}`;
+  const primaryUrl = isVercelHost ? `/api/proxy${normalizedEndpoint}` : `${API_BASE}${normalizedEndpoint}`;
+  const secondaryUrl = isVercelHost ? `${API_BASE}${normalizedEndpoint}` : `/api/proxy${normalizedEndpoint}`;
 
   // Allow generous 60-second window for media uploads (compressed photos / videos)
   const isUpload = options.body instanceof FormData;
@@ -274,7 +279,7 @@ export const api = {
       if (content) formData.append("content", content);
       files.forEach((file) => formData.append("files", file));
 
-      return request<Post>("/posts/", {
+      return request<Post>("/posts", {
         method: "POST",
         body: formData,
       });
@@ -434,7 +439,7 @@ export const api = {
   notifications: {
     list: (page = 1, pageSize = 20) =>
       request<PaginatedNotifications>(
-        `/notifications/?page=${page}&page_size=${pageSize}`
+        `/notifications?page=${page}&page_size=${pageSize}`
       ),
 
     getUnreadCount: () =>

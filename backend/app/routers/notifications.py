@@ -21,6 +21,7 @@ from app.services.notification_service import (
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
 
+@router.get("", response_model=PaginatedNotificationsResponse)
 @router.get("/", response_model=PaginatedNotificationsResponse)
 def list_notifications(
     page: int = Query(default=1, ge=1),

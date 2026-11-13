@@ -7,10 +7,15 @@ from sqlalchemy import text
 from app.database import base
 from app.database.session import get_db
 from app.core.config import settings
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from app.routers import auth, users, posts, likes, notifications, messages
 from app.routers.comments import posts_router as comments_posts_router, comments_router
 
 app = FastAPI(title="CampusConnect API", version="1.0.0")
+
+# Respect X-Forwarded-Proto and X-Forwarded-For from reverse proxies (Railway, Cloudflare)
+# This prevents scheme downgrades to http:// during URL generation or redirects
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
 app.add_middleware(
     CORSMiddleware,
@@ -23,6 +28,11 @@ app.add_middleware(
 
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
+    # Ensure ASGI scope scheme reflects forwarded protocol
+    forwarded_proto = request.headers.get("x-forwarded-proto")
+    if forwarded_proto:
+        request.scope["scheme"] = forwarded_proto
+
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
