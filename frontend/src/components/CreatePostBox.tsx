@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { Post } from "@/types";
 import { checkImageSafety } from "@/lib/nsfw";
+import { compressImage } from "@/lib/imageCompressor";
 import {
   Image as ImageIcon,
   X,
@@ -110,10 +111,13 @@ export function CreatePostBox({
       return;
     }
 
-    // Pre-flight NSFW check using client-side NSFWJS
+    // Process and compress images client-side before upload to prevent timeouts
+    const processedFiles: File[] = [];
     for (const f of selectedFiles) {
       if (f.type.startsWith("image/")) {
-        const safety = await checkImageSafety(f);
+        const compressed = await compressImage(f);
+        // Pre-flight NSFW check using client-side NSFWJS
+        const safety = await checkImageSafety(compressed);
         if (safety.isExplicit) {
           setError(
             safety.reason ||
@@ -122,14 +126,17 @@ export function CreatePostBox({
           if (fileInputRef.current) fileInputRef.current.value = "";
           return;
         }
+        processedFiles.push(compressed);
+      } else {
+        processedFiles.push(f);
       }
     }
 
-    const newFiles = [...files, ...selectedFiles];
+    const newFiles = [...files, ...processedFiles];
     setFiles(newFiles);
 
     // Generate previews
-    const newPreviews = selectedFiles.map((file) => URL.createObjectURL(file));
+    const newPreviews = processedFiles.map((file) => URL.createObjectURL(file));
     setPreviews((prev) => [...prev, ...newPreviews]);
   };
 

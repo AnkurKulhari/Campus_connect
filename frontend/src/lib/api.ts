@@ -101,6 +101,10 @@ async function request<T>(
   const primaryUrl = isVercelHost ? `/api/proxy${endpoint}` : `${API_BASE}${endpoint}`;
   const secondaryUrl = isVercelHost ? `${API_BASE}${endpoint}` : `/api/proxy${endpoint}`;
 
+  // Allow generous 60-second window for media uploads (compressed photos / videos)
+  const isUpload = options.body instanceof FormData;
+  const timeoutMs = isUpload ? 60000 : 15000;
+
   let response: Response;
   try {
     response = await fetchWithTimeout(
@@ -109,7 +113,7 @@ async function request<T>(
         ...options,
         headers,
       },
-      15000
+      timeoutMs
     );
   } catch (primaryErr: unknown) {
     console.warn(
@@ -123,7 +127,7 @@ async function request<T>(
           ...options,
           headers,
         },
-        15000
+        timeoutMs
       );
     } catch (secondaryErr: unknown) {
       console.error(`[API Network Error] Both routes failed for ${endpoint}:`, secondaryErr);

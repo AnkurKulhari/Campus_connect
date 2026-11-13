@@ -98,17 +98,43 @@ def create_post(
     db.add(post)
     db.flush()
 
-    for idx, file in enumerate(files):
-        if file.filename:
+    valid_files = [f for f in files if f.filename]
+    if len(valid_files) > 1:
+        from concurrent.futures import ThreadPoolExecutor
+
+        def _upload_single(f_idx_tuple):
+            idx, file = f_idx_tuple
             uploaded = upload_media(file)
+            return (
+                idx,
+                uploaded["url"],
+                uploaded["public_id"],
+                uploaded["media_type"],
+            )
+
+        with ThreadPoolExecutor(max_workers=min(len(valid_files), 4)) as executor:
+            results = list(executor.map(_upload_single, list(enumerate(valid_files))))
+
+        for idx, url, public_id, media_type in results:
             media = PostMedia(
                 post_id=post.id,
-                cloudinary_url=uploaded["url"],
-                cloudinary_public_id=uploaded["public_id"],
-                media_type=uploaded["media_type"],
+                cloudinary_url=url,
+                cloudinary_public_id=public_id,
+                media_type=media_type,
                 order=idx,
             )
             db.add(media)
+    elif len(valid_files) == 1:
+        file = valid_files[0]
+        uploaded = upload_media(file)
+        media = PostMedia(
+            post_id=post.id,
+            cloudinary_url=uploaded["url"],
+            cloudinary_public_id=uploaded["public_id"],
+            media_type=uploaded["media_type"],
+            order=0,
+        )
+        db.add(media)
 
     db.commit()
     return _get_post_or_404(post.id, current_user.id, db)
