@@ -50,7 +50,7 @@ export function removeToken(): void {
 async function fetchWithTimeout(
   url: string,
   options: RequestInit = {},
-  timeoutMs = 8000
+  timeoutMs = 15000
 ): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -109,7 +109,7 @@ async function request<T>(
         ...options,
         headers,
       },
-      8000
+      15000
     );
   } catch (primaryErr: unknown) {
     console.warn(
@@ -123,11 +123,18 @@ async function request<T>(
           ...options,
           headers,
         },
-        8000
+        15000
       );
     } catch (secondaryErr: unknown) {
       console.error(`[API Network Error] Both routes failed for ${endpoint}:`, secondaryErr);
-      const msg = primaryErr instanceof Error ? primaryErr.message : "Network request failed";
+      const isAbort =
+        (primaryErr instanceof Error && primaryErr.name === "AbortError") ||
+        (secondaryErr instanceof Error && secondaryErr.name === "AbortError");
+      const msg = isAbort
+        ? "Connection timed out"
+        : primaryErr instanceof Error
+        ? primaryErr.message
+        : "Network request failed";
       throw new ApiError(
         0,
         `Unable to reach backend (${msg}). Please verify your connection or try again in a few moments.`

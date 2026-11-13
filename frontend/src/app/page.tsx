@@ -131,7 +131,7 @@ function HomeFeedContent() {
       }
     };
     fetchBadges();
-    const interval = setInterval(fetchBadges, 15000);
+    const interval = setInterval(fetchBadges, 45000);
     return () => clearInterval(interval);
   }, [user]);
 

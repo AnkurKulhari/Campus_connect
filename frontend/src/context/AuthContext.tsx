@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { User } from "@/types";
-import { api, getToken, setToken, removeToken } from "@/lib/api";
+import { api, getToken, setToken, removeToken, ApiError } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
 interface AuthContextType {
@@ -26,10 +26,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const currentUser = await api.auth.getMe();
       setUser(currentUser);
-    } catch {
-      setUser(null);
-      removeToken();
-      setTokenState(null);
+    } catch (err: unknown) {
+      // ONLY log the user out if the server explicitly returned 401 Unauthorized.
+      // Do NOT sign the user out on network lags, temporary timeouts, or offline events!
+      if (err instanceof ApiError && err.status === 401) {
+        setUser(null);
+        removeToken();
+        setTokenState(null);
+      }
     }
   }, []);
 

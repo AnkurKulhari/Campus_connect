@@ -56,7 +56,7 @@ export function Navbar() {
     };
 
     fetchCounts();
-    const interval = setInterval(fetchCounts, 15000); // refresh every 15s
+    const interval = setInterval(fetchCounts, 45000); // refresh every 45s
     return () => clearInterval(interval);
   }, [user]);
 
