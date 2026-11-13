@@ -147,10 +147,13 @@ def register_user(user_data: UserCreate, background_tasks: BackgroundTasks, db: 
 
 
 def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    clean_identifier = form_data.username.strip()
     user_login = db.query(User).filter(
         or_(
-            User.username == form_data.username,
-            User.college_email == form_data.username.strip().lower()
+            User.username == clean_identifier,
+            User.username == clean_identifier.lower(),
+            User.college_email == clean_identifier.lower(),
+            User.roll_number == clean_identifier,
         )
     ).first()
 

@@ -47,6 +47,23 @@ export function removeToken(): void {
   }
 }
 
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeoutMs = 8000
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: options.signal || controller.signal,
+    });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function request<T>(
   endpoint: string,
   options: RequestInit = {}
@@ -76,36 +93,44 @@ async function request<T>(
     headers.set("Content-Type", "application/json");
   }
 
+  // Detect environment: on Vercel, use same-origin /api/proxy as primary URL to bypass Indian mobile cellular ISP blocks on *.up.railway.app
+  const isVercelHost =
+    typeof window !== "undefined" &&
+    window.location.hostname.includes("vercel.app");
+
+  const primaryUrl = isVercelHost ? `/api/proxy${endpoint}` : `${API_BASE}${endpoint}`;
+  const secondaryUrl = isVercelHost ? `${API_BASE}${endpoint}` : `/api/proxy${endpoint}`;
+
   let response: Response;
   try {
-    response = await fetch(`${API_BASE}${endpoint}`, {
-      ...options,
-      headers,
-    });
-  } catch (networkError: unknown) {
-    // If direct fetch failed (e.g. Indian mobile ISPs blocking *.up.railway.app),
-    // automatically failover to same-origin Vercel rewrite proxy
-    if (typeof window !== "undefined" && !endpoint.startsWith("/api/proxy")) {
-      try {
-        console.warn(`[API Failover] Direct fetch to ${API_BASE}${endpoint} failed. Retrying via /api/proxy...`);
-        response = await fetch(`/api/proxy${endpoint}`, {
+    response = await fetchWithTimeout(
+      primaryUrl,
+      {
+        ...options,
+        headers,
+      },
+      8000
+    );
+  } catch (primaryErr: unknown) {
+    console.warn(
+      `[API Failover] Primary request to ${primaryUrl} failed/timed out. Retrying via secondary route ${secondaryUrl}...`,
+      primaryErr
+    );
+    try {
+      response = await fetchWithTimeout(
+        secondaryUrl,
+        {
           ...options,
           headers,
-        });
-      } catch (proxyError: unknown) {
-        console.error(`[API Failover Error] calling /api/proxy${endpoint}:`, proxyError);
-        const msg = networkError instanceof Error ? networkError.message : "Network request failed";
-        throw new ApiError(
-          0,
-          `Unable to reach backend at ${API_BASE} (${msg}). Please verify that Railway backend is running.`
-        );
-      }
-    } else {
-      console.error(`[API Network Error] calling ${API_BASE}${endpoint}:`, networkError);
-      const msg = networkError instanceof Error ? networkError.message : "Network request failed";
+        },
+        8000
+      );
+    } catch (secondaryErr: unknown) {
+      console.error(`[API Network Error] Both routes failed for ${endpoint}:`, secondaryErr);
+      const msg = primaryErr instanceof Error ? primaryErr.message : "Network request failed";
       throw new ApiError(
         0,
-        `Unable to reach backend at ${API_BASE} (${msg}). Please verify that Railway backend is running.`
+        `Unable to reach backend (${msg}). Please verify your connection or try again in a few moments.`
       );
     }
   }
