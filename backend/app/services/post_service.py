@@ -1,4 +1,5 @@
 import re
+from datetime import datetime, UTC, timedelta
 from collections import Counter
 from fastapi import HTTPException, UploadFile, BackgroundTasks
 from sqlalchemy.orm import Session, selectinload, with_expression
@@ -96,7 +97,6 @@ def create_post(
 
     # Idempotency Guard: prevent duplicate posts from double-clicks or client timeout retries
     if post_data.content and post_data.content.strip():
-        from datetime import timedelta
         recent_duplicate = db.scalar(
             select(Post)
             .where(
