@@ -211,31 +211,42 @@ def verify_email_service(verify_data: VerifyEmail, db: Session):
     is_alumni_flag = pending_user.is_alumni or (bool(pending_user.year) and "alumni" in pending_user.year.lower())
     is_id_verified = False
 
-    # Automated verification logic using IPEC / AKTU roll number formula
-    # Standard format: 13 digits (e.g., 2100300100045)
-    # First 2 digits: Admission Year (e.g. 21 -> 2021)
-    # Digits 3-6: 0030 (IPEC code)
+    # Automated verification logic: supports AKTU affiliated batches (3rd/4th year) and IPEC Autonomous batches (1st/2nd year)
     if pending_user.roll_number:
         clean_roll = pending_user.roll_number.strip()
-        if len(clean_roll) == 13 and clean_roll.isdigit():
+        if clean_roll.isdigit() and len(clean_roll) >= 8:
             batch_yy = int(clean_roll[:2])
-            college_code = clean_roll[2:6]
             now = datetime.now(UTC)
             # Academic year index (sessions start around July/August)
             current_academic_start = now.year if now.month >= 7 else now.year - 1
             calculated_year_num = current_academic_start - (2000 + batch_yy) + 1
+            standing_map = {1: "1st", 2: "2nd", 3: "3rd", 4: "4th"}
+            expected_prefix = standing_map.get(calculated_year_num)
 
-            if college_code == "0030":
+            # 1. Standard AKTU format: 13 digits, digits 3-6: 0030
+            if len(clean_roll) == 13 and clean_roll[2:6] == "0030":
                 if is_alumni_flag and calculated_year_num > 4:
                     is_id_verified = True
                 elif not is_alumni_flag:
-                    standing_map = {1: "1st", 2: "2nd", 3: "3rd", 4: "4th"}
-                    expected_prefix = standing_map.get(calculated_year_num)
                     if expected_prefix and pending_user.year and expected_prefix in pending_user.year:
                         is_id_verified = True
                     elif pending_user.is_year_back and pending_user.id_card_url:
-                        # Year back with uploaded card
                         is_id_verified = True
+                    elif pending_user.id_card_url:
+                        is_id_verified = True
+
+            # 2. Autonomous batches (1st & 2nd Year, admitted 2023 onwards)
+            elif clean_roll[:2] in ("23", "24", "25", "26"):
+                if not is_alumni_flag:
+                    if expected_prefix and pending_user.year and expected_prefix in pending_user.year:
+                        is_id_verified = True
+                    elif pending_user.id_card_url:
+                        is_id_verified = True
+
+            # 3. Legacy AKTU Alumni (10 digits with 030)
+            elif len(clean_roll) == 10 and clean_roll[2:5] == "030":
+                if is_alumni_flag or pending_user.id_card_url:
+                    is_id_verified = True
 
     # If ID card was uploaded and valid roll number
     if pending_user.id_card_url and is_id_verified:

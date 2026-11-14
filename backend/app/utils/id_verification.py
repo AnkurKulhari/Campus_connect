@@ -9,7 +9,8 @@ logger = logging.getLogger(__name__)
 IPEC_COLLEGE_KEYWORDS = {
     "inderprastha", "engineering", "college", "ipec",
     "aktu", "identity", "card", "student", "admn", "admission",
-    "ghaziabad", "dr.", "abdul", "kalam", "technical", "university"
+    "ghaziabad", "dr.", "abdul", "kalam", "technical", "university",
+    "autonomous", "institution"
 }
 
 

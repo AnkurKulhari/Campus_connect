@@ -196,10 +196,11 @@ export default function RegisterPage() {
     const localPart = email.split("@")[0];
     const isStandard13 = /^\d{13}$/.test(localPart) && localPart.substring(2, 6) === "0030";
     const isLegacy10 = /^\d{10}$/.test(localPart) && localPart.substring(2, 5) === "030";
+    const isAutonomous = /^\d{8,14}$/.test(localPart) && ["23", "24", "25", "26"].includes(localPart.substring(0, 2));
 
-    if (!isStandard13 && !isLegacy10) {
+    if (!isStandard13 && !isLegacy10 && !isAutonomous) {
       setError(
-        "Invalid college email: Must contain your official 13-digit AKTU roll number with IPEC institute code 0030 (e.g. 2300300100032@ipec.org.in)."
+        "Invalid college email: Must contain your official numeric roll number under @ipec.org.in (e.g. 2400300100032@ipec.org.in or 2100300100045@ipec.org.in)."
       );
       setLoading(false);
       return;
@@ -599,18 +600,32 @@ export default function RegisterPage() {
 
                   <div className="mt-4">
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                      13-Digit University Roll Number
+                      {year.startsWith("1st") || year.startsWith("2nd")
+                        ? "College Roll / Enrollment Number (Autonomous Batch)"
+                        : year.startsWith("Alumni")
+                        ? "University Roll Number (10 or 13 Digits)"
+                        : "13-Digit University Roll Number (AKTU Batch)"}
                     </label>
                     <input
                       type="text"
                       value={rollNumber}
                       onChange={(e) => setRollNumber(e.target.value)}
-                      placeholder="e.g. 2100300100045"
-                      maxLength={13}
+                      placeholder={
+                        year.startsWith("1st")
+                          ? "e.g. 2400300100045"
+                          : year.startsWith("2nd")
+                          ? "e.g. 2300300100045"
+                          : year.startsWith("Alumni")
+                          ? "e.g. 1900300100012 or 1703000012"
+                          : "e.g. 2100300100045"
+                      }
+                      maxLength={14}
                       className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-mono text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
                     />
                     <p className="mt-1 text-[11px] text-slate-400">
-                      Your official AKTU roll number printed on your college ID enables instant automated verified badge activation.
+                      {year.startsWith("1st") || year.startsWith("2nd")
+                        ? "Your official IPEC Autonomous roll or enrollment number printed on your college ID card."
+                        : "Your official AKTU roll number printed on your college ID enables instant automated verified badge activation."}
                     </p>
                   </div>
 

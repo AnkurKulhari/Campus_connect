@@ -75,17 +75,24 @@ def validate_email(college_email: str):
             detail="College email must contain your numeric roll number (e.g. 2300300100032@ipec.org.in)."
         )
 
-    # IPEC / AKTU official roll number format:
-    # Standard: 13 digits, digits 3-6 must be college code "0030"
-    # Legacy alumni: 10 digits, digits 3-5 must be college code "030"
-    is_valid_13 = len(local_part) == 13 and local_part[2:6] == "0030"
-    is_valid_10 = len(local_part) == 10 and local_part[2:5] == "030"
+    # IPEC Student Roll Number / College Email validation:
+    # 1. AKTU Affiliated batches (3rd & 4th Year): 13 digits, digits 3-6 must be college code "0030"
+    # 2. Autonomous batches (1st & 2nd Year): Admitted 2023 onwards (batch prefix 23, 24, 25, 26), 8-14 numeric digits
+    # 3. Legacy alumni batches: 10 digits, digits 3-5 must be college code "030"
+    is_valid_aktu_13 = len(local_part) == 13 and local_part[2:6] == "0030"
+    is_valid_aktu_10 = len(local_part) == 10 and local_part[2:5] == "030"
+    is_valid_autonomous = (
+        len(local_part) >= 8
+        and len(local_part) <= 14
+        and local_part[:2] in {"23", "24", "25", "26"}
+    )
 
-    if not (is_valid_13 or is_valid_10):
+    if not (is_valid_aktu_13 or is_valid_aktu_10 or is_valid_autonomous):
         raise HTTPException(
             status_code=400,
             detail=(
                 "Invalid college email roll number. Must be your official 13-digit AKTU roll number "
-                "containing IPEC institute code 0030 (e.g. 2300300100032@ipec.org.in)."
+                "(containing IPEC institute code 0030) or your official IPEC Autonomous roll number "
+                "(e.g. 2400300100032@ipec.org.in or 2300300100032@ipec.org.in)."
             )
         )
