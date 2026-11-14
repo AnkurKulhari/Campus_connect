@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import { Navbar } from "@/components/Navbar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { ClientOnly } from "@/components/ClientOnly";
+import { PointerGlow } from "@/components/PointerGlow";
 
 export const metadata: Metadata = {
   title: "CampusConnect | College Social Network",
@@ -16,12 +18,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
+    <html lang="en" className="h-full antialiased dark" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
+                try {
+                  var t = localStorage.getItem('campusconnect_theme');
+                  if (t === 'light') {
+                    document.documentElement.classList.remove('dark');
+                  } else {
+                    document.documentElement.classList.add('dark');
+                  }
+                } catch (e) {
+                  document.documentElement.classList.add('dark');
+                }
+
                 const origError = console.error;
                 console.error = function(...args) {
                   const str = args.map(function(a) {
@@ -59,11 +72,14 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <AuthProvider>
-          <ClientOnly>
-            <Navbar />
-            <main className="flex-1 pb-16 lg:pb-0">{children}</main>
-            <MobileBottomNav />
-          </ClientOnly>
+          <ThemeProvider>
+            <PointerGlow />
+            <ClientOnly>
+              <Navbar />
+              <main className="flex-1 pb-16 lg:pb-0">{children}</main>
+              <MobileBottomNav />
+            </ClientOnly>
+          </ThemeProvider>
         </AuthProvider>
       </body>
     </html>

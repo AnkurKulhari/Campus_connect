@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext";
 import { UserProfile } from "@/types";
 import {
   GraduationCap,
@@ -16,12 +17,15 @@ import {
   Loader2,
   Menu,
   MessageSquare,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { MobileSidebarDrawer } from "./MobileSidebarDrawer";
 
 export function Navbar() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState<number>(0);
@@ -323,6 +327,19 @@ export function Navbar() {
               <span className="hidden sm:inline">@{user.username}</span>
             </Link>
 
+            {/* Theme Toggle (Desktop) */}
+            <button
+              onClick={toggleTheme}
+              title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+              className="hidden md:flex rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition min-h-[44px] min-w-[44px] items-center justify-center cursor-pointer"
+            >
+              {theme === "dark" ? (
+                <Sun className="h-4 w-4 text-amber-500" />
+              ) : (
+                <Moon className="h-4 w-4 text-indigo-500" />
+              )}
+            </button>
+
             {/* Logout button (Desktop only; on mobile it is inside the profile page) */}
             <button
               onClick={logout}
@@ -334,6 +351,17 @@ export function Navbar() {
           </nav>
         ) : (
           <div className="flex items-center gap-3">
+            <button
+              onClick={toggleTheme}
+              title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+              className="flex rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition min-h-[44px] min-w-[44px] items-center justify-center cursor-pointer"
+            >
+              {theme === "dark" ? (
+                <Sun className="h-4 w-4 text-amber-500" />
+              ) : (
+                <Moon className="h-4 w-4 text-indigo-500" />
+              )}
+            </button>
             <Link
               href="/login"
               className="rounded-full px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 transition"
