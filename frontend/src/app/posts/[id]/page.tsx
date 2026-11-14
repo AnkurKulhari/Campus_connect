@@ -14,6 +14,8 @@ import { ReportModal } from "@/components/ReportModal";
 import { PostMediaCarousel } from "@/components/PostMediaCarousel";
 import { TrendingTopicsCard } from "@/components/TrendingTopicsCard";
 import { AuthGuard } from "@/components/AuthGuard";
+import { ShareModal } from "@/components/ShareModal";
+import { formatTwitterTimestamp } from "@/lib/date";
 import {
   ArrowLeft,
   Heart,
@@ -60,6 +62,7 @@ export default function PostDetailPage({
   const [showReportModal, setShowReportModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -348,6 +351,9 @@ export default function PostDetailPage({
                     >
                       {post.author.full_name}
                     </Link>
+                    <span className="text-xs text-slate-400">
+                      @{post.author.username}
+                    </span>
                     {post.author.is_id_verified && (
                       <span title="Verified Student ID">
                         <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
@@ -355,19 +361,33 @@ export default function PostDetailPage({
                     )}
                   </div>
 
-                  <div className="flex items-center gap-1.5 text-[11px] text-slate-400 truncate mt-0.5">
-                    <span>@{post.author.username}</span>
-                    {post.author.year && (
-                      <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.2 text-[10px] font-semibold text-slate-600 dark:text-slate-300 shrink-0">
-                        {post.author.year}
+                  {/* Academic Badge moved directly under Name & Username */}
+                  {post.author.is_alumni || post.author.year === "Alumni" ? (
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-blue-50/80 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/50 dark:border-blue-900/50">
+                        <GraduationCap className="h-2.5 w-2.5" />
+                        <span>Alumni</span>
+                        {post.author.branch && (
+                          <span>• {post.author.branch.replace(/\(.*?\)/g, "").trim()}</span>
+                        )}
                       </span>
-                    )}
-                    {post.author.branch && (
-                      <span className="truncate">
-                        • {post.author.branch.replace(/\(.*?\)/g, "").trim()}
+                    </div>
+                  ) : post.author.year ? (
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-blue-50/80 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/50 dark:border-blue-900/50">
+                        <span>{post.author.year}</span>
+                        {post.author.branch && (
+                          <span>• {post.author.branch.replace(/\(.*?\)/g, "").trim()}</span>
+                        )}
                       </span>
-                    )}
-                  </div>
+                    </div>
+                  ) : post.author.branch ? (
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        {post.author.branch.replace(/\(.*?\)/g, "").trim()}
+                      </span>
+                    </div>
+                  ) : null}
                 </div>
               </div>
 
@@ -461,17 +481,12 @@ export default function PostDetailPage({
               </div>
             )}
 
-            {/* Date / Timestamp */}
-            <div className="px-4 sm:px-5 py-2.5 border-t border-slate-100 dark:border-slate-800/80 text-[11px] text-slate-400">
-              {formattedDate}
-            </div>
-
-            {/* Action Bar: Like, Comments, Share */}
+            {/* Action Bar: Like, Comments, Share & Twitter-style Timestamp */}
             <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-t border-slate-100 dark:border-slate-800/80 text-xs">
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-5 sm:gap-6">
                 <button
                   onClick={handleLike}
-                  className={`flex items-center gap-1.5 font-bold transition ${
+                  className={`flex items-center gap-1.5 font-bold transition cursor-pointer ${
                     liked
                       ? "text-rose-600 dark:text-rose-500"
                       : "text-slate-600 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400"
@@ -485,15 +500,24 @@ export default function PostDetailPage({
                   <MessageCircle className="h-4.5 w-4.5" />
                   <span>{commentCount} {commentCount === 1 ? "Comment" : "Comments"}</span>
                 </div>
+
+                <button
+                  onClick={() => setShowShareModal(true)}
+                  className="flex items-center gap-1.5 font-semibold text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer"
+                  title="Share post"
+                >
+                  <Share2 className="h-4 w-4" />
+                  <span>Share</span>
+                </button>
               </div>
 
-              <button
-                onClick={handleShare}
-                className="flex items-center gap-1.5 font-semibold text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition"
+              {/* Twitter-style Timestamp in bottom right corner */}
+              <span
+                title={formattedDate}
+                className="text-[11px] text-slate-400 font-medium select-none"
               >
-                <Share2 className="h-4 w-4" />
-                <span>{copied ? "Link Copied!" : "Share"}</span>
-              </button>
+                {formatTwitterTimestamp(post.created_at)}
+              </span>
             </div>
 
             {/* Comments Section */}
@@ -657,6 +681,13 @@ export default function PostDetailPage({
         onReported={() => {
           router.push("/home");
         }}
+      />
+
+      {/* Share Post Modal */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        post={post}
       />
       </div>
     </AuthGuard>

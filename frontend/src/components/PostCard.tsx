@@ -10,10 +10,13 @@ import { useAuth } from "@/context/AuthContext";
 import { CommentSection } from "./CommentSection";
 import { ConfirmModal } from "./ConfirmModal";
 import { ReportModal } from "./ReportModal";
+import { ShareModal } from "./ShareModal";
 import { FormattedContent } from "./FormattedContent";
+import { formatTwitterTimestamp } from "@/lib/date";
 import {
   Heart,
   MessageCircle,
+  Share2,
   MoreVertical,
   Trash2,
   Flag,
@@ -37,6 +40,7 @@ export function PostCard({
   const [likeCount, setLikeCount] = useState(post.like_count);
   const [commentCount, setCommentCount] = useState(post.comment_count);
   const [showComments, setShowComments] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -85,13 +89,6 @@ export function PostCard({
     }
   };
 
-  // Formatted date
-  const formattedDate = new Date(post.created_at).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 
   if (isReported) {
     return (
@@ -136,20 +133,6 @@ export function PostCard({
                 @{post.author.username}
               </span>
 
-              {/* Academic Badge */}
-              {post.author.is_alumni || post.author.year === "Alumni" ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/40 dark:border-blue-900/40">
-                  <GraduationCap className="h-3 w-3" />
-                  <span>Alumni</span>
-                  {post.author.branch && <span>• {post.author.branch.replace(/\(.*?\)/g, "").trim()}</span>}
-                </span>
-              ) : post.author.year ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/40 dark:border-blue-900/40">
-                  <span>{post.author.year}</span>
-                  {post.author.branch && <span>• {post.author.branch.replace(/\(.*?\)/g, "").trim()}</span>}
-                </span>
-              ) : null}
-
               {/* Verified Student Badge */}
               {post.author.is_id_verified && (
                 <span
@@ -173,12 +156,34 @@ export function PostCard({
                 </a>
               )}
             </div>
-            <Link
-              href={`/posts/${post.id}`}
-              className="text-[11px] text-slate-400 hover:underline"
-            >
-              {formattedDate}
-            </Link>
+
+            {/* Academic Badge moved directly under Name & Username */}
+            {post.author.is_alumni || post.author.year === "Alumni" ? (
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="inline-flex items-center gap-1 rounded-full bg-blue-50/80 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/50 dark:border-blue-900/50">
+                  <GraduationCap className="h-2.5 w-2.5" />
+                  <span>Alumni</span>
+                  {post.author.branch && (
+                    <span>• {post.author.branch.replace(/\(.*?\)/g, "").trim()}</span>
+                  )}
+                </span>
+              </div>
+            ) : post.author.year ? (
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="inline-flex items-center gap-1 rounded-full bg-blue-50/80 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/50 dark:border-blue-900/50">
+                  <span>{post.author.year}</span>
+                  {post.author.branch && (
+                    <span>• {post.author.branch.replace(/\(.*?\)/g, "").trim()}</span>
+                  )}
+                </span>
+              </div>
+            ) : post.author.branch ? (
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="text-[10px] text-slate-400 font-medium">
+                  {post.author.branch.replace(/\(.*?\)/g, "").trim()}
+                </span>
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -382,27 +387,53 @@ export function PostCard({
         </div>
       )}
 
-      {/* Footer / Action Counts */}
-      <div className="flex items-center gap-6 px-4 py-3 border-t border-slate-100 dark:border-slate-800/80 text-xs text-slate-500">
-        <button
-          onClick={handleLike}
-          className={`flex items-center gap-1.5 font-semibold transition ${
-            liked
-              ? "text-rose-600 dark:text-rose-500"
-              : "hover:text-rose-600"
-          }`}
-        >
-          <Heart className={`h-4 w-4 ${liked ? "fill-current" : ""}`} />
-          <span>{likeCount}</span>
-        </button>
+      {/* Footer / Action Counts & Twitter-style Timestamp */}
+      <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 dark:border-slate-800/80 text-xs text-slate-500">
+        <div className="flex items-center gap-5 sm:gap-6">
+          <button
+            onClick={handleLike}
+            className={`flex items-center gap-1.5 font-semibold transition cursor-pointer ${
+              liked
+                ? "text-rose-600 dark:text-rose-500"
+                : "hover:text-rose-600"
+            }`}
+          >
+            <Heart className={`h-4 w-4 ${liked ? "fill-current" : ""}`} />
+            <span>{likeCount}</span>
+          </button>
 
-        <button
-          onClick={() => setShowComments(!showComments)}
-          className="flex items-center gap-1.5 font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition"
+          <button
+            onClick={() => setShowComments(!showComments)}
+            className="flex items-center gap-1.5 font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer"
+          >
+            <MessageCircle className="h-4 w-4" />
+            <span>{commentCount}</span>
+          </button>
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowShareModal(true);
+            }}
+            className="flex items-center gap-1.5 font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer"
+            title="Share post"
+          >
+            <Share2 className="h-4 w-4" />
+            <span>Share</span>
+          </button>
+        </div>
+
+        {/* Twitter-style Timestamp in bottom right corner parallel to action buttons */}
+        <Link
+          href={`/posts/${post.id}`}
+          title={new Date(post.created_at).toLocaleString(undefined, {
+            dateStyle: "medium",
+            timeStyle: "short",
+          })}
+          className="text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 font-medium transition"
         >
-          <MessageCircle className="h-4 w-4" />
-          <span>{commentCount}</span>
-        </button>
+          {formatTwitterTimestamp(post.created_at)}
+        </Link>
       </div>
 
       {/* Inline Comment Section Toggle */}
@@ -412,6 +443,13 @@ export function PostCard({
           onCommentCountChange={(count) => setCommentCount(count)}
         />
       )}
+
+      {/* Share Post Modal */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        post={post}
+      />
 
       {/* Custom Delete Confirmation Modal */}
       <ConfirmModal
