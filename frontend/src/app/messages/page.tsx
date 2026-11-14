@@ -10,6 +10,7 @@ import { Conversation, DirectMessage } from "@/types";
 import { api } from "@/lib/api";
 import { AuthGuard } from "@/components/AuthGuard";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { ChatMessageContent } from "@/components/ChatMessageContent";
 import {
   playMessageSentSound,
   playMessageReceivedSound,
@@ -794,7 +795,14 @@ function MessagesContent() {
                               : "text-slate-600 dark:text-slate-400"
                           }`}
                         >
-                          {conv.last_message?.content || "Started conversation"}
+                          {(() => {
+                            const text = conv.last_message?.content;
+                            if (!text) return "Started conversation";
+                            if (/(?:https?:\/\/[^\s/]+)?\/posts\/\d+/i.test(text.trim())) {
+                              return "📷 Shared a post";
+                            }
+                            return text;
+                          })()}
                         </p>
                         {conv.unread_count > 0 && (
                           <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white shrink-0 shadow-2xs">
@@ -1158,7 +1166,7 @@ function MessagesContent() {
                                   } ${isSameSenderAsNext ? "rounded-bl-xs" : ""}`
                             }`}
                           >
-                            <span className="align-middle">{msg.content}</span>
+                            <ChatMessageContent content={msg.content} isMe={Boolean(isMe)} />
                             {/* Integrated Timestamp & Read Receipts */}
                             <span
                               className={`float-right ml-2.5 translate-y-0.5 inline-flex items-center gap-0.5 text-[10px] select-none shrink-0 ${
