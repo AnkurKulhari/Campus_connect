@@ -72,13 +72,14 @@ def validate_email(college_email: str):
     if not local_part.isdigit():
         raise HTTPException(
             status_code=400,
-            detail="College email must contain your numeric roll number (e.g. 2300300100032@ipec.org.in)."
+            detail="College email must contain your numeric student ID or roll number (e.g. 592603@ipec.org.in or 2100300100045@ipec.org.in)."
         )
 
     # IPEC Student Roll Number / College Email validation:
     # 1. AKTU Affiliated batches (3rd & 4th Year): 13 digits, digits 3-6 must be college code "0030"
     # 2. Autonomous batches (1st & 2nd Year): Admitted 2023 onwards (batch prefix 23, 24, 25, 26), 8-14 numeric digits
-    # 3. Legacy alumni batches: 10 digits, digits 3-5 must be college code "030"
+    # 3. Junior/Autonomous ERP Student ID format: 5 to 7 digits (e.g. 592603@ipec.org.in or 578595@ipec.org.in)
+    # 4. Legacy alumni batches: 10 digits, digits 3-5 must be college code "030"
     is_valid_aktu_13 = len(local_part) == 13 and local_part[2:6] == "0030"
     is_valid_aktu_10 = len(local_part) == 10 and local_part[2:5] == "030"
     is_valid_autonomous = (
@@ -86,13 +87,13 @@ def validate_email(college_email: str):
         and len(local_part) <= 14
         and local_part[:2] in {"23", "24", "25", "26"}
     )
+    is_valid_student_id = len(local_part) >= 5 and len(local_part) <= 7
 
-    if not (is_valid_aktu_13 or is_valid_aktu_10 or is_valid_autonomous):
+    if not (is_valid_aktu_13 or is_valid_aktu_10 or is_valid_autonomous or is_valid_student_id):
         raise HTTPException(
             status_code=400,
             detail=(
-                "Invalid college email roll number. Must be your official 13-digit AKTU roll number "
-                "(containing IPEC institute code 0030) or your official IPEC Autonomous roll number "
-                "(e.g. 2400300100032@ipec.org.in or 2300300100032@ipec.org.in)."
+                "Invalid college email format. Must be your official IPEC student email ending in @ipec.org.in "
+                "(e.g. 592603@ipec.org.in for 1st/2nd years or 2100300100045@ipec.org.in for seniors)."
             )
         )

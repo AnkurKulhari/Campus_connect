@@ -200,10 +200,11 @@ export default function RegisterPage() {
     const isStandard13 = /^\d{13}$/.test(localPart) && localPart.substring(2, 6) === "0030";
     const isLegacy10 = /^\d{10}$/.test(localPart) && localPart.substring(2, 5) === "030";
     const isAutonomous = /^\d{8,14}$/.test(localPart) && ["23", "24", "25", "26"].includes(localPart.substring(0, 2));
+    const isStudentId = /^\d{5,7}$/.test(localPart);
 
-    if (!isStandard13 && !isLegacy10 && !isAutonomous) {
+    if (!isStandard13 && !isLegacy10 && !isAutonomous && !isStudentId) {
       setError(
-        "Invalid college email: Must contain your official numeric roll number under @ipec.org.in (e.g. 2400300100032@ipec.org.in or 2100300100045@ipec.org.in)."
+        "Invalid college email: Must contain your official Student ID or roll number under @ipec.org.in (e.g. 592603@ipec.org.in or 2100300100045@ipec.org.in)."
       );
       setLoading(false);
       return;
@@ -514,13 +515,13 @@ export default function RegisterPage() {
                           type="email"
                           value={collegeEmail}
                           onChange={handleEmailChange}
-                          placeholder="e.g. 2100300100045@ipec.org.in"
+                          placeholder="e.g. 592603@ipec.org.in or 2100300100045@ipec.org.in"
                           required
                           className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800/60 dark:text-white dark:focus:bg-slate-800 transition"
                         />
                       </div>
                       <p className="mt-1 text-[11px] text-slate-400">
-                        Must end with @ipec.org.in
+                        Must end with @ipec.org.in (Student ID for 1st/2nd years or Roll Number for seniors)
                       </p>
                     </div>
 
@@ -619,9 +620,9 @@ export default function RegisterPage() {
                       onChange={(e) => setRollNumber(e.target.value)}
                       placeholder={
                         year.startsWith("1st")
-                          ? "e.g. 2400300100045"
+                          ? "e.g. 2500300100009"
                           : year.startsWith("2nd")
-                          ? "e.g. 2300300100045"
+                          ? "e.g. 2400300100045"
                           : year.startsWith("Alumni")
                           ? "e.g. 1900300100012 or 1703000012"
                           : "e.g. 2100300100045"
@@ -631,7 +632,7 @@ export default function RegisterPage() {
                     />
                     <p className="mt-1 text-[11px] text-slate-400">
                       {year.startsWith("1st") || year.startsWith("2nd")
-                        ? "Your official IPEC Autonomous roll or enrollment number printed on your college ID card."
+                        ? "Your official university roll number printed on your college ID card or fee receipt."
                         : "Your official AKTU roll number printed on your college ID enables instant automated verified badge activation."}
                     </p>
                   </div>
