@@ -79,7 +79,10 @@ export default function RegisterPage() {
   const [isYearBack, setIsYearBack] = useState(false);
   const [linkedinUrl, setLinkedinUrl] = useState("");
 
-  // ID Card Upload
+  // Document verification type: College ID Card (default) or Fee Receipt (if ID not issued, e.g. 2nd Year)
+  const [docType, setDocType] = useState<"id_card" | "fee_receipt">("id_card");
+
+  // ID Card / Fee Receipt Upload
   const [idCardFile, setIdCardFile] = useState<File | null>(null);
   const [idCardPreview, setIdCardPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -219,7 +222,11 @@ export default function RegisterPage() {
     }
 
     if (!idCardFile) {
-      setError("Official College ID card photo is required to verify your enrollment.");
+      setError(
+        docType === "id_card"
+          ? "Official College ID card photo is required to verify your enrollment."
+          : "Official College Fee Receipt photo is required to verify your enrollment."
+      );
       setLoading(false);
       return;
     }
@@ -629,16 +636,67 @@ export default function RegisterPage() {
                     </p>
                   </div>
 
-                  {/* College ID Card Upload */}
+                  {/* College ID Card / Fee Receipt Upload */}
                   <div className="mt-4">
-                    <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center justify-between mb-2">
                       <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                        College ID Card Photo <span className="text-red-500 font-bold">*</span>
+                        {docType === "id_card"
+                          ? "College ID Card Photo"
+                          : "Official College Fee Receipt"}{" "}
+                        <span className="text-red-500 font-bold">*</span>
                       </label>
                       <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded-full border border-blue-200/60 dark:border-blue-800/40">
                         Required • Verified via OCR
                       </span>
                     </div>
+
+                    {/* Document Type Selector */}
+                    <div className="mb-2.5 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDocType("id_card");
+                          removeIdCard();
+                        }}
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-xl border transition cursor-pointer ${
+                          docType === "id_card"
+                            ? "bg-blue-600 text-white border-blue-600 shadow-2xs"
+                            : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-300"
+                        }`}
+                      >
+                        College ID Card
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDocType("fee_receipt");
+                          removeIdCard();
+                        }}
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-xl border transition flex items-center gap-1.5 cursor-pointer ${
+                          docType === "fee_receipt"
+                            ? "bg-blue-600 text-white border-blue-600 shadow-2xs"
+                            : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-300"
+                        }`}
+                      >
+                        <span>College Fee Receipt</span>
+                        <span
+                          className={`text-[10px] ${
+                            docType === "fee_receipt"
+                              ? "text-blue-100"
+                              : "text-amber-600 dark:text-amber-400 font-bold"
+                          }`}
+                        >
+                          (If ID not issued)
+                        </span>
+                      </button>
+                    </div>
+
+                    {year.startsWith("2nd") && docType === "id_card" && (
+                      <div className="mb-2.5 rounded-xl border border-amber-200/70 bg-amber-50/60 dark:border-amber-900/40 dark:bg-amber-950/30 p-2.5 text-[11px] text-amber-800 dark:text-amber-300 leading-snug">
+                        💡 <strong>Notice for 2nd Year:</strong> If your physical college ID card has not been issued yet, select <strong>&quot;College Fee Receipt&quot;</strong> above to verify using your official college fee receipt.
+                      </div>
+                    )}
+
                     <input
                       type="file"
                       ref={fileInputRef}
@@ -651,7 +709,7 @@ export default function RegisterPage() {
                       <div className="relative mt-1 aspect-video w-full max-w-xs rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
                         <Image
                           src={idCardPreview}
-                          alt="College ID Preview"
+                          alt={docType === "id_card" ? "College ID Preview" : "Fee Receipt Preview"}
                           fill
                           className="object-cover"
                         />
@@ -670,11 +728,17 @@ export default function RegisterPage() {
                         className="w-full flex items-center justify-center gap-2.5 rounded-2xl border border-dashed border-blue-300 dark:border-blue-800/80 p-4 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:border-blue-500 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 transition bg-slate-50/60 dark:bg-slate-800/30 cursor-pointer"
                       >
                         <Upload className="h-4 w-4 text-blue-500" />
-                        <span>Upload Official College ID Card (JPEG, PNG, max 10MB)</span>
+                        <span>
+                          {docType === "id_card"
+                            ? "Upload Official College ID Card (JPEG, PNG, max 10MB)"
+                            : "Upload Official College Fee Receipt (Photo/Screenshot, max 10MB)"}
+                        </span>
                       </button>
                     )}
                     <p className="mt-1.5 text-[11px] text-slate-400 leading-relaxed">
-                      Upload a clear photo of your official college student ID card. Your entered Full Name must match the name printed on your ID card for verification.
+                      {docType === "id_card"
+                        ? "Upload a clear photo of your official college student ID card. Your entered Full Name must match the name printed on your ID card for verification."
+                        : "Upload a clear photo or screenshot of your college tuition / admission fee receipt. It must clearly display your Full Name and Roll Number / Student ID."}
                     </p>
                   </div>
                 </div>

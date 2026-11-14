@@ -10,7 +10,8 @@ IPEC_COLLEGE_KEYWORDS = {
     "inderprastha", "engineering", "college", "ipec",
     "aktu", "identity", "card", "student", "admn", "admission",
     "ghaziabad", "dr.", "abdul", "kalam", "technical", "university",
-    "autonomous", "institution"
+    "autonomous", "institution", "fee", "receipt", "tuition", "accounts",
+    "fees", "challan", "slip", "session"
 }
 
 
@@ -121,16 +122,16 @@ def verify_id_card_name(
             if clean_roll in cleaned_ocr or clean_roll[-7:] in cleaned_ocr:
                 roll_matched = True
 
-    # If roll number matches exactly on the card, that is strong verification
+    # If roll number matches exactly on the document, that is strong verification
     if roll_matched:
-        return True, "College ID verified via matching roll number."
+        return True, "College enrollment verified via matching roll number."
 
     # If student's name tokens match
     if matched_name_tokens:
-        return True, f"Name verified on ID card (matched: {', '.join(matched_name_tokens)})."
+        return True, f"Name verified on document (matched: {', '.join(matched_name_tokens)})."
 
-    # Name is completely absent from the card
+    # Name is completely absent from the card/receipt
     return False, (
-        f"The name on the uploaded College ID card does not match your entered Full Name ('{full_name}'). "
-        "Please ensure your ID card is clear, legible, and belongs to you."
+        f"The name on the uploaded document does not match your entered Full Name ('{full_name}'). "
+        "Please ensure your College ID card or Fee Receipt is clear, legible, and belongs to you."
     )
