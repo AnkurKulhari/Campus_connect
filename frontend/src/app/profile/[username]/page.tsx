@@ -134,7 +134,7 @@ export default function ProfilePage() {
           The requested user @{username} doesn&apos;t exist or is not verified on CampusConnect.
         </p>
         <Link
-          href="/"
+          href="/home"
           className="mt-4 inline-block rounded-xl bg-blue-600 px-5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 transition"
         >
           Return to Feed

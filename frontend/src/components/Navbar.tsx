@@ -124,7 +124,7 @@ export function Navbar() {
           )}
 
           <Link
-            href="/"
+            href={user ? "/home" : "/"}
             className="flex items-center gap-2 font-black text-xl tracking-tight text-slate-900 dark:text-white hover:opacity-90 transition"
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-500/20">

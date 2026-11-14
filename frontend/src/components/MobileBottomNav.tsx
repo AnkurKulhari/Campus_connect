@@ -71,9 +71,9 @@ function MobileBottomNavInner() {
   const navItems = [
     {
       label: "Feed",
-      href: "/",
+      href: "/home",
       icon: Compass,
-      isActive: pathname === "/",
+      isActive: pathname === "/home",
       badge: 0,
     },
     {

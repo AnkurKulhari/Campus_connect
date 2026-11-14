@@ -78,7 +78,7 @@ export function TrendingTopicsCard({ activeTag, limit = 6 }: TrendingTopicsCardP
             return (
               <button
                 key={item.tag}
-                onClick={() => router.push(`/?tag=${encodeURIComponent(item.tag)}`)}
+                onClick={() => router.push(`/home?tag=${encodeURIComponent(item.tag)}`)}
                 className={`w-full flex items-center justify-between text-left group p-2 rounded-xl transition ${
                   isSelected
                     ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-bold"

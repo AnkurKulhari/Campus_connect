@@ -160,7 +160,7 @@ export default function PostDetailPage({
     setDeleting(true);
     try {
       await api.posts.deletePost(post.id);
-      router.push("/");
+      router.push("/home");
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "Failed to delete post");
       setDeleting(false);
@@ -181,7 +181,7 @@ export default function PostDetailPage({
     if (typeof window !== "undefined" && window.history.length > 2) {
       router.back();
     } else {
-      router.push("/");
+      router.push("/home");
     }
   };
 
@@ -200,7 +200,7 @@ export default function PostDetailPage({
           {error || "Post not found or has been deleted."}
         </p>
         <Link
-          href="/"
+          href="/home"
           className="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-sm"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -230,7 +230,7 @@ export default function PostDetailPage({
             <div className="rounded-3xl border border-slate-200/80 bg-white p-3 shadow-xs dark:border-slate-800 dark:bg-[#131B2E]">
               <nav className="space-y-1">
                 <Link
-                  href="/"
+                  href="/home"
                   className="flex items-center gap-3 rounded-2xl px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800/80 transition"
                 >
                   <Compass className="h-4 w-4 text-blue-500" />
@@ -655,7 +655,7 @@ export default function PostDetailPage({
         isOpen={showReportModal}
         onClose={() => setShowReportModal(false)}
         onReported={() => {
-          router.push("/");
+          router.push("/home");
         }}
       />
       </div>

@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       //
     }
-    window.location.href = "/";
+    window.location.href = "/home";
   };
 
   const logout = () => {

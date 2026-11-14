@@ -207,10 +207,10 @@ export function MobileSidebarDrawer({ isOpen, onClose }: MobileSidebarDrawerProp
           </p>
           <nav className="space-y-1 mt-1">
             <Link
-              href="/"
+              href="/home"
               onClick={onClose}
               className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold transition min-h-[44px] ${
-                pathname === "/"
+                pathname === "/home"
                   ? "bg-blue-600 text-white shadow-xs"
                   : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
               }`}
@@ -318,7 +318,7 @@ export function MobileSidebarDrawer({ isOpen, onClose }: MobileSidebarDrawerProp
               </p>
             </div>
             <Link
-              href="/"
+              href="/home"
               onClick={onClose}
               className="text-[10px] font-bold text-blue-600 dark:text-blue-400"
             >
@@ -337,7 +337,7 @@ export function MobileSidebarDrawer({ isOpen, onClose }: MobileSidebarDrawerProp
                   key={topic.tag}
                   onClick={() => {
                     onClose();
-                    router.push(`/?tag=${encodeURIComponent(topic.tag)}`);
+                    router.push(`/home?tag=${encodeURIComponent(topic.tag)}`);
                   }}
                   className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left hover:bg-slate-100 dark:hover:bg-slate-800/80 transition min-h-[38px]"
                 >

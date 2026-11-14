@@ -67,7 +67,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (!isLoading && user) {
-      router.replace("/");
+      router.replace("/home");
     }
   }, [user, isLoading, router]);
 
@@ -829,7 +829,7 @@ export default function RegisterPage() {
         actionText="Enter Campus Feed"
         autoRedirectSeconds={3}
         onAction={() => {
-          window.location.href = "/";
+          window.location.href = "/home";
         }}
       />
     </div>

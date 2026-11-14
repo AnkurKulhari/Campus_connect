@@ -23,7 +23,7 @@ export default function ForgotPasswordPage() {
 
   React.useEffect(() => {
     if (!isLoading && user) {
-      router.replace("/");
+      router.replace("/home");
     }
   }, [user, isLoading, router]);
 

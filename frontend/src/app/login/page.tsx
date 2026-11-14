@@ -27,7 +27,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!isLoading && user) {
-      router.replace("/");
+      router.replace("/home");
     }
   }, [user, isLoading, router]);
 
