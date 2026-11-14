@@ -691,11 +691,6 @@ export default function RegisterPage() {
                       </button>
                     </div>
 
-                    {year.startsWith("2nd") && docType === "id_card" && (
-                      <div className="mb-2.5 rounded-xl border border-amber-200/70 bg-amber-50/60 dark:border-amber-900/40 dark:bg-amber-950/30 p-2.5 text-[11px] text-amber-800 dark:text-amber-300 leading-snug">
-                        💡 <strong>Notice for 2nd Year:</strong> If your physical college ID card has not been issued yet, select <strong>&quot;College Fee Receipt&quot;</strong> above to verify using your official college fee receipt.
-                      </div>
-                    )}
 
                     <input
                       type="file"
