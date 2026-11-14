@@ -11,6 +11,7 @@ import { PostCard } from "@/components/PostCard";
 import { CreatePostBox } from "@/components/CreatePostBox";
 import { TrendingTopicsCard } from "@/components/TrendingTopicsCard";
 import { AuthGuard } from "@/components/AuthGuard";
+import { LandingPage } from "@/components/LandingPage";
 import {
   Globe,
   Users,
@@ -676,17 +677,34 @@ function HomeFeedContent() {
 }
 
 export default function HomePage() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center gap-3">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 shadow-xs border border-blue-200/50 dark:border-blue-800/40">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </div>
+        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+          Loading CampusConnect...
+        </p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LandingPage />;
+  }
+
   return (
-    <AuthGuard>
-      <Suspense
-        fallback={
-          <div className="flex justify-center py-20 text-slate-400">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-          </div>
-        }
-      >
-        <HomeFeedContent />
-      </Suspense>
-    </AuthGuard>
+    <Suspense
+      fallback={
+        <div className="flex justify-center py-20 text-slate-400">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        </div>
+      }
+    >
+      <HomeFeedContent />
+    </Suspense>
   );
 }
