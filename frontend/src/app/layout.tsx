@@ -5,7 +5,6 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { Navbar } from "@/components/Navbar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { ClientOnly } from "@/components/ClientOnly";
-import { PointerGlow } from "@/components/PointerGlow";
 
 export const metadata: Metadata = {
   title: "CampusConnect | College Social Network",
@@ -73,7 +72,6 @@ export default function RootLayout({
       >
         <AuthProvider>
           <ThemeProvider>
-            <PointerGlow />
             <ClientOnly>
               <Navbar />
               <main className="flex-1 pb-16 lg:pb-0">{children}</main>
