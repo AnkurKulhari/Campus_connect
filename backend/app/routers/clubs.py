@@ -153,10 +153,10 @@ def register_club(
 
     # Gate 4: Slug format & reserved slugs
     clean_slug = payload.slug.strip().lower()
-    if not re.match(r"^[a-z0-9_]{3,50}$", clean_slug):
+    if not re.match(r"^[a-z0-9._]{3,50}$", clean_slug) or clean_slug.startswith(".") or clean_slug.endswith(".") or ".." in clean_slug:
         raise HTTPException(
             status_code=400,
-            detail="Club handle (slug) must be 3-50 characters long and contain only lowercase letters, numbers, and underscores."
+            detail="Club handle (slug) must be 3-50 characters long and contain only lowercase letters, numbers, dots, and underscores."
         )
     if clean_slug in RESERVED_SLUGS:
         raise HTTPException(
@@ -304,6 +304,27 @@ def update_club(
         clean_name = payload.name.strip()
         assert_safe_content(clean_name, "Society Name")
         club.name = clean_name
+    if payload.slug:
+        new_slug = payload.slug.strip().lower()
+        if new_slug != club.slug:
+            if not re.match(r"^[a-z0-9._]{3,50}$", new_slug) or new_slug.startswith(".") or new_slug.endswith(".") or ".." in new_slug:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Club handle (slug) must be 3-50 characters long and contain only lowercase letters, numbers, dots, and underscores."
+                )
+            if new_slug in RESERVED_SLUGS:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"The handle '{new_slug}' is reserved by the campus platform."
+                )
+            existing_slug = db.query(Club).filter(func.lower(Club.slug) == new_slug).first()
+            if existing_slug:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"A society with the handle '@{new_slug}' is already registered."
+                )
+            assert_safe_content(new_slug, "Society Handle")
+            club.slug = new_slug
     if payload.category:
         club.category = payload.category.strip()
     if payload.tagline is not None:

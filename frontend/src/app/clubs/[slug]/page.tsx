@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, use } from "react";
+import React, { useEffect, useState, use, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -10,6 +10,7 @@ import { api, ApiError } from "@/lib/api";
 import { Club, ClubMember } from "@/types";
 import { LinkedinIcon } from "@/components/icons/LinkedinIcon";
 import { InstagramIcon } from "@/components/icons/InstagramIcon";
+import { checkImageSafety } from "@/lib/nsfw";
 import {
   Landmark,
   ShieldCheck,
@@ -26,11 +27,24 @@ import {
   UserCheck,
   User as UserIcon,
   X,
+  Upload,
+  Camera,
+  Settings,
 } from "lucide-react";
 
 interface ClubPageProps {
   params: Promise<{ slug: string }>;
 }
+
+const CATEGORIES = [
+  "Technical",
+  "Cultural",
+  "Sports",
+  "Literary",
+  "Social",
+  "Departmental",
+  "Other",
+];
 
 export default function ClubDetailPage({ params }: ClubPageProps) {
   const resolvedParams = use(params);
@@ -43,7 +57,7 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Modals
+  // Add Member Modal State
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [memberUsername, setMemberUsername] = useState("");
   const [memberRole, setMemberRole] = useState("CORE");
@@ -51,7 +65,36 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
   const [addingMember, setAddingMember] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
 
+  // Edit Society Details Modal State
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editSlug, setEditSlug] = useState("");
+  const [editCategory, setEditCategory] = useState("Technical");
+  const [editTagline, setEditTagline] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editLogoUrl, setEditLogoUrl] = useState("");
+  const [editBannerUrl, setEditBannerUrl] = useState("");
+  const [editInstagramUrl, setEditInstagramUrl] = useState("");
+  const [editLinkedinUrl, setEditLinkedinUrl] = useState("");
+  const [editWebsiteUrl, setEditWebsiteUrl] = useState("");
+  const [editFacultyName, setEditFacultyName] = useState("");
+
+  const [editLogoUploading, setEditLogoUploading] = useState(false);
+  const [editBannerUploading, setEditBannerUploading] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
+  const editLogoInputRef = useRef<HTMLInputElement>(null);
+  const editBannerInputRef = useRef<HTMLInputElement>(null);
+
   const [activeTab, setActiveTab] = useState<"about" | "team">("about");
+
+  const isLead =
+    club &&
+    (club.is_owner ||
+      club.my_role === "PRESIDENT" ||
+      club.my_role === "VICE_PRESIDENT" ||
+      club.my_role === "LEAD");
 
   const fetchClub = async () => {
     setLoading(true);
@@ -73,6 +116,141 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
   useEffect(() => {
     fetchClub();
   }, [slug]);
+
+  // Open Edit Modal with current values
+  const handleOpenEditModal = () => {
+    if (!club) return;
+    setEditName(club.name || "");
+    setEditSlug(club.slug || "");
+    setEditCategory(club.category || "Technical");
+    setEditTagline(club.tagline || "");
+    setEditDescription(club.description || "");
+    setEditLogoUrl(club.logo_url || "");
+    setEditBannerUrl(club.banner_url || "");
+    setEditInstagramUrl(club.instagram_url || "");
+    setEditLinkedinUrl(club.linkedin_url || "");
+    setEditWebsiteUrl(club.website_url || "");
+    setEditFacultyName(club.faculty_coordinator_name || "");
+    setEditError(null);
+    setShowEditModal(true);
+  };
+
+  // Upload Logo in Edit Modal
+  const handleEditLogoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setEditError("Please select an image file (PNG, JPG, WEBP).");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setEditError("Logo image size must be under 10MB.");
+      return;
+    }
+
+    setEditError(null);
+    setEditLogoUploading(true);
+
+    try {
+      const safety = await checkImageSafety(file);
+      if (safety.isExplicit) {
+        setEditError("Adult or explicit content detected in logo photo.");
+        setEditLogoUploading(false);
+        return;
+      }
+
+      const res = await api.clubs.uploadImage(file, "logo");
+      setEditLogoUrl(res.url);
+    } catch (err) {
+      setEditError(err instanceof ApiError ? err.detail : "Failed to upload logo.");
+    } finally {
+      setEditLogoUploading(false);
+    }
+  };
+
+  // Upload Banner in Edit Modal
+  const handleEditBannerSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setEditError("Please select an image file (PNG, JPG, WEBP).");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setEditError("Cover banner image size must be under 10MB.");
+      return;
+    }
+
+    setEditError(null);
+    setEditBannerUploading(true);
+
+    try {
+      const safety = await checkImageSafety(file);
+      if (safety.isExplicit) {
+        setEditError("Adult or explicit content detected in banner photo.");
+        setEditBannerUploading(false);
+        return;
+      }
+
+      const res = await api.clubs.uploadImage(file, "banner");
+      setEditBannerUrl(res.url);
+    } catch (err) {
+      setEditError(err instanceof ApiError ? err.detail : "Failed to upload banner.");
+    } finally {
+      setEditBannerUploading(false);
+    }
+  };
+
+  // Save Edit Changes
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!club) return;
+
+    if (!editName.trim()) {
+      setEditError("Society name cannot be empty.");
+      return;
+    }
+    if (!editSlug.trim()) {
+      setEditError("Society handle cannot be empty.");
+      return;
+    }
+
+    setSavingEdit(true);
+    setEditError(null);
+
+    try {
+      const updated = await api.clubs.update(slug, {
+        name: editName.trim(),
+        slug: editSlug.trim().toLowerCase(),
+        category: editCategory,
+        tagline: editTagline.trim(),
+        description: editDescription.trim(),
+        logo_url: editLogoUrl || undefined,
+        banner_url: editBannerUrl || undefined,
+        instagram_url: editInstagramUrl.trim() || undefined,
+        linkedin_url: editLinkedinUrl.trim() || undefined,
+        website_url: editWebsiteUrl.trim() || undefined,
+        faculty_coordinator_name: editFacultyName.trim() || undefined,
+      });
+
+      setClub(updated);
+      setShowEditModal(false);
+
+      if (updated.slug !== slug) {
+        router.push(`/clubs/${updated.slug}`);
+      }
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setEditError(err.detail);
+      } else {
+        setEditError("Failed to update society details.");
+      }
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -223,14 +401,24 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                {isLead && (
+                  <button
+                    onClick={handleOpenEditModal}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#131B2E] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 px-3.5 py-2 text-xs font-bold transition shadow-2xs cursor-pointer min-h-[40px]"
+                  >
+                    <Edit3 className="h-4 w-4 text-violet-500" />
+                    <span>Edit Details</span>
+                  </button>
+                )}
+
                 {club.is_owner && (
                   <button
                     onClick={() => setShowAddMemberModal(true)}
                     className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white px-3.5 py-2 text-xs font-bold transition shadow-xs cursor-pointer min-h-[40px]"
                   >
                     <Plus className="h-4 w-4" />
-                    <span>Add Core Member</span>
+                    <span>Add Member</span>
                   </button>
                 )}
 
@@ -432,7 +620,7 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                       <button
                         onClick={() => handleRemoveMember(member.user_id, member.full_name)}
                         title="Remove member from core team"
-                        className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 transition"
+                        className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 transition cursor-pointer"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -443,6 +631,302 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
             </div>
           )}
         </div>
+
+        {/* Modal: Edit Society Details */}
+        {showEditModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs overflow-y-auto">
+            <div className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#131B2E] p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150 my-8">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <Edit3 className="h-4 w-4 text-violet-500" />
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Edit Society Details
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="rounded-lg p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {editError && (
+                <div className="mt-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 p-2.5 text-xs text-rose-700 dark:text-rose-300">
+                  {editError}
+                </div>
+              )}
+
+              <form onSubmit={handleSaveEdit} className="mt-4 space-y-4">
+                {/* Name */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Official Society Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-violet-500 focus:outline-none"
+                  />
+                </div>
+
+                {/* Handle / Slug */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Society Handle / Slug
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editSlug}
+                    onChange={(e) => setEditSlug(e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, ""))}
+                    placeholder="csi.ipec or csi_ipec"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3 py-2 text-xs font-mono text-slate-900 dark:text-white focus:border-violet-500 focus:outline-none"
+                  />
+                  <p className="mt-1 text-[10px] text-slate-400">
+                    Supports dots (.) and underscores (_). Changing handle updates your society URL.
+                  </p>
+                </div>
+
+                {/* Category */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Category
+                  </label>
+                  <select
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-violet-500 focus:outline-none"
+                  >
+                    {CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Tagline */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Tagline / Motto
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={200}
+                    value={editTagline}
+                    onChange={(e) => setEditTagline(e.target.value)}
+                    placeholder="Short one-line motto"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-violet-500 focus:outline-none"
+                  />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    About / Description
+                  </label>
+                  <textarea
+                    rows={4}
+                    maxLength={2000}
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    placeholder="Describe your society..."
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 p-3 text-xs text-slate-900 dark:text-white focus:border-violet-500 focus:outline-none resize-y"
+                  />
+                </div>
+
+                {/* Photo & Banner Uploads */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Logo Photo
+                    </label>
+                    <input
+                      type="file"
+                      ref={editLogoInputRef}
+                      accept="image/*"
+                      onChange={handleEditLogoSelect}
+                      className="hidden"
+                    />
+                    <div className="flex items-center gap-3">
+                      <div className="relative h-12 w-12 shrink-0 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                        {editLogoUrl ? (
+                          <img
+                            src={editLogoUrl}
+                            alt="Logo"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center text-slate-400 font-bold text-xs">
+                            No Logo
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-1">
+                        <button
+                          type="button"
+                          disabled={editLogoUploading}
+                          onClick={() => editLogoInputRef.current?.click()}
+                          className="inline-flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-200 transition"
+                        >
+                          {editLogoUploading ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Camera className="h-3 w-3" />
+                          )}
+                          <span>Change</span>
+                        </button>
+                        {editLogoUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setEditLogoUrl("")}
+                            className="block text-[10px] text-rose-500 hover:underline"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Cover Banner
+                    </label>
+                    <input
+                      type="file"
+                      ref={editBannerInputRef}
+                      accept="image/*"
+                      onChange={handleEditBannerSelect}
+                      className="hidden"
+                    />
+                    <div className="flex items-center gap-3">
+                      <div className="relative h-12 w-18 shrink-0 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                        {editBannerUrl ? (
+                          <img
+                            src={editBannerUrl}
+                            alt="Banner"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center text-slate-400 font-bold text-[10px]">
+                            No Banner
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-1">
+                        <button
+                          type="button"
+                          disabled={editBannerUploading}
+                          onClick={() => editBannerInputRef.current?.click()}
+                          className="inline-flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-200 transition"
+                        >
+                          {editBannerUploading ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Camera className="h-3 w-3" />
+                          )}
+                          <span>Change</span>
+                        </button>
+                        {editBannerUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setEditBannerUrl("")}
+                            className="block text-[10px] text-rose-500 hover:underline"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Social Links */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                      Instagram URL
+                    </label>
+                    <input
+                      type="url"
+                      value={editInstagramUrl}
+                      onChange={(e) => setEditInstagramUrl(e.target.value)}
+                      placeholder="https://instagram.com/..."
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-2.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                      LinkedIn URL
+                    </label>
+                    <input
+                      type="url"
+                      value={editLinkedinUrl}
+                      onChange={(e) => setEditLinkedinUrl(e.target.value)}
+                      placeholder="https://linkedin.com/..."
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-2.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                      Website URL
+                    </label>
+                    <input
+                      type="url"
+                      value={editWebsiteUrl}
+                      onChange={(e) => setEditWebsiteUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-2.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Faculty Coordinator */}
+                <div className="pt-2">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Faculty Coordinator Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editFacultyName}
+                    onChange={(e) => setEditFacultyName(e.target.value)}
+                    placeholder="Prof. / Dr. ..."
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-violet-500 focus:outline-none"
+                  />
+                </div>
+
+                {/* Footer Buttons */}
+                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={savingEdit || editLogoUploading || editBannerUploading}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white px-5 py-2 text-xs font-bold transition shadow-xs disabled:opacity-50 cursor-pointer"
+                  >
+                    {savingEdit ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <span>Save Changes</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* Modal: Add Core Member */}
         {showAddMemberModal && (
@@ -524,7 +1008,7 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                   <button
                     type="submit"
                     disabled={addingMember}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 text-xs font-bold transition shadow-xs disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 text-xs font-bold transition shadow-xs disabled:opacity-50 cursor-pointer"
                   >
                     {addingMember ? (
                       <>

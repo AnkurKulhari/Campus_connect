@@ -72,10 +72,10 @@ export default function RegisterClubPage() {
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setName(val);
-    if (!slug || slug === name.toLowerCase().replace(/[^a-z0-9_]/g, "_")) {
+    if (!slug || slug === name.toLowerCase().replace(/[^a-z0-9._]/g, "_")) {
       const generated = val
         .toLowerCase()
-        .replace(/[^a-z0-9_]/g, "_")
+        .replace(/[^a-z0-9._]/g, "_")
         .replace(/_+/g, "_")
         .slice(0, 30);
       setSlug(generated);
@@ -358,13 +358,13 @@ export default function RegisterClubPage() {
                     required
                     disabled={!isEligible || submitting}
                     value={slug}
-                    onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
-                    placeholder="csi_ipec"
+                    onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, ""))}
+                    placeholder="csi.ipec or csi_ipec"
                     className="w-full bg-transparent px-3 py-2.5 text-xs font-mono text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none disabled:opacity-50"
                   />
                 </div>
                 <p className="mt-1 text-[11px] text-slate-400">
-                  Lowercase letters, numbers, and underscores only. Max 50 characters.
+                  Lowercase letters, numbers, dots (.), and underscores (_). Max 50 characters.
                 </p>
               </div>
 

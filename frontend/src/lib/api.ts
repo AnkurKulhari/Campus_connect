@@ -557,6 +557,7 @@ export const api = {
       slug: string,
       data: Partial<{
         name: string;
+        slug: string;
         category: string;
         tagline: string;
         description: string;
