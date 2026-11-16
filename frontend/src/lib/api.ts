@@ -307,6 +307,11 @@ export const api = {
         `/posts/user/${username}?page=${page}&page_size=${pageSize}`
       ),
 
+    getClubPosts: (clubSlug: string, page = 1, pageSize = 20) =>
+      request<PaginatedPosts>(
+        `/posts/club/${encodeURIComponent(clubSlug)}?page=${page}&page_size=${pageSize}`
+      ),
+
     getPost: (postId: number) => request<Post>(`/posts/${postId}`),
 
     updatePost: (postId: number, content: string | null) =>

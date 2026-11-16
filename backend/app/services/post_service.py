@@ -91,7 +91,7 @@ def create_post(
                 select(ClubMember).where(
                     ClubMember.club_id == club.id,
                     ClubMember.user_id == current_user.id,
-                    ClubMember.role.in_(["PRESIDENT", "VICE_PRESIDENT", "LEAD", "CORE"]),
+                    ClubMember.role.in_(["PRESIDENT", "VICE_PRESIDENT"]),
                 )
             )
             if member:
@@ -100,7 +100,7 @@ def create_post(
         if not is_authorized:
             raise HTTPException(
                 status_code=403,
-                detail="You are not authorized to publish posts on behalf of this society."
+                detail="Only the Society President and Vice President are authorized to publish posts on behalf of this society."
             )
         target_club_id = club.id
 
@@ -356,6 +356,41 @@ def get_user_posts(username: str, page: int, page_size: int, current_user_id: in
         .options(*_post_options(current_user_id))
         .where(
             Post.user_id == user.id,
+            Post.is_hidden == False,
+        )
+        .order_by(Post.created_at.desc())
+        .offset(offset)
+        .limit(page_size)
+    ).all()
+
+    return {
+        "posts": posts,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "has_next": (offset + page_size) < total,
+    }
+
+
+def get_club_posts(club_slug: str, page: int, page_size: int, current_user_id: int, db: Session) -> dict:
+    from app.models.club import Club
+    club = db.scalar(select(Club).where(func.lower(Club.slug) == club_slug.strip().lower(), Club.is_active == True))
+    if not club:
+        raise HTTPException(status_code=404, detail="Club or society not found.")
+
+    offset = (page - 1) * page_size
+    total = db.scalar(
+        select(func.count(Post.id)).where(
+            Post.club_id == club.id,
+            Post.is_hidden == False,
+        )
+    ) or 0
+
+    posts = db.scalars(
+        select(Post)
+        .options(*_post_options(current_user_id))
+        .where(
+            Post.club_id == club.id,
             Post.is_hidden == False,
         )
         .order_by(Post.created_at.desc())

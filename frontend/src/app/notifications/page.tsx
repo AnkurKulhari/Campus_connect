@@ -23,6 +23,7 @@ import {
   Trash2,
   Sparkles,
   ExternalLink,
+  Landmark,
 } from "lucide-react";
 
 type NotifFilter = "all" | "interactions" | "follows";
@@ -332,12 +333,37 @@ export default function NotificationsPage() {
                       <span className="font-bold hover:underline">
                         {n.sender.full_name}
                       </span>{" "}
-                      {n.type === "like" && "liked your post."}
-                      {n.type === "comment" && "commented on your post."}
+                      {n.club_name ? (
+                        <>
+                          {n.type === "like" && (
+                            <>
+                              liked{" "}
+                              <span className="font-bold text-violet-600 dark:text-violet-400">
+                                {n.club_name}
+                              </span>
+                              &apos;s post.
+                            </>
+                          )}
+                          {n.type === "comment" && (
+                            <>
+                              commented on{" "}
+                              <span className="font-bold text-violet-600 dark:text-violet-400">
+                                {n.club_name}
+                              </span>
+                              &apos;s post.
+                            </>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {n.type === "like" && "liked your post."}
+                          {n.type === "comment" && "commented on your post."}
+                        </>
+                      )}
                       {n.type === "follow" && "started following you."}
                     </p>
 
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
                       <span className="text-[11px] text-slate-400 dark:text-slate-500">
                         {new Date(n.created_at).toLocaleDateString(undefined, {
                           month: "short",
@@ -346,6 +372,14 @@ export default function NotificationsPage() {
                           minute: "2-digit",
                         })}
                       </span>
+
+                      {n.club_name && (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-violet-100 dark:bg-violet-950/70 px-1.5 py-0.5 text-[9px] font-bold text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800">
+                          <Landmark className="h-2.5 w-2.5" />
+                          <span>{n.club_name}</span>
+                        </span>
+                      )}
+
                       {((n.type === "like" || n.type === "comment") && n.post_id) && (
                         <span className="inline-flex items-center gap-0.5 text-[10px] text-blue-600 dark:text-blue-400 font-semibold group-hover:underline">
                           <span>View post</span>

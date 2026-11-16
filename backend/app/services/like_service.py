@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 
@@ -11,7 +11,7 @@ from app.services.notification_service import create_notification, delete_notifi
 
 def toggle_like(post_id: int, current_user: User, db: Session) -> dict:
     # Verify the post exists
-    post = db.scalar(select(Post).where(Post.id == post_id))
+    post = db.scalar(select(Post).options(selectinload(Post.club)).where(Post.id == post_id))
     if not post:
         raise HTTPException(status_code=404, detail="Post not found.")
 
@@ -42,11 +42,17 @@ def toggle_like(post_id: int, current_user: User, db: Session) -> dict:
             db.rollback()
             liked = True
         else:
+            custom_msg = (
+                f"@{current_user.username} liked {post.club.name}'s post."
+                if (post.club_id and post.club)
+                else None
+            )
             create_notification(
                 recipient_id=post.user_id,
                 sender_id=current_user.id,
                 type="like",
                 post_id=post.id,
+                message=custom_msg,
                 db=db,
             )
             liked = True

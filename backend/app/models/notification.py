@@ -37,3 +37,15 @@ class Notification(Base):
     sender: Mapped["User"] = relationship("User", foreign_keys=[sender_id])
     post: Mapped["Post"] = relationship("Post", foreign_keys=[post_id])
     comment: Mapped["Comment"] = relationship("Comment", foreign_keys=[comment_id])
+
+    @property
+    def club_id(self) -> int | None:
+        return self.post.club_id if self.post else None
+
+    @property
+    def club_name(self) -> str | None:
+        return self.post.club.name if (self.post and self.post.club) else None
+
+    @property
+    def club_slug(self) -> str | None:
+        return self.post.club.slug if (self.post and self.post.club) else None

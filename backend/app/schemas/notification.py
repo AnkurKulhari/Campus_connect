@@ -16,6 +16,9 @@ class NotificationResponse(BaseModel):
     sender: NotificationSenderResponse
     post_id: int | None = None
     comment_id: int | None = None
+    club_id: int | None = None
+    club_name: str | None = None
+    club_slug: str | None = None
     message: str | None = None
     is_read: bool
     created_at: datetime

@@ -210,6 +210,9 @@ export interface Notification {
   sender: NotificationSender;
   post_id: number | null;
   comment_id: number | null;
+  club_id?: number | null;
+  club_name?: string | null;
+  club_slug?: string | null;
   message: string | null;
   is_read: boolean;
   created_at: string;

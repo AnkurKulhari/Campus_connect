@@ -12,7 +12,7 @@ from app.schemas.post import (
 from app.schemas.auth import MessageResponse
 from app.services.post_service import (
     create_post, get_post, get_feed, get_following_feed,
-    get_user_posts, update_post, delete_post, report_post,
+    get_user_posts, get_club_posts, update_post, delete_post, report_post,
     get_trending_topics
 )
 
@@ -76,6 +76,18 @@ def user_posts(
 ):
     """All posts by a specific user, paginated."""
     return get_user_posts(username, page, page_size, current_user.id, db)
+
+
+@router.get("/club/{club_slug}", response_model=PaginatedPostsResponse)
+def club_posts(
+    club_slug: str,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=50),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """All posts published on behalf of a specific club or society, paginated."""
+    return get_club_posts(club_slug, page, page_size, current_user.id, db)
 
 
 @router.get("/{post_id}", response_model=PostResponse)

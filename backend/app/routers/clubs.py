@@ -271,7 +271,7 @@ def get_my_manageable_clubs(
     db: Session = Depends(get_db),
 ):
     """
-    Returns clubs that the current user owns or is a leadership/core member of,
+    Returns clubs that the current user owns as President or is a Vice President of,
     allowing them to post on behalf of the society.
     """
     memberships = (
@@ -280,7 +280,7 @@ def get_my_manageable_clubs(
         .filter(
             ClubMember.user_id == current_user.id,
             Club.is_active == True,
-            ClubMember.role.in_(["PRESIDENT", "VICE_PRESIDENT", "LEAD", "CORE"]),
+            ClubMember.role.in_(["PRESIDENT", "VICE_PRESIDENT"]),
         )
         .all()
     )

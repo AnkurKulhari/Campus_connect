@@ -4,6 +4,7 @@ from sqlalchemy import select, func, update, delete
 
 from app.models.notification import Notification
 from app.models.user import User
+from app.models.post import Post
 
 
 def create_notification(
@@ -85,7 +86,10 @@ def get_user_notifications(user_id: int, page: int, page_size: int, db: Session)
 
     notifications = db.scalars(
         select(Notification)
-        .options(selectinload(Notification.sender))
+        .options(
+            selectinload(Notification.sender),
+            selectinload(Notification.post).selectinload(Post.club),
+        )
         .where(Notification.recipient_id == user_id)
         .order_by(Notification.created_at.desc())
         .offset(offset)

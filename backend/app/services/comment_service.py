@@ -22,7 +22,7 @@ def _get_comment_or_404(comment_id: int, db: Session) -> Comment:
 
 
 def create_comment(post_id: int, comment_data: CommentCreate, current_user: User, db: Session) -> Comment:
-    post = db.scalar(select(Post).where(Post.id == post_id))
+    post = db.scalar(select(Post).options(selectinload(Post.club)).where(Post.id == post_id))
     if not post:
         raise HTTPException(status_code=404, detail="Post not found.")
 
@@ -36,12 +36,18 @@ def create_comment(post_id: int, comment_data: CommentCreate, current_user: User
     db.add(comment)
     db.commit()
 
+    custom_msg = (
+        f"@{current_user.username} commented on {post.club.name}'s post: \"{comment.content[:35]}...\""
+        if (post.club_id and post.club)
+        else None
+    )
     create_notification(
         recipient_id=post.user_id,
         sender_id=current_user.id,
         type="comment",
         post_id=post.id,
         comment_id=comment.id,
+        message=custom_msg,
         db=db,
     )
 

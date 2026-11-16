@@ -1,16 +1,18 @@
 "use client";
 
-import React, { useEffect, useState, use, useRef } from "react";
+import React, { useEffect, useState, use, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { AuthGuard } from "@/components/AuthGuard";
 import { api, ApiError } from "@/lib/api";
-import { Club, ClubMember } from "@/types";
+import { Club, ClubMember, Post } from "@/types";
 import { LinkedinIcon } from "@/components/icons/LinkedinIcon";
 import { InstagramIcon } from "@/components/icons/InstagramIcon";
 import { ImageCropModal } from "@/components/ImageCropModal";
+import { PostCard } from "@/components/PostCard";
+import { CreatePostBox } from "@/components/CreatePostBox";
 import { checkImageSafety } from "@/lib/nsfw";
 import {
   Landmark,
@@ -33,6 +35,8 @@ import {
   Settings,
   Flag,
   ShieldAlert,
+  MoreVertical,
+  FileText,
 } from "lucide-react";
 
 interface ClubPageProps {
@@ -90,7 +94,21 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
   const editLogoInputRef = useRef<HTMLInputElement>(null);
   const editBannerInputRef = useRef<HTMLInputElement>(null);
 
-  const [activeTab, setActiveTab] = useState<"about" | "team">("about");
+  const [activeTab, setActiveTab] = useState<"about" | "posts" | "team">("about");
+  const [clubPosts, setClubPosts] = useState<Post[]>([]);
+  const [postsLoading, setPostsLoading] = useState(false);
+
+  // Three-dot header menu state
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+
+  // Custom remove team member modal state
+  const [memberToRemove, setMemberToRemove] = useState<{
+    id: number;
+    name: string;
+    title?: string | null;
+    role: string;
+  } | null>(null);
+  const [removingMember, setRemovingMember] = useState(false);
 
   // Crop modal state
   const [cropModalOpen, setCropModalOpen] = useState(false);
@@ -112,6 +130,12 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
       club.my_role === "VICE_PRESIDENT" ||
       club.my_role === "LEAD");
 
+  const isPresidentOrVP =
+    club &&
+    (club.is_owner ||
+      club.my_role === "PRESIDENT" ||
+      club.my_role === "VICE_PRESIDENT");
+
   const fetchClub = async () => {
     setLoading(true);
     setError(null);
@@ -129,9 +153,23 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
     }
   };
 
+  const fetchClubPosts = useCallback(async () => {
+    if (!slug) return;
+    setPostsLoading(true);
+    try {
+      const res = await api.posts.getClubPosts(slug);
+      setClubPosts(res.posts);
+    } catch {
+      //
+    } finally {
+      setPostsLoading(false);
+    }
+  }, [slug]);
+
   useEffect(() => {
     fetchClub();
-  }, [slug]);
+    fetchClubPosts();
+  }, [slug, fetchClubPosts]);
 
   // Open Edit Modal with current values
   const handleOpenEditModal = () => {
@@ -343,16 +381,26 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
     }
   };
 
-  const handleRemoveMember = async (userId: number, memberName: string) => {
-    if (!confirm(`Are you sure you want to remove ${memberName} from the society team?`)) {
-      return;
-    }
+  const handleOpenRemoveMemberModal = (member: ClubMember) => {
+    setMemberToRemove({
+      id: member.user_id,
+      name: member.full_name,
+      title: member.title,
+      role: member.role,
+    });
+  };
 
+  const handleConfirmRemoveMember = async () => {
+    if (!memberToRemove || !club) return;
+    setRemovingMember(true);
     try {
-      const updated = await api.clubs.removeMember(slug, userId);
+      const updated = await api.clubs.removeMember(slug, memberToRemove.id);
       setClub(updated);
+      setMemberToRemove(null);
     } catch (err) {
       alert(err instanceof ApiError ? err.detail : "Could not remove member.");
+    } finally {
+      setRemovingMember(false);
     }
   };
 
@@ -495,22 +543,6 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                   </button>
                 )}
 
-                {/* Report Rogue Society Button (For students who do not own the club) */}
-                {!club.is_owner && (
-                  <button
-                    onClick={() => {
-                      setReportError(null);
-                      setReportSuccess(null);
-                      setShowReportModal(true);
-                    }}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/60 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/60 px-3 py-2 text-xs font-bold transition shadow-2xs cursor-pointer min-h-[40px]"
-                    title="Report rogue or fake society registration"
-                  >
-                    <Flag className="h-3.5 w-3.5" />
-                    <span>Report Rogue Club</span>
-                  </button>
-                )}
-
                 {/* Social Links */}
                 <div className="flex items-center gap-1">
                   {club.instagram_url && (
@@ -546,6 +578,38 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                       <Globe className="h-4 w-4" />
                     </a>
                   )}
+
+                  {/* Three-Dot Menu (Hidden for President and Vice President) */}
+                  {!isPresidentOrVP && (
+                    <div className="relative ml-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setShowMoreMenu(!showMoreMenu)}
+                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
+                        title="More options"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
+
+                      {showMoreMenu && (
+                        <div className="absolute right-0 top-full mt-1.5 z-40 w-52 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#131B2E] p-1.5 shadow-xl animate-in fade-in duration-100">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowMoreMenu(false);
+                              setReportError(null);
+                              setReportSuccess(null);
+                              setShowReportModal(true);
+                            }}
+                            className="w-full flex items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
+                          >
+                            <Flag className="h-3.5 w-3.5 shrink-0" />
+                            <span>Report Rogue Society</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -568,6 +632,16 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                 }`}
               >
                 About & Overview
+              </button>
+              <button
+                onClick={() => setActiveTab("posts")}
+                className={`pb-2.5 text-xs font-bold transition cursor-pointer border-b-2 ${
+                  activeTab === "posts"
+                    ? "border-violet-600 text-violet-600 dark:text-violet-400"
+                    : "border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                }`}
+              >
+                Society Posts ({clubPosts.length})
               </button>
               <button
                 onClick={() => setActiveTab("team")}
@@ -648,7 +722,56 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
             </div>
           )}
 
-          {/* Tab 2: Society Team */}
+          {/* Tab 2: Society Posts & Updates */}
+          {activeTab === "posts" && (
+            <div className="mt-6 max-w-2xl mx-auto space-y-6">
+              {/* If President or VP: show CreatePostBox */}
+              {isPresidentOrVP && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-violet-600 dark:text-violet-400">
+                    <Landmark className="h-3.5 w-3.5" />
+                    <span>Publish Announcement or Post as {club.name}</span>
+                  </div>
+                  <CreatePostBox
+                    onPostCreated={(newPost) => {
+                      setClubPosts((prev) => [newPost, ...prev]);
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Feed of Society Posts */}
+              {postsLoading ? (
+                <div className="flex justify-center py-12 text-slate-400">
+                  <Loader2 className="h-7 w-7 animate-spin text-violet-600" />
+                </div>
+              ) : clubPosts.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-[#131B2E] p-12 text-center shadow-xs">
+                  <FileText className="mx-auto h-9 w-9 text-slate-400 mb-2" />
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                    No posts published yet
+                  </h4>
+                  <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
+                    Official updates, event recaps, and announcements from {club.name} will appear here.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {clubPosts.map((post) => (
+                    <PostCard
+                      key={post.id}
+                      post={post}
+                      onPostDeleted={(deletedId) => {
+                        setClubPosts((prev) => prev.filter((p) => p.id !== deletedId));
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Tab 3: Society Team */}
           {activeTab === "team" && (
             <div className="mt-6 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#131B2E] p-6 shadow-xs">
               <div className="flex items-center justify-between mb-5">
@@ -667,7 +790,7 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                     className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white px-3 py-1.5 text-xs font-bold transition shadow-xs cursor-pointer"
                   >
                     <Plus className="h-3.5 w-3.5" />
-                    <span>Add Member</span>
+                    <span>Add Team Member</span>
                   </button>
                 )}
               </div>
@@ -717,7 +840,7 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                     {/* Owner delete button (cannot remove owner) */}
                     {club.is_owner && member.user_id !== club.owner_id && (
                       <button
-                        onClick={() => handleRemoveMember(member.user_id, member.full_name)}
+                        onClick={() => handleOpenRemoveMemberModal(member)}
                         title="Remove member from society team"
                         className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 transition cursor-pointer"
                       >
@@ -1233,6 +1356,75 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal: Custom Warning to Remove Team Member */}
+        {memberToRemove && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+            <div className="w-full max-w-md rounded-2xl border border-rose-200 dark:border-rose-900/60 bg-white dark:bg-[#131B2E] p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
+                    <Trash2 className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                      Remove Team Member
+                    </h3>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setMemberToRemove(null)}
+                  className="rounded-lg p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="mt-4 space-y-3">
+                <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                  Are you sure you want to remove{" "}
+                  <span className="font-bold text-slate-900 dark:text-white">
+                    {memberToRemove.name}
+                  </span>{" "}
+                  from <span className="font-bold text-slate-900 dark:text-white">{club.name}</span>?
+                </p>
+
+                <div className="rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 p-3 text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
+                  <span className="font-bold">Notice:</span> This action will immediately revoke their title{" "}
+                  <span className="font-bold underline">
+                    ({memberToRemove.title || memberToRemove.role.replace("_", " ")})
+                  </span>{" "}
+                  and remove their leadership & posting permissions for this society page.
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-800 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setMemberToRemove(null)}
+                  className="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={removingMember}
+                  onClick={handleConfirmRemoveMember}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 text-xs font-bold transition shadow-xs disabled:opacity-50 cursor-pointer"
+                >
+                  {removingMember ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span>Removing...</span>
+                    </>
+                  ) : (
+                    <span>Yes, Remove Member</span>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         )}
