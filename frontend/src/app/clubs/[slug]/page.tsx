@@ -609,16 +609,6 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                   </button>
                 )}
 
-                {club.is_owner && (
-                  <button
-                    onClick={() => setShowAddMemberModal(true)}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white px-3.5 py-2 text-xs font-bold transition shadow-xs cursor-pointer min-h-[40px]"
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span>Add Team Member</span>
-                  </button>
-                )}
-
                 {/* Social Links */}
                 <div className="flex items-center gap-1">
                   {club.instagram_url && (
@@ -773,112 +763,111 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
 
           {/* Tab 1: About */}
           {activeTab === "about" && (
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-2 space-y-6">
-                <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#131B2E] p-6 shadow-xs">
-                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-3">
+            <div className="mt-6 space-y-6">
+              <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#131B2E] p-6 shadow-xs space-y-6">
+                {/* Description */}
+                <div>
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2.5">
                     About this Society
                   </h3>
-                  <div className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
+                  <div className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
                     {club.description || "No detailed description provided by the coordinators yet."}
                   </div>
                 </div>
 
-                {/* Key Achievements & Honors */}
-                {club.achievements && (
-                  <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#131B2E] p-6 shadow-xs">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Trophy className="h-4 w-4 text-amber-500" />
-                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-                        Key Achievements & Honors
-                      </h3>
-                    </div>
-                    <div className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
-                      {club.achievements}
-                    </div>
-                  </div>
-                )}
-              </div>
+                <hr className="border-slate-100 dark:border-slate-800" />
 
-              {/* Sidebar Info */}
-              <div className="space-y-5">
-                <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#131B2E] p-5 shadow-xs space-y-4">
-                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-                    Faculty Coordinator
-                  </h3>
-                  {club.faculty_coordinator_name ? (
-                    <div className="space-y-1">
-                      <p className="text-xs font-bold text-slate-900 dark:text-white">
+                {/* Key Society Details Grid: Faculty Coordinator, President, Heritage */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 pt-1">
+                  {/* Faculty Coordinator */}
+                  <div>
+                    <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-2">
+                      Faculty Coordinator
+                    </h4>
+                    {club.faculty_coordinator_name ? (
+                      <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                         {club.faculty_coordinator_name}
                       </p>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-slate-400">Not specified</p>
-                  )}
+                    ) : (
+                      <p className="text-xs text-slate-400">Not specified</p>
+                    )}
+                  </div>
 
-                  <hr className="border-slate-100 dark:border-slate-800" />
+                  {/* Society President / Lead */}
+                  <div>
+                    <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-2">
+                      Society President / Lead
+                    </h4>
+                    <Link
+                      href={`/profile/${club.owner_username}`}
+                      className="flex items-center gap-2.5 group"
+                    >
+                      <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-600 text-white font-bold text-xs overflow-hidden">
+                        {club.owner_profile_picture ? (
+                          <Image
+                            src={club.owner_profile_picture}
+                            alt={club.owner_name}
+                            fill
+                            sizes="32px"
+                            className="object-cover"
+                          />
+                        ) : (
+                          club.owner_name.charAt(0).toUpperCase()
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white group-hover:text-violet-600 transition truncate">
+                          {club.owner_name}
+                        </p>
+                        <p className="text-[10px] text-slate-400 font-mono">
+                          @{club.owner_username}
+                        </p>
+                      </div>
+                    </Link>
+                  </div>
 
-                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-                    Society President / Lead
-                  </h3>
-                  <Link
-                    href={`/profile/${club.owner_username}`}
-                    className="flex items-center gap-2.5 group"
-                  >
-                    <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-600 text-white font-bold text-xs overflow-hidden">
-                      {club.owner_profile_picture ? (
-                        <Image
-                          src={club.owner_profile_picture}
-                          alt={club.owner_name}
-                          fill
-                          sizes="32px"
-                          className="object-cover"
-                        />
-                      ) : (
-                        club.owner_name.charAt(0).toUpperCase()
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-violet-600 transition">
-                        {club.owner_name}
-                      </p>
-                      <p className="text-[10px] text-slate-400">
-                        @{club.owner_username}
-                      </p>
-                    </div>
-                  </Link>
-
+                  {/* Society Heritage */}
                   {(club.founded_in || club.founded_by) && (
-                    <>
-                      <hr className="border-slate-100 dark:border-slate-800" />
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-1.5">
-                          <Calendar className="h-3.5 w-3.5 text-violet-500" />
-                          <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-                            Society Heritage
-                          </h3>
-                        </div>
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Calendar className="h-3.5 w-3.5 text-violet-500" />
+                        <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                          Society Heritage
+                        </h4>
+                      </div>
+                      <div className="space-y-1.5 text-xs">
                         {club.founded_in && (
                           <div>
-                            <p className="text-[10px] font-semibold text-slate-400">Founded In</p>
-                            <p className="text-xs font-bold text-slate-900 dark:text-white">
-                              {club.founded_in}
-                            </p>
+                            <span className="text-[10px] text-slate-400 font-medium">Founded In: </span>
+                            <span className="font-bold text-slate-900 dark:text-white">{club.founded_in}</span>
                           </div>
                         )}
                         {club.founded_by && (
                           <div>
-                            <p className="text-[10px] font-semibold text-slate-400">Founded By</p>
-                            <p className="text-xs font-bold text-slate-900 dark:text-white">
-                              {club.founded_by}
-                            </p>
+                            <span className="text-[10px] text-slate-400 font-medium">Founded By: </span>
+                            <span className="font-bold text-slate-900 dark:text-white">{club.founded_by}</span>
                           </div>
                         )}
                       </div>
-                    </>
+                    </div>
                   )}
                 </div>
               </div>
+
+              {/* Key Achievements & Honors */}
+              {club.achievements && (
+                <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#131B2E] p-6 shadow-xs">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Trophy className="h-4 w-4 text-amber-500" />
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+                      Key Achievements & Honors
+                    </h3>
+                  </div>
+                  <div className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
+                    {club.achievements}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
