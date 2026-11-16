@@ -12,6 +12,8 @@ import {
   PaginatedUserSearch,
   Conversation,
   DirectMessage,
+  Club,
+  PaginatedClubs,
 } from "@/types";
 
 const RAW_API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -505,6 +507,72 @@ export const api = {
 
     unblockUser: (username: string) =>
       request<{ message: string }>(`/messages/block/${username}`, {
+        method: "DELETE",
+      }),
+  },
+
+  clubs: {
+    list: (category?: string, q?: string, page = 1, pageSize = 20) => {
+      const params = new URLSearchParams();
+      if (category && category !== "all") params.append("category", category);
+      if (q) params.append("q", q);
+      params.append("page", String(page));
+      params.append("page_size", String(pageSize));
+      return request<PaginatedClubs>(`/clubs?${params.toString()}`);
+    },
+
+    get: (slug: string) =>
+      request<Club>(`/clubs/${encodeURIComponent(slug)}`),
+
+    register: (data: {
+      name: string;
+      slug: string;
+      category: string;
+      tagline?: string;
+      description?: string;
+      logo_url?: string;
+      banner_url?: string;
+      instagram_url?: string;
+      linkedin_url?: string;
+      website_url?: string;
+      faculty_coordinator_name?: string;
+      faculty_coordinator_email?: string;
+      declaration_accepted: boolean;
+    }) =>
+      request<Club>("/clubs", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+
+    update: (
+      slug: string,
+      data: Partial<{
+        name: string;
+        category: string;
+        tagline: string;
+        description: string;
+        logo_url: string;
+        banner_url: string;
+        instagram_url: string;
+        linkedin_url: string;
+        website_url: string;
+        faculty_coordinator_name: string;
+        faculty_coordinator_email: string;
+      }>
+    ) =>
+      request<Club>(`/clubs/${encodeURIComponent(slug)}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }),
+
+    addMember: (slug: string, data: { username: string; role: string; title?: string }) =>
+      request<Club>(`/clubs/${encodeURIComponent(slug)}/members`, {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+
+    removeMember: (slug: string, userId: number) =>
+      request<Club>(`/clubs/${encodeURIComponent(slug)}/members/${userId}`, {
         method: "DELETE",
       }),
   },

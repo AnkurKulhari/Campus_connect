@@ -8,7 +8,7 @@ from app.database import base
 from app.database.session import get_db
 from app.core.config import settings
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
-from app.routers import auth, users, posts, likes, notifications, messages
+from app.routers import auth, users, posts, likes, notifications, messages, clubs
 from app.routers.comments import posts_router as comments_posts_router, comments_router
 
 app = FastAPI(title="CampusConnect API", version="1.0.0")
@@ -60,6 +60,7 @@ app.include_router(comments_posts_router)
 app.include_router(comments_router)
 app.include_router(notifications.router)
 app.include_router(messages.router)
+app.include_router(clubs.router)
 
 
 @app.get("/", tags=["Root"])

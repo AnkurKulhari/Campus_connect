@@ -13,6 +13,7 @@ import {
   X,
   Compass,
   GraduationCap,
+  Landmark,
   MessageSquare,
   Bell,
   Search,
@@ -238,6 +239,24 @@ export function MobileSidebarDrawer({ isOpen, onClose }: MobileSidebarDrawerProp
                 <GraduationCap className="h-4 w-4 text-indigo-500" />
                 <span>Alumni Circle</span>
               </div>
+            </Link>
+
+            <Link
+              href="/clubs"
+              onClick={onClose}
+              className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold transition min-h-[44px] ${
+                pathname.startsWith("/clubs")
+                  ? "bg-blue-600 text-white shadow-xs"
+                  : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Landmark className="h-4 w-4 text-violet-500" />
+                <span>Clubs & Societies</span>
+              </div>
+              <span className="text-[10px] font-bold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/60 px-2 py-0.5 rounded-full border border-violet-200/60 dark:border-violet-800/50">
+                IPEC
+              </span>
             </Link>
 
             <Link

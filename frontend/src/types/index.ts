@@ -218,3 +218,50 @@ export interface PaginatedNotifications {
   page_size: number;
   has_next: boolean;
 }
+
+export interface ClubMember {
+  id: number;
+  user_id: number;
+  role: string;
+  title?: string | null;
+  joined_at: string;
+  full_name: string;
+  username: string;
+  profile_picture?: string | null;
+  year?: string | null;
+  branch?: string | null;
+  is_id_verified: boolean;
+}
+
+export interface Club {
+  id: number;
+  name: string;
+  slug: string;
+  category: string;
+  tagline?: string | null;
+  description?: string | null;
+  logo_url?: string | null;
+  banner_url?: string | null;
+  instagram_url?: string | null;
+  linkedin_url?: string | null;
+  website_url?: string | null;
+  faculty_coordinator_name?: string | null;
+  faculty_coordinator_email?: string | null;
+  is_verified: boolean;
+  created_at: string;
+  owner_id: number;
+  owner_name: string;
+  owner_username: string;
+  members_count: number;
+  is_owner: boolean;
+  my_role?: string | null;
+  members: ClubMember[];
+}
+
+export interface PaginatedClubs {
+  clubs: Club[];
+  total: number;
+  page: number;
+  page_size: number;
+  has_next: boolean;
+}

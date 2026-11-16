@@ -8,6 +8,7 @@ from app.models.follow import Follow
 from app.models.notification import Notification
 from app.models.report import PostReport
 from app.models.message import Conversation, Message, BlockedUser
+from app.models.club import Club, ClubMember
 
 __all__ = [
     "User",
@@ -23,4 +24,6 @@ __all__ = [
     "Conversation",
     "Message",
     "BlockedUser",
+    "Club",
+    "ClubMember",
 ]
