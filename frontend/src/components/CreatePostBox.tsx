@@ -31,8 +31,10 @@ const POPULAR_TAGS = [
 
 export function CreatePostBox({
   onPostCreated,
+  fixedClub,
 }: {
   onPostCreated?: (post: Post) => void;
+  fixedClub?: ClubManageable;
 }) {
   const { user } = useAuth();
   const [content, setContent] = useState("");
@@ -43,7 +45,7 @@ export function CreatePostBox({
 
   // Club identity switcher states
   const [manageableClubs, setManageableClubs] = useState<ClubManageable[]>([]);
-  const [selectedClub, setSelectedClub] = useState<ClubManageable | null>(null);
+  const [selectedClub, setSelectedClub] = useState<ClubManageable | null>(fixedClub || null);
   const [showIdentityMenu, setShowIdentityMenu] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -51,12 +53,16 @@ export function CreatePostBox({
   const lastSubmitTimeRef = useRef<number>(0);
 
   useEffect(() => {
+    if (fixedClub) {
+      setSelectedClub(fixedClub);
+      return;
+    }
     if (!user || !user.is_id_verified) return;
     api.clubs
       .getMyManageable()
       .then((clubs) => setManageableClubs(clubs))
       .catch(() => {});
-  }, [user]);
+  }, [user, fixedClub]);
 
   if (!user) return null;
 
@@ -205,8 +211,34 @@ export function CreatePostBox({
   return (
     <div className="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-[#131B2E] transition">
       <form onSubmit={handleSubmit}>
-        {/* Profile Switcher (When student manages one or more clubs/societies) */}
-        {manageableClubs.length > 0 && (
+        {/* Fixed Society Indicator (when inside club page) */}
+        {fixedClub ? (
+          <div className="relative mb-3.5 pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                Publishing as:
+              </span>
+              <div className="inline-flex items-center gap-2 rounded-xl bg-violet-50 dark:bg-violet-950/60 border border-violet-200 dark:border-violet-800 px-3 py-1.5 text-xs font-bold text-violet-800 dark:text-violet-200 shadow-2xs">
+                <div className="relative flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-violet-600 text-[9px] text-white font-bold overflow-hidden">
+                  {fixedClub.logo_url ? (
+                    <Image
+                      src={fixedClub.logo_url}
+                      alt={fixedClub.name}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <Landmark className="h-2.5 w-2.5 text-white" />
+                  )}
+                </div>
+                <span>{fixedClub.name}</span>
+                <span className="text-[10px] font-semibold text-violet-500 dark:text-violet-400 font-mono">
+                  @{fixedClub.slug}
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : manageableClubs.length > 0 ? (
           <div className="relative mb-3.5 pb-3 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
@@ -331,7 +363,7 @@ export function CreatePostBox({
               </div>
             </div>
           </div>
-        )}
+        ) : null}
 
         <div className="flex gap-3.5">
           <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-600 font-bold text-white overflow-hidden shadow-xs">

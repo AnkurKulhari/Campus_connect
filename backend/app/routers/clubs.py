@@ -16,9 +16,11 @@ from app.schemas.club import (
     PaginatedClubsResponse,
     ClubReportCreate,
     ClubManageableResponse,
+    TransferPresidencyRequest,
 )
 from app.utils.moderation import assert_safe_content
 from app.utils.cloudinary import upload_media, ALLOWED_IMAGE_TYPES
+from app.services.notification_service import create_notification
 
 router = APIRouter(prefix="/clubs", tags=["Clubs & Societies"])
 
@@ -65,7 +67,11 @@ def build_club_response(club: Club, current_user: User | None = None) -> ClubRes
         banner_url=club.banner_url,
         instagram_url=club.instagram_url,
         linkedin_url=club.linkedin_url,
+        youtube_url=club.youtube_url,
         website_url=club.website_url,
+        founded_in=club.founded_in,
+        founded_by=club.founded_by,
+        achievements=club.achievements,
         faculty_coordinator_name=club.faculty_coordinator_name,
         faculty_coordinator_email=club.faculty_coordinator_email,
         is_verified=club.is_verified,
@@ -190,6 +196,12 @@ def register_club(
         assert_safe_content(payload.tagline, "Society Tagline")
     if payload.description:
         assert_safe_content(payload.description, "Society Description")
+    if payload.founded_in:
+        assert_safe_content(payload.founded_in, "Founded Year")
+    if payload.founded_by:
+        assert_safe_content(payload.founded_by, "Founded By")
+    if payload.achievements:
+        assert_safe_content(payload.achievements, "Achievements")
 
     # Create club
     club = Club(
@@ -202,7 +214,11 @@ def register_club(
         banner_url=payload.banner_url,
         instagram_url=payload.instagram_url,
         linkedin_url=payload.linkedin_url,
+        youtube_url=payload.youtube_url,
         website_url=payload.website_url,
+        founded_in=payload.founded_in.strip() if payload.founded_in else None,
+        founded_by=payload.founded_by.strip() if payload.founded_by else None,
+        achievements=payload.achievements.strip() if payload.achievements else None,
         faculty_coordinator_name=payload.faculty_coordinator_name,
         faculty_coordinator_email=payload.faculty_coordinator_email,
         owner_id=current_user.id,
@@ -382,8 +398,22 @@ def update_club(
         club.instagram_url = payload.instagram_url
     if payload.linkedin_url is not None:
         club.linkedin_url = payload.linkedin_url
+    if payload.youtube_url is not None:
+        club.youtube_url = payload.youtube_url
     if payload.website_url is not None:
         club.website_url = payload.website_url
+    if "founded_in" in payload.model_fields_set:
+        if payload.founded_in:
+            assert_safe_content(payload.founded_in, "Founded Year")
+        club.founded_in = payload.founded_in.strip() if payload.founded_in else None
+    if "founded_by" in payload.model_fields_set:
+        if payload.founded_by:
+            assert_safe_content(payload.founded_by, "Founded By")
+        club.founded_by = payload.founded_by.strip() if payload.founded_by else None
+    if "achievements" in payload.model_fields_set:
+        if payload.achievements:
+            assert_safe_content(payload.achievements, "Achievements")
+        club.achievements = payload.achievements.strip() if payload.achievements else None
     if payload.faculty_coordinator_name is not None:
         club.faculty_coordinator_name = payload.faculty_coordinator_name
     if payload.faculty_coordinator_email is not None:
@@ -532,3 +562,93 @@ def report_club(
     db.commit()
 
     return {"status": "success", "message": "Report submitted successfully for administrative review."}
+
+
+@router.post("/{slug}/transfer-presidency", response_model=ClubResponse)
+def transfer_presidency(
+    slug: str,
+    payload: TransferPresidencyRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Hands over leadership of the society to another verified student.
+    Enforces that:
+    1. Only the current society owner/President can initiate succession.
+    2. The target student must exist, be active, and be ID-verified.
+    3. Old president role is transitioned to Former President / Advisor.
+    4. Target student is set as the new Club owner and President.
+    """
+    club = db.query(Club).filter(func.lower(Club.slug) == slug.strip().lower()).first()
+    if not club:
+        raise HTTPException(status_code=404, detail="Club or society not found.")
+
+    if club.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Only the current Society President can transfer leadership."
+        )
+
+    clean_username = payload.new_president_username.strip().lower().lstrip("@")
+    target_user = db.query(User).filter(
+        or_(
+            func.lower(User.username) == clean_username,
+            func.lower(User.roll_number) == clean_username,
+        )
+    ).first()
+    if not target_user:
+        raise HTTPException(status_code=404, detail=f"Student '@{clean_username}' not found.")
+
+    if target_user.id == current_user.id:
+        raise HTTPException(status_code=400, detail="You are already the president of this society.")
+
+    if not target_user.is_id_verified or not target_user.is_verified:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Student {target_user.full_name} is not ID-verified. Leadership can only be transferred to verified students."
+        )
+
+    # 1. Transfer ownership of the Club
+    club.owner_id = target_user.id
+
+    # 2. Update or insert new President member record
+    target_member = db.query(ClubMember).filter(
+        ClubMember.club_id == club.id,
+        ClubMember.user_id == target_user.id,
+    ).first()
+    if target_member:
+        target_member.role = "PRESIDENT"
+        target_member.title = "President"
+    else:
+        new_pres_member = ClubMember(
+            club_id=club.id,
+            user_id=target_user.id,
+            role="PRESIDENT",
+            title="President",
+        )
+        db.add(new_pres_member)
+
+    # 3. Transition former president's member role to Former President / Advisor
+    old_pres_member = db.query(ClubMember).filter(
+        ClubMember.club_id == club.id,
+        ClubMember.user_id == current_user.id,
+    ).first()
+    if old_pres_member:
+        old_pres_member.role = "VICE_PRESIDENT"
+        old_pres_member.title = "Former President / Advisor"
+
+    # 4. Notify new President
+    try:
+        create_notification(
+            recipient_id=target_user.id,
+            sender_id=current_user.id,
+            type="club_leadership",
+            message=f"You have been appointed as the President of {club.name} by {current_user.full_name}.",
+            db=db,
+        )
+    except Exception:
+        pass
+
+    db.commit()
+    db.refresh(club)
+    return build_club_response(club, current_user)

@@ -106,7 +106,7 @@ export function PostCard({
       {/* Header */}
       <div className="flex items-center justify-between p-4 pb-3 relative z-30">
         {post.club_id && post.club_name ? (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
             <Link
               href={`/clubs/${post.club_slug}`}
               className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-600 font-bold text-white overflow-hidden shadow-2xs border border-violet-200 dark:border-violet-800"
@@ -123,38 +123,39 @@ export function PostCard({
                 post.club_name.charAt(0).toUpperCase()
               )}
             </Link>
-            <div>
-              <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 min-w-0">
                 <Link
                   href={`/clubs/${post.club_slug}`}
-                  className="font-bold text-sm text-slate-900 hover:text-violet-600 dark:text-white dark:hover:text-violet-400 transition"
+                  className="font-bold text-sm text-slate-900 hover:text-violet-600 dark:text-white dark:hover:text-violet-400 transition truncate"
                 >
                   {post.club_name}
                 </Link>
-                {post.club_slug && (
-                  <Link
-                    href={`/clubs/${post.club_slug}`}
-                    className="text-xs font-mono text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                  >
-                    @{post.club_slug}
-                  </Link>
-                )}
 
                 <span
                   title="Official Campus Society"
-                  className="inline-flex items-center gap-0.5 rounded-md bg-violet-50 dark:bg-violet-950/60 px-1.5 py-0.5 text-[10px] font-bold text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800"
+                  className="shrink-0 inline-flex items-center gap-0.5 rounded-md bg-violet-50 dark:bg-violet-950/60 px-1.5 py-0.5 text-[10px] font-bold text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800"
                 >
                   <Landmark className="h-3 w-3" />
                   <span>Society</span>
                 </span>
               </div>
 
-              {/* Subtitle with Author Credit */}
-              <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                <span>Posted by</span>
+              {/* Subtitle with @slug & Author Credit */}
+              <div className="flex items-center gap-1 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 min-w-0 truncate">
+                {post.club_slug && (
+                  <Link
+                    href={`/clubs/${post.club_slug}`}
+                    className="font-mono text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 shrink-0"
+                  >
+                    @{post.club_slug}
+                  </Link>
+                )}
+                <span className="text-slate-300 dark:text-slate-600 shrink-0">•</span>
+                <span className="shrink-0">by</span>
                 <Link
                   href={`/profile/${post.author.username}`}
-                  className="font-medium text-slate-700 dark:text-slate-300 hover:underline"
+                  className="font-medium text-slate-700 dark:text-slate-300 hover:underline truncate"
                 >
                   {post.author.full_name}
                 </Link>

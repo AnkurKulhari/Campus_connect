@@ -251,7 +251,11 @@ export interface Club {
   banner_url?: string | null;
   instagram_url?: string | null;
   linkedin_url?: string | null;
+  youtube_url?: string | null;
   website_url?: string | null;
+  founded_in?: string | null;
+  founded_by?: string | null;
+  achievements?: string | null;
   faculty_coordinator_name?: string | null;
   faculty_coordinator_email?: string | null;
   is_verified: boolean;

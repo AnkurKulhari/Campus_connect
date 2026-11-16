@@ -10,6 +10,7 @@ import { api, ApiError } from "@/lib/api";
 import { Club, ClubMember, Post } from "@/types";
 import { LinkedinIcon } from "@/components/icons/LinkedinIcon";
 import { InstagramIcon } from "@/components/icons/InstagramIcon";
+import { YoutubeIcon } from "@/components/icons/YoutubeIcon";
 import { ImageCropModal } from "@/components/ImageCropModal";
 import { PostCard } from "@/components/PostCard";
 import { CreatePostBox } from "@/components/CreatePostBox";
@@ -37,6 +38,10 @@ import {
   ShieldAlert,
   MoreVertical,
   FileText,
+  Share2,
+  Crown,
+  Trophy,
+  Calendar,
 } from "lucide-react";
 
 interface ClubPageProps {
@@ -83,7 +88,11 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
   const [editBannerUrl, setEditBannerUrl] = useState("");
   const [editInstagramUrl, setEditInstagramUrl] = useState("");
   const [editLinkedinUrl, setEditLinkedinUrl] = useState("");
+  const [editYoutubeUrl, setEditYoutubeUrl] = useState("");
   const [editWebsiteUrl, setEditWebsiteUrl] = useState("");
+  const [editFoundedIn, setEditFoundedIn] = useState("");
+  const [editFoundedBy, setEditFoundedBy] = useState("");
+  const [editAchievements, setEditAchievements] = useState("");
   const [editFacultyName, setEditFacultyName] = useState("");
 
   const [editLogoUploading, setEditLogoUploading] = useState(false);
@@ -100,6 +109,14 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
 
   // Three-dot header menu state
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [copiedShareLink, setCopiedShareLink] = useState(false);
+
+  // Transfer Leadership Modal State
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferUsername, setTransferUsername] = useState("");
+  const [transferringPresidency, setTransferringPresidency] = useState(false);
+  const [transferError, setTransferError] = useState<string | null>(null);
+  const [transferSuccess, setTransferSuccess] = useState<string | null>(null);
 
   // Custom remove team member modal state
   const [memberToRemove, setMemberToRemove] = useState<{
@@ -183,7 +200,11 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
     setEditBannerUrl(club.banner_url || "");
     setEditInstagramUrl(club.instagram_url || "");
     setEditLinkedinUrl(club.linkedin_url || "");
+    setEditYoutubeUrl(club.youtube_url || "");
     setEditWebsiteUrl(club.website_url || "");
+    setEditFoundedIn(club.founded_in || "");
+    setEditFoundedBy(club.founded_by || "");
+    setEditAchievements(club.achievements || "");
     setEditFacultyName(club.faculty_coordinator_name || "");
     setEditError(null);
     setShowEditModal(true);
@@ -302,7 +323,11 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
         banner_url: editBannerUrl ? editBannerUrl : null,
         instagram_url: editInstagramUrl.trim() || undefined,
         linkedin_url: editLinkedinUrl.trim() || undefined,
+        youtube_url: editYoutubeUrl.trim() || undefined,
         website_url: editWebsiteUrl.trim() || undefined,
+        founded_in: editFoundedIn.trim() || undefined,
+        founded_by: editFoundedBy.trim() || undefined,
+        achievements: editAchievements.trim() || undefined,
         faculty_coordinator_name: editFacultyName.trim() || undefined,
       });
 
@@ -351,6 +376,57 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
       }
     } finally {
       setSubmittingReport(false);
+    }
+  };
+
+  // Share Society link to clipboard or native share
+  const handleShareClub = async () => {
+    setShowMoreMenu(false);
+    if (typeof window === "undefined") return;
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: club?.name,
+          text: `Check out ${club?.name} on CampusConnect!`,
+          url,
+        });
+        return;
+      } catch {
+        // Fallback to clipboard
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedShareLink(true);
+      setTimeout(() => setCopiedShareLink(false), 2500);
+    } catch {
+      //
+    }
+  };
+
+  // Transfer Presidency / Succession
+  const handleTransferPresidency = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!club || !transferUsername.trim()) return;
+
+    setTransferringPresidency(true);
+    setTransferError(null);
+    setTransferSuccess(null);
+
+    try {
+      const updated = await api.clubs.transferPresidency(club.slug, transferUsername.trim());
+      setClub(updated);
+      setTransferSuccess(`Presidency transferred successfully to @${transferUsername.trim()}!`);
+      setTimeout(() => {
+        setShowTransferModal(false);
+        setTransferSuccess(null);
+        setTransferUsername("");
+      }, 2000);
+    } catch (err) {
+      setTransferError(err instanceof ApiError ? err.detail : "Failed to transfer leadership.");
+    } finally {
+      setTransferringPresidency(false);
     }
   };
 
@@ -567,6 +643,17 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                       <LinkedinIcon className="h-4 w-4" />
                     </a>
                   )}
+                  {club.youtube_url && (
+                    <a
+                      href={club.youtube_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 hover:text-red-600 dark:text-slate-300 dark:hover:text-red-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                      title="YouTube Channel"
+                    >
+                      <YoutubeIcon className="h-4 w-4" />
+                    </a>
+                  )}
                   {club.website_url && (
                     <a
                       href={club.website_url}
@@ -579,20 +666,48 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                     </a>
                   )}
 
-                  {/* Three-Dot Menu (Hidden for President and Vice President) */}
-                  {!isPresidentOrVP && (
-                    <div className="relative ml-0.5">
-                      <button
-                        type="button"
-                        onClick={() => setShowMoreMenu(!showMoreMenu)}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
-                        title="More options"
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
+                  {/* Three-Dot Menu (Visible to everyone) */}
+                  <div className="relative ml-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setShowMoreMenu(!showMoreMenu)}
+                      className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
+                      title="More options"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
 
-                      {showMoreMenu && (
-                        <div className="absolute right-0 top-full mt-1.5 z-40 w-52 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#131B2E] p-1.5 shadow-xl animate-in fade-in duration-100">
+                    {showMoreMenu && (
+                      <div className="absolute right-0 top-full mt-1.5 z-40 w-56 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#131B2E] p-1.5 shadow-xl animate-in fade-in duration-100">
+                        {/* Share button - visible to everyone */}
+                        <button
+                          type="button"
+                          onClick={handleShareClub}
+                          className="w-full flex items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                        >
+                          <Share2 className="h-3.5 w-3.5 shrink-0 text-violet-500" />
+                          <span>{copiedShareLink ? "Link Copied!" : "Share Society Page"}</span>
+                        </button>
+
+                        {/* Handover Presidency - only for current Owner */}
+                        {club.is_owner && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowMoreMenu(false);
+                              setTransferError(null);
+                              setTransferSuccess(null);
+                              setShowTransferModal(true);
+                            }}
+                            className="w-full flex items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition cursor-pointer"
+                          >
+                            <Crown className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+                            <span>Handover Presidency</span>
+                          </button>
+                        )}
+
+                        {/* Report Rogue Society - hidden for President & VP */}
+                        {!isPresidentOrVP && (
                           <button
                             type="button"
                             onClick={() => {
@@ -603,13 +718,13 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                             }}
                             className="w-full flex items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
                           >
-                            <Flag className="h-3.5 w-3.5 shrink-0" />
+                            <Flag className="h-3.5 w-3.5 shrink-0 text-rose-500" />
                             <span>Report Rogue Society</span>
                           </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -668,6 +783,21 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                     {club.description || "No detailed description provided by the coordinators yet."}
                   </div>
                 </div>
+
+                {/* Key Achievements & Honors */}
+                {club.achievements && (
+                  <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#131B2E] p-6 shadow-xs">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Trophy className="h-4 w-4 text-amber-500" />
+                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+                        Key Achievements & Honors
+                      </h3>
+                    </div>
+                    <div className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
+                      {club.achievements}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Sidebar Info */}
@@ -717,6 +847,36 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                       </p>
                     </div>
                   </Link>
+
+                  {(club.founded_in || club.founded_by) && (
+                    <>
+                      <hr className="border-slate-100 dark:border-slate-800" />
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="h-3.5 w-3.5 text-violet-500" />
+                          <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+                            Society Heritage
+                          </h3>
+                        </div>
+                        {club.founded_in && (
+                          <div>
+                            <p className="text-[10px] font-semibold text-slate-400">Founded In</p>
+                            <p className="text-xs font-bold text-slate-900 dark:text-white">
+                              {club.founded_in}
+                            </p>
+                          </div>
+                        )}
+                        {club.founded_by && (
+                          <div>
+                            <p className="text-[10px] font-semibold text-slate-400">Founded By</p>
+                            <p className="text-xs font-bold text-slate-900 dark:text-white">
+                              {club.founded_by}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -725,7 +885,7 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
           {/* Tab 2: Society Posts & Updates */}
           {activeTab === "posts" && (
             <div className="mt-6 max-w-2xl mx-auto space-y-6">
-              {/* If President or VP: show CreatePostBox */}
+              {/* If President or VP: show CreatePostBox locked to this society */}
               {isPresidentOrVP && (
                 <div className="space-y-2">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-violet-600 dark:text-violet-400">
@@ -733,6 +893,13 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                     <span>Publish Announcement or Post as {club.name}</span>
                   </div>
                   <CreatePostBox
+                    fixedClub={{
+                      id: club.id,
+                      name: club.name,
+                      slug: club.slug,
+                      logo_url: club.logo_url,
+                      role: club.my_role || "PRESIDENT",
+                    }}
                     onPostCreated={(newPost) => {
                       setClubPosts((prev) => [newPost, ...prev]);
                     }}
@@ -960,6 +1127,51 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                   />
                 </div>
 
+                {/* Heritage: Founded In & Founded By */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Founded Year (Established In)
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={50}
+                      value={editFoundedIn}
+                      onChange={(e) => setEditFoundedIn(e.target.value)}
+                      placeholder="e.g. 2018 or Fall 2019"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-violet-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Founded By (Founding Members / Seniors)
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={150}
+                      value={editFoundedBy}
+                      onChange={(e) => setEditFoundedBy(e.target.value)}
+                      placeholder="e.g. Ankur Kulhari & Batch of 2022"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-violet-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Achievements & Honors */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Key Achievements & Milestones (Optional)
+                  </label>
+                  <textarea
+                    rows={3}
+                    maxLength={3000}
+                    value={editAchievements}
+                    onChange={(e) => setEditAchievements(e.target.value)}
+                    placeholder="List major hackathon wins, campus festival records, national competitions, or key milestones..."
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 p-3 text-xs text-slate-900 dark:text-white focus:border-violet-500 focus:outline-none resize-y"
+                  />
+                </div>
+
                 {/* Photo & Banner Uploads */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                   <div>
@@ -1068,7 +1280,7 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                 </div>
 
                 {/* Social Links */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                   <div>
                     <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
                       Instagram URL
@@ -1090,6 +1302,18 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                       value={editLinkedinUrl}
                       onChange={(e) => setEditLinkedinUrl(e.target.value)}
                       placeholder="https://linkedin.com/..."
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-2.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                      YouTube Channel URL
+                    </label>
+                    <input
+                      type="url"
+                      value={editYoutubeUrl}
+                      onChange={(e) => setEditYoutubeUrl(e.target.value)}
+                      placeholder="https://youtube.com/@..."
                       className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-2.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none"
                     />
                   </div>
@@ -1425,6 +1649,127 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                   )}
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal: Handover Presidency / Leadership Succession */}
+        {showTransferModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+            <div className="w-full max-w-md rounded-2xl border border-amber-200 dark:border-amber-900/60 bg-white dark:bg-[#131B2E] p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
+                    <Crown className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                      Handover Presidency
+                    </h3>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowTransferModal(false)}
+                  className="rounded-lg p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="mt-4 space-y-3">
+                <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                  Stepping down or graduating? You can transfer full ownership and presidential authority of{" "}
+                  <span className="font-bold text-slate-900 dark:text-white">{club.name}</span> to another verified student coordinator.
+                </p>
+
+                <div className="rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 p-3 text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed space-y-1">
+                  <p className="font-bold">Important Succession Protocol:</p>
+                  <p>• The student must be an active, ID-verified student.</p>
+                  <p>• Your role will transition to <span className="font-bold underline">Former President / Advisor</span>.</p>
+                  <p>• Only the newly appointed President can manage administrative settings from that point onward.</p>
+                </div>
+              </div>
+
+              {transferSuccess && (
+                <div className="mt-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-2.5 text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  <span>{transferSuccess}</span>
+                </div>
+              )}
+
+              {transferError && (
+                <div className="mt-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 p-2.5 text-xs text-rose-700 dark:text-rose-300">
+                  {transferError}
+                </div>
+              )}
+
+              <form onSubmit={handleTransferPresidency} className="mt-4 space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Successor Student Username or Roll Number
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={transferUsername}
+                    onChange={(e) => setTransferUsername(e.target.value)}
+                    placeholder="e.g. ankur or 2200300100054"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-amber-500 focus:outline-none"
+                  />
+                </div>
+
+                {/* Quick Select from Current Society Team Members */}
+                {club.members.filter((m) => m.user_id !== club.owner_id).length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                      Or select from active team members:
+                    </p>
+                    <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
+                      {club.members
+                        .filter((m) => m.user_id !== club.owner_id)
+                        .map((m) => (
+                          <button
+                            key={m.id}
+                            type="button"
+                            onClick={() => setTransferUsername(m.username)}
+                            className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition cursor-pointer ${
+                              transferUsername.toLowerCase() === m.username.toLowerCase()
+                                ? "border-amber-500 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300"
+                                : "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 text-slate-700 dark:text-slate-300 hover:bg-slate-100"
+                            }`}
+                          >
+                            <span>{m.full_name}</span>
+                            <span className="text-[10px] text-slate-400 font-mono">@{m.username}</span>
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setShowTransferModal(false)}
+                    className="rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={transferringPresidency || !!transferSuccess || !transferUsername.trim()}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 text-xs font-bold transition shadow-xs disabled:opacity-50 cursor-pointer"
+                  >
+                    {transferringPresidency ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span>Transferring...</span>
+                      </>
+                    ) : (
+                      <span>Confirm & Handover Presidency</span>
+                    )}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

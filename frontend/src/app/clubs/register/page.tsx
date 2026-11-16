@@ -47,8 +47,12 @@ export default function RegisterClubPage() {
   const [category, setCategory] = useState("Technical");
   const [tagline, setTagline] = useState("");
   const [description, setDescription] = useState("");
+  const [foundedIn, setFoundedIn] = useState("");
+  const [foundedBy, setFoundedBy] = useState("");
+  const [achievements, setAchievements] = useState("");
   const [instagramUrl, setInstagramUrl] = useState("");
   const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [youtubeUrl, setYoutubeUrl] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [facultyCoordinatorName, setFacultyCoordinatorName] = useState("");
   const [declarationAccepted, setDeclarationAccepted] = useState(false);
@@ -241,7 +245,11 @@ export default function RegisterClubPage() {
         banner_url: bannerUrl || undefined,
         instagram_url: instagramUrl.trim() || undefined,
         linkedin_url: linkedinUrl.trim() || undefined,
+        youtube_url: youtubeUrl.trim() || undefined,
         website_url: websiteUrl.trim() || undefined,
+        founded_in: foundedIn.trim() || undefined,
+        founded_by: foundedBy.trim() || undefined,
+        achievements: achievements.trim() || undefined,
         faculty_coordinator_name: facultyCoordinatorName.trim() || undefined,
         declaration_accepted: declarationAccepted,
       });
@@ -432,6 +440,54 @@ export default function RegisterClubPage() {
                 />
               </div>
 
+              {/* Heritage: Founded In & Founded By */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Founded Year (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={50}
+                    disabled={!isEligible || submitting}
+                    value={foundedIn}
+                    onChange={(e) => setFoundedIn(e.target.value)}
+                    placeholder="e.g. 2018 or Fall 2019"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Founded By (Founders / Seniors)
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={150}
+                    disabled={!isEligible || submitting}
+                    value={foundedBy}
+                    onChange={(e) => setFoundedBy(e.target.value)}
+                    placeholder="e.g. Ankur Kulhari & Batch of 2022"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50"
+                  />
+                </div>
+              </div>
+
+              {/* Achievements & Milestones */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Key Achievements & Honors (Optional)
+                </label>
+                <textarea
+                  rows={3}
+                  maxLength={3000}
+                  disabled={!isEligible || submitting}
+                  value={achievements}
+                  onChange={(e) => setAchievements(e.target.value)}
+                  placeholder="List major hackathon wins, campus festival records, national competitions, or key milestones..."
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 p-3.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50 resize-y"
+                />
+              </div>
+
               {/* Field 6: UPLOADABLE LOGO & COVER BANNER */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2 border-t border-slate-100 dark:border-slate-800">
                 {/* Logo Upload Box */}
@@ -598,7 +654,7 @@ export default function RegisterClubPage() {
                 <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
                   Official Channels & Links
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
                       Instagram URL
@@ -623,6 +679,20 @@ export default function RegisterClubPage() {
                       value={linkedinUrl}
                       onChange={(e) => setLinkedinUrl(e.target.value)}
                       placeholder="https://linkedin.com/company/..."
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                      YouTube Channel URL
+                    </label>
+                    <input
+                      type="url"
+                      disabled={!isEligible || submitting}
+                      value={youtubeUrl}
+                      onChange={(e) => setYoutubeUrl(e.target.value)}
+                      placeholder="https://youtube.com/@..."
                       className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50"
                     />
                   </div>

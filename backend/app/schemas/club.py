@@ -13,7 +13,11 @@ class ClubRegisterRequest(BaseModel):
     banner_url: str | None = Field(default=None, max_length=500)
     instagram_url: str | None = Field(default=None, max_length=255)
     linkedin_url: str | None = Field(default=None, max_length=255)
+    youtube_url: str | None = Field(default=None, max_length=255)
     website_url: str | None = Field(default=None, max_length=255)
+    founded_in: str | None = Field(default=None, max_length=50)
+    founded_by: str | None = Field(default=None, max_length=150)
+    achievements: str | None = Field(default=None, max_length=3000)
     faculty_coordinator_name: str | None = Field(default=None, max_length=100)
     faculty_coordinator_email: str | None = Field(default=None, max_length=100)
     declaration_accepted: bool = Field(..., description="Mandatory declaration that the registrant is the official President/Lead")
@@ -29,7 +33,11 @@ class ClubUpdateRequest(BaseModel):
     banner_url: str | None = Field(default=None, max_length=500)
     instagram_url: str | None = Field(default=None, max_length=255)
     linkedin_url: str | None = Field(default=None, max_length=255)
+    youtube_url: str | None = Field(default=None, max_length=255)
     website_url: str | None = Field(default=None, max_length=255)
+    founded_in: str | None = Field(default=None, max_length=50)
+    founded_by: str | None = Field(default=None, max_length=150)
+    achievements: str | None = Field(default=None, max_length=3000)
     faculty_coordinator_name: str | None = Field(default=None, max_length=100)
     faculty_coordinator_email: str | None = Field(default=None, max_length=100)
 
@@ -67,7 +75,11 @@ class ClubResponse(BaseModel):
     banner_url: str | None = None
     instagram_url: str | None = None
     linkedin_url: str | None = None
+    youtube_url: str | None = None
     website_url: str | None = None
+    founded_in: str | None = None
+    founded_by: str | None = None
+    achievements: str | None = None
     faculty_coordinator_name: str | None = None
     faculty_coordinator_email: str | None = None
     is_verified: bool = True
@@ -82,6 +94,15 @@ class ClubResponse(BaseModel):
     members: list[ClubMemberResponse] = []
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class TransferPresidencyRequest(BaseModel):
+    new_president_username: str = Field(
+        ...,
+        min_length=2,
+        max_length=50,
+        description="Username or roll number of the verified student taking over as President",
+    )
 
 
 class ClubReportCreate(BaseModel):

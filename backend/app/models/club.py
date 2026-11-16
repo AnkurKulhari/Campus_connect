@@ -22,7 +22,12 @@ class Club(Base):
 
     instagram_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
     linkedin_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    youtube_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
     website_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    founded_in: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    founded_by: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    achievements: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     faculty_coordinator_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     faculty_coordinator_email: Mapped[str | None] = mapped_column(String(100), nullable=True)

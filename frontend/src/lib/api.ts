@@ -553,7 +553,11 @@ export const api = {
       banner_url?: string;
       instagram_url?: string;
       linkedin_url?: string;
+      youtube_url?: string;
       website_url?: string;
+      founded_in?: string;
+      founded_by?: string;
+      achievements?: string;
       faculty_coordinator_name?: string;
       faculty_coordinator_email?: string;
       declaration_accepted: boolean;
@@ -575,7 +579,11 @@ export const api = {
         banner_url: string | null;
         instagram_url: string;
         linkedin_url: string;
+        youtube_url: string;
         website_url: string;
+        founded_in: string;
+        founded_by: string;
+        achievements: string;
         faculty_coordinator_name: string;
         faculty_coordinator_email: string;
       }>
@@ -600,6 +608,12 @@ export const api = {
     removeMember: (slug: string, userId: number) =>
       request<Club>(`/clubs/${encodeURIComponent(slug)}/members/${userId}`, {
         method: "DELETE",
+      }),
+
+    transferPresidency: (slug: string, newPresidentUsername: string) =>
+      request<Club>(`/clubs/${encodeURIComponent(slug)}/transfer-presidency`, {
+        method: "POST",
+        body: JSON.stringify({ new_president_username: newPresidentUsername }),
       }),
   },
 };
