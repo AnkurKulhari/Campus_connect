@@ -91,6 +91,12 @@ def get_followers(username: str, page: int, page_size: int, current_user_id: int
             select(Follow.following_id).where(Follow.follower_id == current_user_id)
         ).all()
     )
+    # Get set of IDs that follow the current user
+    my_follower_ids = set(
+        db.scalars(
+            select(Follow.follower_id).where(Follow.following_id == current_user_id)
+        ).all()
+    )
 
     user_list = [
         {
@@ -100,6 +106,7 @@ def get_followers(username: str, page: int, page_size: int, current_user_id: int
             "profile_picture": u.profile_picture,
             "bio": u.bio,
             "is_following": u.id in my_following_ids,
+            "is_followed_by": u.id in my_follower_ids,
             "is_self": u.id == current_user_id,
         }
         for u in followers
@@ -139,6 +146,11 @@ def get_following(username: str, page: int, page_size: int, current_user_id: int
             select(Follow.following_id).where(Follow.follower_id == current_user_id)
         ).all()
     )
+    my_follower_ids = set(
+        db.scalars(
+            select(Follow.follower_id).where(Follow.following_id == current_user_id)
+        ).all()
+    )
 
     user_list = [
         {
@@ -148,6 +160,7 @@ def get_following(username: str, page: int, page_size: int, current_user_id: int
             "profile_picture": u.profile_picture,
             "bio": u.bio,
             "is_following": u.id in my_following_ids,
+            "is_followed_by": u.id in my_follower_ids,
             "is_self": u.id == current_user_id,
         }
         for u in following_users
@@ -159,4 +172,57 @@ def get_following(username: str, page: int, page_size: int, current_user_id: int
         "page": page,
         "page_size": page_size,
         "has_next": (offset + page_size) < total,
+    }
+
+
+def remove_follower(follower_username: str, current_user: User, db: Session) -> dict:
+    """
+    Removes a follower from following the current user.
+    Enforces authorization: Only the followed user can remove their own follower.
+    """
+    clean_username = follower_username.strip().lower().lstrip("@")
+    follower_user = db.scalar(
+        select(User).where(func.lower(User.username) == clean_username)
+    )
+    if not follower_user:
+        raise HTTPException(status_code=404, detail="Student not found.")
+
+    if follower_user.id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot remove yourself as a follower.")
+
+    follow_record = db.scalar(
+        select(Follow).where(
+            Follow.follower_id == follower_user.id,
+            Follow.following_id == current_user.id,
+        )
+    )
+    if not follow_record:
+        raise HTTPException(
+            status_code=400,
+            detail=f"@{follower_user.username} is not following you."
+        )
+
+    db.delete(follow_record)
+    db.commit()
+
+    # Clean up follow notification if pending
+    try:
+        delete_notification(
+            recipient_id=current_user.id,
+            sender_id=follower_user.id,
+            type="follow",
+            db=db,
+        )
+    except Exception:
+        pass
+
+    followers_count = db.scalar(
+        select(func.count(Follow.id)).where(Follow.following_id == current_user.id)
+    ) or 0
+
+    return {
+        "status": "success",
+        "message": f"@{follower_user.username} was removed from your followers.",
+        "followers_count": followers_count,
+        "removed_user_id": follower_user.id,
     }

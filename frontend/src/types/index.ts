@@ -41,6 +41,7 @@ export interface UserProfile {
   following_count: number;
   posts_count: number;
   is_following: boolean;
+  is_followed_by?: boolean;
   is_self: boolean;
   created_at?: string;
 }
@@ -187,6 +188,7 @@ export interface FollowUser {
   profile_picture: string | null;
   bio: string | null;
   is_following: boolean;
+  is_followed_by?: boolean;
   is_self: boolean;
 }
 

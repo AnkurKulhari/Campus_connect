@@ -22,6 +22,7 @@ class UserProfileResponse(BaseModel):
     following_count: int = 0
     posts_count: int = 0
     is_following: bool = False
+    is_followed_by: bool = False
     is_self: bool = False
     created_at: datetime | None = None
 

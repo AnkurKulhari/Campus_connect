@@ -5,13 +5,22 @@ from app.schemas.user import (
     UserProfileResponse, UserProfileUpdate,
     PaginatedAlumniResponse, PaginatedUserSearchResponse
 )
-from app.schemas.follow import FollowToggleResponse, PaginatedFollowUsersResponse
+from app.schemas.follow import (
+    FollowToggleResponse,
+    PaginatedFollowUsersResponse,
+    FollowerRemoveResponse,
+)
 from app.models.user import User
 from app.services.user_service import (
     get_my_profile, update_my_profile, get_user_profile,
     update_avatar, remove_avatar, get_alumni_circle, search_users, get_suggested_users
 )
-from app.services.follow_service import toggle_follow, get_followers, get_following
+from app.services.follow_service import (
+    toggle_follow,
+    get_followers,
+    get_following,
+    remove_follower,
+)
 from app.auth.jwt import get_current_user
 from app.database.session import get_db
 from app.utils.cloudinary import upload_media, ALLOWED_IMAGE_TYPES
@@ -155,3 +164,14 @@ def list_following(
 ):
     """List users this user is following."""
     return get_following(username, page, page_size, current_user.id, db)
+
+
+@router.delete("/{username}/follower", response_model=FollowerRemoveResponse)
+@router.delete("/followers/{username}", response_model=FollowerRemoveResponse)
+def remove_follower_route(
+    username: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Remove a student from following the current user."""
+    return remove_follower(username, current_user, db)

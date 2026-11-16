@@ -13,6 +13,7 @@ import { FollowListModal } from "@/components/FollowListModal";
 import {
   UserPlus,
   UserCheck,
+  UserMinus,
   Edit3,
   Grid,
   Loader2,
@@ -40,6 +41,22 @@ export default function ProfilePage() {
   // Modals
   const [editOpen, setEditOpen] = useState(false);
   const [followModal, setFollowModal] = useState<"followers" | "following" | null>(null);
+  const [confirmRemoveFollower, setConfirmRemoveFollower] = useState(false);
+  const [isRemovingFollower, setIsRemovingFollower] = useState(false);
+
+  const handleRemoveFollower = async () => {
+    if (!profile) return;
+    setIsRemovingFollower(true);
+    try {
+      await api.users.removeFollower(profile.username);
+      setProfile((prev) => (prev ? { ...prev, is_followed_by: false } : prev));
+      setConfirmRemoveFollower(false);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Failed to remove follower");
+    } finally {
+      setIsRemovingFollower(false);
+    }
+  };
 
   const fetchProfile = useCallback(async () => {
     if (!username) return;
@@ -193,7 +210,14 @@ export default function ProfilePage() {
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">@{profile.username}</p>
+                <div className="flex items-center justify-center sm:justify-start gap-1.5 flex-wrap">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">@{profile.username}</p>
+                  {profile.is_followed_by && !profile.is_self && (
+                    <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                      Follows you
+                    </span>
+                  )}
+                </div>
 
                 {/* Academic Badges */}
                 <div className="mt-2 flex items-center justify-center sm:justify-start gap-2 flex-wrap">
@@ -257,7 +281,7 @@ export default function ProfilePage() {
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Link
                       href={`/messages?user=${profile.username}`}
                       className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 shadow-2xs transition"
@@ -266,10 +290,22 @@ export default function ProfilePage() {
                       <span>Message</span>
                     </Link>
 
+                    {profile.is_followed_by && (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmRemoveFollower(true)}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-rose-800 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 shadow-2xs transition cursor-pointer"
+                        title={`Remove @${profile.username} from your followers`}
+                      >
+                        <UserMinus className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Remove Follower</span>
+                      </button>
+                    )}
+
                     <button
                       onClick={handleToggleFollow}
                       disabled={isFollowLoading}
-                      className={`inline-flex items-center gap-1.5 rounded-xl px-5 py-1.5 text-xs font-semibold transition ${
+                      className={`inline-flex items-center gap-1.5 rounded-xl px-5 py-1.5 text-xs font-semibold transition cursor-pointer ${
                         profile.is_following
                           ? "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                           : "bg-blue-600 text-white hover:bg-blue-700 shadow-2xs"
@@ -381,7 +417,58 @@ export default function ProfilePage() {
           type={followModal}
           isOpen={true}
           onClose={() => setFollowModal(null)}
+          onFollowerRemoved={(_removedUsername) => {
+            if (profile.is_self) {
+              setProfile((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      followers_count: Math.max(0, prev.followers_count - 1),
+                    }
+                  : prev
+              );
+            }
+          }}
         />
+      )}
+
+      {/* Remove Follower Confirmation Dialog from Profile Page */}
+      {confirmRemoveFollower && profile && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center animate-in fade-in zoom-in-95 duration-150">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400">
+              <UserMinus className="h-6 w-6" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+              Remove follower?
+            </h3>
+            <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              CampusConnect won&apos;t notify <span className="font-semibold text-slate-700 dark:text-slate-200">@{profile.username}</span> that they were removed from your followers.
+            </p>
+            <div className="mt-5 flex gap-2.5">
+              <button
+                type="button"
+                onClick={() => setConfirmRemoveFollower(false)}
+                disabled={isRemovingFollower}
+                className="flex-1 rounded-xl border border-slate-200 bg-slate-50 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleRemoveFollower}
+                disabled={isRemovingFollower}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-rose-600 py-2 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition cursor-pointer"
+              >
+                {isRemovingFollower ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  "Remove"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
       </div>
     </AuthGuard>

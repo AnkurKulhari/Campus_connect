@@ -426,6 +426,12 @@ export const api = {
         { method: "POST" }
       ),
 
+    removeFollower: (username: string) =>
+      request<{ status: string; message: string; followers_count: number; removed_user_id: number }>(
+        `/users/${encodeURIComponent(username)}/follower`,
+        { method: "DELETE" }
+      ),
+
     getFollowers: (username: string, page = 1, pageSize = 20) =>
       request<PaginatedFollowUsers>(
         `/users/${username}/followers?page=${page}&page_size=${pageSize}`

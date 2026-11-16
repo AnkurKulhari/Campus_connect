@@ -17,12 +17,21 @@ def _build_profile_response(user: User, current_user_id: int | None, db: Session
 
     is_self = (current_user_id == user.id) if current_user_id is not None else False
     is_following = False
+    is_followed_by = False
     if current_user_id is not None and not is_self:
         is_following = bool(
             db.scalar(
                 select(Follow.id).where(
                     Follow.follower_id == current_user_id,
                     Follow.following_id == user.id,
+                )
+            )
+        )
+        is_followed_by = bool(
+            db.scalar(
+                select(Follow.id).where(
+                    Follow.follower_id == user.id,
+                    Follow.following_id == current_user_id,
                 )
             )
         )
@@ -47,6 +56,7 @@ def _build_profile_response(user: User, current_user_id: int | None, db: Session
         "following_count": following_count,
         "posts_count": posts_count,
         "is_following": is_following,
+        "is_followed_by": is_followed_by,
         "is_self": is_self,
         "created_at": user.created_at,
     }
