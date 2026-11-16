@@ -51,6 +51,10 @@ class PostResponse(BaseModel):
     content: str | None
     media: list[PostMediaResponse]
     author: PostAuthorResponse
+    club_id: int | None = None
+    club_name: str | None = None
+    club_slug: str | None = None
+    club_logo: str | None = None
     like_count: int
     comment_count: int
     is_liked_by_me: bool

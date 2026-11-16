@@ -75,12 +75,26 @@ class ClubResponse(BaseModel):
     owner_id: int
     owner_name: str
     owner_username: str
+    owner_profile_picture: str | None = None
     members_count: int = 0
     is_owner: bool = False
     my_role: str | None = None
     members: list[ClubMemberResponse] = []
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ClubReportCreate(BaseModel):
+    reason: str = Field(..., min_length=3, max_length=100)
+    details: str | None = Field(default=None, max_length=1000)
+
+
+class ClubManageableResponse(BaseModel):
+    id: int
+    name: str
+    slug: str
+    logo_url: str | None = None
+    role: str
 
 
 class PaginatedClubsResponse(BaseModel):

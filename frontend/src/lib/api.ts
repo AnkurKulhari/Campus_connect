@@ -13,6 +13,7 @@ import {
   Conversation,
   DirectMessage,
   Club,
+  ClubManageable,
   PaginatedClubs,
 } from "@/types";
 
@@ -276,9 +277,10 @@ export const api = {
   },
 
   posts: {
-    create: (content: string | null, files: File[] = []) => {
+    create: (content: string | null, files: File[] = [], clubId?: number | null) => {
       const formData = new FormData();
       if (content) formData.append("content", content);
+      if (clubId) formData.append("club_id", String(clubId));
       files.forEach((file) => formData.append("files", file));
 
       return request<Post>("/posts", {
@@ -524,6 +526,9 @@ export const api = {
     get: (slug: string) =>
       request<Club>(`/clubs/${encodeURIComponent(slug)}`),
 
+    getMyManageable: () =>
+      request<ClubManageable[]>("/clubs/my/manageable"),
+
     uploadImage: (file: File, folderType: "logo" | "banner" = "logo") => {
       const formData = new FormData();
       formData.append("file", file);
@@ -561,8 +566,8 @@ export const api = {
         category: string;
         tagline: string;
         description: string;
-        logo_url: string;
-        banner_url: string;
+        logo_url: string | null;
+        banner_url: string | null;
         instagram_url: string;
         linkedin_url: string;
         website_url: string;
@@ -572,6 +577,12 @@ export const api = {
     ) =>
       request<Club>(`/clubs/${encodeURIComponent(slug)}`, {
         method: "PATCH",
+        body: JSON.stringify(data),
+      }),
+
+    report: (slug: string, data: { reason: string; details?: string }) =>
+      request<{ status: string; message: string }>(`/clubs/${encodeURIComponent(slug)}/report`, {
+        method: "POST",
         body: JSON.stringify(data),
       }),
 

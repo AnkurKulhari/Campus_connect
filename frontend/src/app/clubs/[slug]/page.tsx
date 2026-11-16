@@ -10,6 +10,7 @@ import { api, ApiError } from "@/lib/api";
 import { Club, ClubMember } from "@/types";
 import { LinkedinIcon } from "@/components/icons/LinkedinIcon";
 import { InstagramIcon } from "@/components/icons/InstagramIcon";
+import { ImageCropModal } from "@/components/ImageCropModal";
 import { checkImageSafety } from "@/lib/nsfw";
 import {
   Landmark,
@@ -30,6 +31,8 @@ import {
   Upload,
   Camera,
   Settings,
+  Flag,
+  ShieldAlert,
 } from "lucide-react";
 
 interface ClubPageProps {
@@ -89,6 +92,19 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
 
   const [activeTab, setActiveTab] = useState<"about" | "team">("about");
 
+  // Crop modal state
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [cropType, setCropType] = useState<"logo" | "banner">("logo");
+
+  // Report modal state
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState("Rogue / Unauthorized Registration (Student is not president or coordinator)");
+  const [reportDetails, setReportDetails] = useState("");
+  const [submittingReport, setSubmittingReport] = useState(false);
+  const [reportSuccess, setReportSuccess] = useState<string | null>(null);
+  const [reportError, setReportError] = useState<string | null>(null);
+
   const isLead =
     club &&
     (club.is_owner ||
@@ -135,8 +151,8 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
     setShowEditModal(true);
   };
 
-  // Upload Logo in Edit Modal
-  const handleEditLogoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Select Logo in Edit Modal -> Opens Crop Modal
+  const handleEditLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -149,28 +165,18 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
       return;
     }
 
-    setEditError(null);
-    setEditLogoUploading(true);
-
-    try {
-      const safety = await checkImageSafety(file);
-      if (safety.isExplicit) {
-        setEditError("Adult or explicit content detected in logo photo.");
-        setEditLogoUploading(false);
-        return;
-      }
-
-      const res = await api.clubs.uploadImage(file, "logo");
-      setEditLogoUrl(res.url);
-    } catch (err) {
-      setEditError(err instanceof ApiError ? err.detail : "Failed to upload logo.");
-    } finally {
-      setEditLogoUploading(false);
-    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropImageSrc(reader.result as string);
+      setCropType("logo");
+      setCropModalOpen(true);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
   };
 
-  // Upload Banner in Edit Modal
-  const handleEditBannerSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Select Banner in Edit Modal -> Opens Crop Modal
+  const handleEditBannerSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -183,27 +189,54 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
       return;
     }
 
-    setEditError(null);
-    setEditBannerUploading(true);
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropImageSrc(reader.result as string);
+      setCropType("banner");
+      setCropModalOpen(true);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
 
-    try {
-      const safety = await checkImageSafety(file);
-      if (safety.isExplicit) {
-        setEditError("Adult or explicit content detected in banner photo.");
-        setEditBannerUploading(false);
-        return;
+  // Cropping finished -> runs NSFW check & uploads to Cloudinary
+  const handleCropDone = async (croppedFile: File) => {
+    if (cropType === "logo") {
+      setEditLogoUploading(true);
+      setEditError(null);
+      try {
+        const safety = await checkImageSafety(croppedFile);
+        if (safety.isExplicit) {
+          setEditError("Adult or explicit content detected in logo photo.");
+          return;
+        }
+        const res = await api.clubs.uploadImage(croppedFile, "logo");
+        setEditLogoUrl(res.url);
+      } catch (err) {
+        setEditError(err instanceof ApiError ? err.detail : "Failed to upload logo.");
+      } finally {
+        setEditLogoUploading(false);
       }
-
-      const res = await api.clubs.uploadImage(file, "banner");
-      setEditBannerUrl(res.url);
-    } catch (err) {
-      setEditError(err instanceof ApiError ? err.detail : "Failed to upload banner.");
-    } finally {
-      setEditBannerUploading(false);
+    } else {
+      setEditBannerUploading(true);
+      setEditError(null);
+      try {
+        const safety = await checkImageSafety(croppedFile);
+        if (safety.isExplicit) {
+          setEditError("Adult or explicit content detected in banner photo.");
+          return;
+        }
+        const res = await api.clubs.uploadImage(croppedFile, "banner");
+        setEditBannerUrl(res.url);
+      } catch (err) {
+        setEditError(err instanceof ApiError ? err.detail : "Failed to upload banner.");
+      } finally {
+        setEditBannerUploading(false);
+      }
     }
   };
 
-  // Save Edit Changes
+  // Save Edit Changes (Supports clearing Logo or Banner when removed)
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!club) return;
@@ -227,8 +260,8 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
         category: editCategory,
         tagline: editTagline.trim(),
         description: editDescription.trim(),
-        logo_url: editLogoUrl || undefined,
-        banner_url: editBannerUrl || undefined,
+        logo_url: editLogoUrl ? editLogoUrl : null,
+        banner_url: editBannerUrl ? editBannerUrl : null,
         instagram_url: editInstagramUrl.trim() || undefined,
         linkedin_url: editLinkedinUrl.trim() || undefined,
         website_url: editWebsiteUrl.trim() || undefined,
@@ -252,6 +285,37 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
     }
   };
 
+  // Submit Report Rogue Society
+  const handleReportClub = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!club) return;
+
+    setSubmittingReport(true);
+    setReportError(null);
+    setReportSuccess(null);
+
+    try {
+      const res = await api.clubs.report(club.slug, {
+        reason: reportReason,
+        details: reportDetails.trim() || undefined,
+      });
+      setReportSuccess(res.message || "Report submitted successfully for administrative review.");
+      setTimeout(() => {
+        setShowReportModal(false);
+        setReportSuccess(null);
+        setReportDetails("");
+      }, 2500);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setReportError(err.detail);
+      } else {
+        setReportError("Failed to submit report. Please try again.");
+      }
+    } finally {
+      setSubmittingReport(false);
+    }
+  };
+
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!memberUsername.trim()) return;
@@ -272,7 +336,7 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
       if (err instanceof ApiError) {
         setModalError(err.detail);
       } else {
-        setModalError("Could not add student to core team. Ensure the username is verified.");
+        setModalError("Could not add student to team. Ensure the username is verified.");
       }
     } finally {
       setAddingMember(false);
@@ -280,7 +344,7 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
   };
 
   const handleRemoveMember = async (userId: number, memberName: string) => {
-    if (!confirm(`Are you sure you want to remove ${memberName} from the core team?`)) {
+    if (!confirm(`Are you sure you want to remove ${memberName} from the society team?`)) {
       return;
     }
 
@@ -335,17 +399,26 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
     <AuthGuard>
       <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F19] transition-colors pb-16">
         {/* Banner Area */}
-        <div className="relative h-44 sm:h-56 w-full bg-gradient-to-r from-violet-900 via-indigo-950 to-slate-900 overflow-hidden">
+        <div className="relative aspect-[16/7] sm:aspect-[21/9] min-h-[180px] sm:min-h-[240px] max-h-[340px] w-full bg-slate-950 overflow-hidden flex items-center justify-center">
           {club.banner_url ? (
-            <Image
-              src={club.banner_url}
-              alt={club.name}
-              fill
-              priority
-              className="object-cover"
-            />
+            <>
+              {/* Blurred background backdrop so wide banner looks seamless on any screen */}
+              <div
+                className="absolute inset-0 bg-cover bg-center blur-md opacity-30 scale-105 pointer-events-none"
+                style={{ backgroundImage: `url(${club.banner_url})` }}
+              />
+              <Image
+                src={club.banner_url}
+                alt={club.name}
+                fill
+                priority
+                className="object-contain sm:object-cover object-center"
+              />
+            </>
           ) : (
-            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]" />
+            <div className="absolute inset-0 bg-gradient-to-r from-violet-900 via-indigo-950 to-slate-900">
+              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]" />
+            </div>
           )}
           <div className="absolute top-4 left-4 z-10">
             <Link
@@ -360,7 +433,7 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
 
         {/* Profile Card Header */}
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <div className="relative -mt-16 sm:-mt-20 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#131B2E] p-6 shadow-sm">
+          <div className="relative -mt-8 sm:-mt-16 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#131B2E] p-6 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5">
               {/* Logo + Details */}
               <div className="flex items-start sm:items-end gap-4">
@@ -418,7 +491,23 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                     className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white px-3.5 py-2 text-xs font-bold transition shadow-xs cursor-pointer min-h-[40px]"
                   >
                     <Plus className="h-4 w-4" />
-                    <span>Add Member</span>
+                    <span>Add Team Member</span>
+                  </button>
+                )}
+
+                {/* Report Rogue Society Button (For students who do not own the club) */}
+                {!club.is_owner && (
+                  <button
+                    onClick={() => {
+                      setReportError(null);
+                      setReportSuccess(null);
+                      setShowReportModal(true);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/60 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/60 px-3 py-2 text-xs font-bold transition shadow-2xs cursor-pointer min-h-[40px]"
+                    title="Report rogue or fake society registration"
+                  >
+                    <Flag className="h-3.5 w-3.5" />
+                    <span>Report Rogue Club</span>
                   </button>
                 )}
 
@@ -488,7 +577,7 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                     : "border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
                 }`}
               >
-                Core Team & Leadership ({club.members_count})
+                Society Team ({club.members_count})
               </button>
             </div>
           </div>
@@ -532,8 +621,18 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                     href={`/profile/${club.owner_username}`}
                     className="flex items-center gap-2.5 group"
                   >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-white font-bold text-xs">
-                      {club.owner_name.charAt(0).toUpperCase()}
+                    <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-600 text-white font-bold text-xs overflow-hidden">
+                      {club.owner_profile_picture ? (
+                        <Image
+                          src={club.owner_profile_picture}
+                          alt={club.owner_name}
+                          fill
+                          sizes="32px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        club.owner_name.charAt(0).toUpperCase()
+                      )}
                     </div>
                     <div>
                       <p className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-violet-600 transition">
@@ -549,16 +648,16 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
             </div>
           )}
 
-          {/* Tab 2: Core Team */}
+          {/* Tab 2: Society Team */}
           {activeTab === "team" && (
             <div className="mt-6 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#131B2E] p-6 shadow-xs">
               <div className="flex items-center justify-between mb-5">
                 <div>
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                    Official Student Leadership Roster
+                    Official Student Leadership & Team Roster
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Verified student coordinators managing {club.name}.
+                    Verified student coordinators and members managing {club.name}.
                   </p>
                 </div>
 
@@ -619,7 +718,7 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                     {club.is_owner && member.user_id !== club.owner_id && (
                       <button
                         onClick={() => handleRemoveMember(member.user_id, member.full_name)}
-                        title="Remove member from core team"
+                        title="Remove member from society team"
                         className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 transition cursor-pointer"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -928,14 +1027,19 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
           </div>
         )}
 
-        {/* Modal: Add Core Member */}
+        {/* Modal: Add Team Member */}
         {showAddMemberModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
             <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#131B2E] p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                  Add Core Team Member
-                </h3>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Add Team Member
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Add verified students from any year (1st, 2nd, 3rd, or 4th) to your society roster.
+                  </p>
+                </div>
                 <button
                   onClick={() => setShowAddMemberModal(false)}
                   className="rounded-lg p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
@@ -977,10 +1081,10 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                     onChange={(e) => setMemberRole(e.target.value)}
                     className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-violet-500 focus:outline-none"
                   >
-                    <option value="VICE_PRESIDENT">Vice President</option>
+                    <option value="VICE_PRESIDENT">Vice President / Co-Lead</option>
                     <option value="LEAD">Lead Coordinator</option>
                     <option value="CORE">Core Member</option>
-                    <option value="MEMBER">Member / Volunteer</option>
+                    <option value="MEMBER">Member / Volunteer (1st - 4th Year)</option>
                   </select>
                 </div>
 
@@ -992,7 +1096,7 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                     type="text"
                     value={memberTitle}
                     onChange={(e) => setMemberTitle(e.target.value)}
-                    placeholder="e.g. Technical Head, Design Lead, General Secretary"
+                    placeholder="e.g. Technical Head, Design Lead, Volunteer"
                     className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-violet-500 focus:outline-none"
                   />
                 </div>
@@ -1024,6 +1128,127 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
             </div>
           </div>
         )}
+
+        {/* Modal: Report Rogue Club / Society */}
+        {showReportModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+            <div className="w-full max-w-md rounded-2xl border border-rose-200 dark:border-rose-900/60 bg-white dark:bg-[#131B2E] p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
+                    <ShieldAlert className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                      Report Rogue Society
+                    </h3>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowReportModal(false)}
+                  className="rounded-lg p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="mt-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 p-2.5 text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
+                CampusConnect strictly enforces that only official student presidents with faculty clearance can register clubs. Rogue or fake registrations will be unlisted immediately.
+              </div>
+
+              {reportSuccess && (
+                <div className="mt-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-2.5 text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  <span>{reportSuccess}</span>
+                </div>
+              )}
+
+              {reportError && (
+                <div className="mt-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 p-2.5 text-xs text-rose-700 dark:text-rose-300">
+                  {reportError}
+                </div>
+              )}
+
+              <form onSubmit={handleReportClub} className="mt-4 space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Reason for Report
+                  </label>
+                  <select
+                    value={reportReason}
+                    onChange={(e) => setReportReason(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-rose-500 focus:outline-none"
+                  >
+                    <option value="Rogue / Unauthorized Registration (Student is not president or coordinator)">
+                      Rogue / Unauthorized Registration (Student is not president)
+                    </option>
+                    <option value="Impersonation of Official College Society or Club">
+                      Impersonation of Official College Society
+                    </option>
+                    <option value="Offensive, Vulgar, or Defamatory Content">
+                      Offensive, Vulgar, or Defamatory Content
+                    </option>
+                    <option value="Duplicate or Fake Club Page">
+                      Duplicate or Fake Club Page
+                    </option>
+                    <option value="Other Policy Violation">Other Policy Violation</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Details & Context (Optional)
+                  </label>
+                  <textarea
+                    rows={3}
+                    maxLength={1000}
+                    value={reportDetails}
+                    onChange={(e) => setReportDetails(e.target.value)}
+                    placeholder="Provide evidence or context for campus moderation..."
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 p-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-rose-500 focus:outline-none resize-none"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2.5 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowReportModal(false)}
+                    className="rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingReport || !!reportSuccess}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 text-xs font-bold transition shadow-xs disabled:opacity-50 cursor-pointer"
+                  >
+                    {submittingReport ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span>Submitting...</span>
+                      </>
+                    ) : (
+                      <span>Submit Report</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal: Image Cropper */}
+        <ImageCropModal
+          isOpen={cropModalOpen}
+          imageSrc={cropImageSrc}
+          aspectRatio={cropType === "logo" ? "1:1" : "16:7"}
+          title={cropType === "logo" ? "Crop Society Logo (1:1)" : "Crop Cover Banner (Wide)"}
+          onClose={() => {
+            setCropModalOpen(false);
+            setCropImageSrc(null);
+          }}
+          onCropDone={handleCropDone}
+        />
       </div>
     </AuthGuard>
   );

@@ -69,6 +69,10 @@ export interface Post {
   content: string | null;
   media: PostMedia[];
   author: PostAuthor;
+  club_id?: number | null;
+  club_name?: string | null;
+  club_slug?: string | null;
+  club_logo?: string | null;
   like_count: number;
   comment_count: number;
   is_liked_by_me: boolean;
@@ -252,10 +256,19 @@ export interface Club {
   owner_id: number;
   owner_name: string;
   owner_username: string;
+  owner_profile_picture?: string | null;
   members_count: number;
   is_owner: boolean;
   my_role?: string | null;
   members: ClubMember[];
+}
+
+export interface ClubManageable {
+  id: number;
+  name: string;
+  slug: string;
+  logo_url?: string | null;
+  role: string;
 }
 
 export interface PaginatedClubs {

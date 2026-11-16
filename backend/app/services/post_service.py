@@ -39,6 +39,7 @@ def _post_options(current_user_id: int) -> list:
     return [
         selectinload(Post.media),
         selectinload(Post.author),
+        selectinload(Post.club),
         with_expression(Post.like_count, like_count_subq),
         with_expression(Post.comment_count, comment_count_subq),
         with_expression(Post.is_liked_by_me, is_liked_subq),
@@ -68,6 +69,7 @@ def create_post(
     files: list[UploadFile],
     current_user: User,
     db: Session,
+    club_id: int | None = None,
 ) -> Post:
     # Alumni posting restriction: Alumni can browse, like, and comment, but cannot publish new posts
     if current_user.is_alumni or (current_user.year and current_user.year.strip().lower() == "alumni"):
@@ -75,6 +77,32 @@ def create_post(
             status_code=403,
             detail="Alumni accounts have read-only browsing access and cannot publish new posts. Connect with students and explore the campus feed!"
         )
+
+    target_club_id: int | None = None
+    if club_id is not None:
+        from app.models.club import Club, ClubMember
+        club = db.scalar(select(Club).where(Club.id == club_id, Club.is_active == True))
+        if not club:
+            raise HTTPException(status_code=404, detail="Club or society not found.")
+
+        is_authorized = (club.owner_id == current_user.id)
+        if not is_authorized:
+            member = db.scalar(
+                select(ClubMember).where(
+                    ClubMember.club_id == club.id,
+                    ClubMember.user_id == current_user.id,
+                    ClubMember.role.in_(["PRESIDENT", "VICE_PRESIDENT", "LEAD", "CORE"]),
+                )
+            )
+            if member:
+                is_authorized = True
+
+        if not is_authorized:
+            raise HTTPException(
+                status_code=403,
+                detail="You are not authorized to publish posts on behalf of this society."
+            )
+        target_club_id = club.id
 
     if not post_data.content and not files:
         raise HTTPException(status_code=400, detail="A post must have text content or at least one media file.")
@@ -101,6 +129,7 @@ def create_post(
             select(Post)
             .where(
                 Post.user_id == current_user.id,
+                Post.club_id == target_club_id,
                 Post.content == post_data.content.strip(),
                 Post.created_at >= datetime.now(UTC) - timedelta(seconds=60),
             )
@@ -109,7 +138,7 @@ def create_post(
         if recent_duplicate:
             return _get_post_or_404(recent_duplicate.id, current_user.id, db)
 
-    post = Post(user_id=current_user.id, content=post_data.content)
+    post = Post(user_id=current_user.id, club_id=target_club_id, content=post_data.content)
     db.add(post)
     db.flush()
 

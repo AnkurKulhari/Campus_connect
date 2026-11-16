@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.models.user import User
+    from app.models.club import Club
 
 
 class Post(Base):
@@ -13,6 +14,7 @@ class Post(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    club_id: Mapped[int | None] = mapped_column(ForeignKey("clubs.id", ondelete="SET NULL"), nullable=True, index=True)
     content: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_hidden: Mapped[bool] = mapped_column(default=False, nullable=False)
     report_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -25,6 +27,7 @@ class Post(Base):
 
     # ORM relationships (data access)
     author: Mapped["User"] = relationship("User", back_populates="posts")
+    club: Mapped["Club | None"] = relationship("Club")
     media: Mapped[list["PostMedia"]] = relationship(
         "PostMedia", back_populates="post", cascade="all, delete-orphan", order_by="PostMedia.order"
     )
@@ -33,6 +36,18 @@ class Post(Base):
     like_count = query_expression(default_expr=literal(0))
     comment_count = query_expression(default_expr=literal(0))
     is_liked_by_me = query_expression(default_expr=literal(False))
+
+    @property
+    def club_name(self) -> str | None:
+        return self.club.name if self.club else None
+
+    @property
+    def club_slug(self) -> str | None:
+        return self.club.slug if self.club else None
+
+    @property
+    def club_logo(self) -> str | None:
+        return self.club.logo_url if self.club else None
 
 
 class PostMedia(Base):

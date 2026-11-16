@@ -24,6 +24,7 @@ import {
   CheckCircle,
   ChevronLeft,
   ChevronRight,
+  Landmark,
 } from "lucide-react";
 import { LinkedinIcon } from "@/components/icons/LinkedinIcon";
 
@@ -104,88 +105,146 @@ export function PostCard({
     <article className="rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-[#131B2E] overflow-hidden transition-all hover:border-slate-300 dark:hover:border-slate-700">
       {/* Header */}
       <div className="flex items-center justify-between p-4 pb-3 relative z-30">
-        <div className="flex items-center gap-3">
-          <Link
-            href={`/profile/${post.author.username}`}
-            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-600 font-bold text-white overflow-hidden shadow-2xs"
-          >
-            {post.author.profile_picture ? (
-              <Image
-                src={post.author.profile_picture}
-                alt={post.author.username}
-                fill
-                sizes="40px"
-                className="object-cover"
-              />
-            ) : (
-              post.author.full_name.charAt(0).toUpperCase()
-            )}
-          </Link>
-          <div>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <Link
-                href={`/profile/${post.author.username}`}
-                className="font-bold text-sm text-slate-900 hover:text-blue-600 dark:text-white dark:hover:text-blue-400 transition"
-              >
-                {post.author.full_name}
-              </Link>
-              <span className="text-xs text-slate-400">
-                @{post.author.username}
-              </span>
+        {post.club_id && post.club_name ? (
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/clubs/${post.club_slug}`}
+              className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-600 font-bold text-white overflow-hidden shadow-2xs border border-violet-200 dark:border-violet-800"
+            >
+              {post.club_logo ? (
+                <Image
+                  src={post.club_logo}
+                  alt={post.club_name}
+                  fill
+                  sizes="40px"
+                  className="object-cover"
+                />
+              ) : (
+                post.club_name.charAt(0).toUpperCase()
+              )}
+            </Link>
+            <div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <Link
+                  href={`/clubs/${post.club_slug}`}
+                  className="font-bold text-sm text-slate-900 hover:text-violet-600 dark:text-white dark:hover:text-violet-400 transition"
+                >
+                  {post.club_name}
+                </Link>
+                {post.club_slug && (
+                  <Link
+                    href={`/clubs/${post.club_slug}`}
+                    className="text-xs font-mono text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                  >
+                    @{post.club_slug}
+                  </Link>
+                )}
 
-              {/* Verified Student Badge */}
-              {post.author.is_id_verified && (
                 <span
-                  title="Verified Student ID"
-                  className="inline-flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400"
+                  title="Official Campus Society"
+                  className="inline-flex items-center gap-0.5 rounded-md bg-violet-50 dark:bg-violet-950/60 px-1.5 py-0.5 text-[10px] font-bold text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800"
                 >
-                  <CheckCircle className="h-3.5 w-3.5" />
+                  <Landmark className="h-3 w-3" />
+                  <span>Society</span>
                 </span>
-              )}
+              </div>
 
-              {/* LinkedIn Networking Link */}
-              {post.author.linkedin_url && (
-                <a
-                  href={post.author.linkedin_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="Connect on LinkedIn"
-                  className="text-slate-400 hover:text-[#0077b5] transition"
+              {/* Subtitle with Author Credit */}
+              <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                <span>Posted by</span>
+                <Link
+                  href={`/profile/${post.author.username}`}
+                  className="font-medium text-slate-700 dark:text-slate-300 hover:underline"
                 >
-                  <LinkedinIcon className="h-3.5 w-3.5" />
-                </a>
-              )}
+                  {post.author.full_name}
+                </Link>
+              </div>
             </div>
-
-            {/* Academic Badge moved directly under Name & Username */}
-            {post.author.is_alumni || post.author.year === "Alumni" ? (
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="inline-flex items-center gap-1 rounded-full bg-blue-50/80 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/50 dark:border-blue-900/50">
-                  <GraduationCap className="h-2.5 w-2.5" />
-                  <span>Alumni</span>
-                  {post.author.branch && (
-                    <span>• {post.author.branch.replace(/\(.*?\)/g, "").trim()}</span>
-                  )}
-                </span>
-              </div>
-            ) : post.author.year ? (
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="inline-flex items-center gap-1 rounded-full bg-blue-50/80 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/50 dark:border-blue-900/50">
-                  <span>{post.author.year}</span>
-                  {post.author.branch && (
-                    <span>• {post.author.branch.replace(/\(.*?\)/g, "").trim()}</span>
-                  )}
-                </span>
-              </div>
-            ) : post.author.branch ? (
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-[10px] text-slate-400 font-medium">
-                  {post.author.branch.replace(/\(.*?\)/g, "").trim()}
-                </span>
-              </div>
-            ) : null}
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/profile/${post.author.username}`}
+              className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-600 font-bold text-white overflow-hidden shadow-2xs"
+            >
+              {post.author.profile_picture ? (
+                <Image
+                  src={post.author.profile_picture}
+                  alt={post.author.username}
+                  fill
+                  sizes="40px"
+                  className="object-cover"
+                />
+              ) : (
+                post.author.full_name.charAt(0).toUpperCase()
+              )}
+            </Link>
+            <div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <Link
+                  href={`/profile/${post.author.username}`}
+                  className="font-bold text-sm text-slate-900 hover:text-blue-600 dark:text-white dark:hover:text-blue-400 transition"
+                >
+                  {post.author.full_name}
+                </Link>
+                <span className="text-xs text-slate-400">
+                  @{post.author.username}
+                </span>
+
+                {/* Verified Student Badge */}
+                {post.author.is_id_verified && (
+                  <span
+                    title="Verified Student ID"
+                    className="inline-flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400"
+                  >
+                    <CheckCircle className="h-3.5 w-3.5" />
+                  </span>
+                )}
+
+                {/* LinkedIn Networking Link */}
+                {post.author.linkedin_url && (
+                  <a
+                    href={post.author.linkedin_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Connect on LinkedIn"
+                    className="text-slate-400 hover:text-[#0077b5] transition"
+                  >
+                    <LinkedinIcon className="h-3.5 w-3.5" />
+                  </a>
+                )}
+              </div>
+
+              {/* Academic Badge moved directly under Name & Username */}
+              {post.author.is_alumni || post.author.year === "Alumni" ? (
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-50/80 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/50 dark:border-blue-900/50">
+                    <GraduationCap className="h-2.5 w-2.5" />
+                    <span>Alumni</span>
+                    {post.author.branch && (
+                      <span>• {post.author.branch.replace(/\(.*?\)/g, "").trim()}</span>
+                    )}
+                  </span>
+                </div>
+              ) : post.author.year ? (
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-50/80 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/50 dark:border-blue-900/50">
+                    <span>{post.author.year}</span>
+                    {post.author.branch && (
+                      <span>• {post.author.branch.replace(/\(.*?\)/g, "").trim()}</span>
+                    )}
+                  </span>
+                </div>
+              ) : post.author.branch ? (
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-[10px] text-slate-400 font-medium">
+                    {post.author.branch.replace(/\(.*?\)/g, "").trim()}
+                  </span>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        )}
 
         {/* Post Options Menu */}
         {user && (

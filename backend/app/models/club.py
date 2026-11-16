@@ -63,3 +63,22 @@ class ClubMember(Base):
     __table_args__ = (
         UniqueConstraint("club_id", "user_id", name="uq_club_member"),
     )
+
+
+class ClubReport(Base):
+    __tablename__ = "club_reports"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    club_id: Mapped[int] = mapped_column(ForeignKey("clubs.id", ondelete="CASCADE"), nullable=False, index=True)
+    reporter_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    reason: Mapped[str] = mapped_column(String(100), nullable=False)
+    details: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="PENDING")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+
+    club: Mapped["Club"] = relationship("Club")
+    reporter: Mapped["User"] = relationship("User")
+
+    __table_args__ = (
+        UniqueConstraint("club_id", "reporter_id", name="uq_club_report_reporter"),
+    )

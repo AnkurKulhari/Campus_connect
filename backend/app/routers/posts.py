@@ -23,13 +23,14 @@ router = APIRouter(prefix="/posts", tags=["Posts"])
 @router.post("/", response_model=PostResponse, status_code=201)
 def create(
     content: Annotated[str | None, Form()] = None,
+    club_id: Annotated[int | None, Form()] = None,
     files: Annotated[list[UploadFile], File()] = [],
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Create a new post. Accepts optional text content and up to 5 media files."""
+    """Create a new post. Accepts optional text content, optional club_id, and up to 5 media files."""
     post_data = PostCreate(content=content)
-    return create_post(post_data, files, current_user, db)
+    return create_post(post_data, files, current_user, db, club_id=club_id)
 
 
 @router.get("/feed", response_model=PaginatedPostsResponse)

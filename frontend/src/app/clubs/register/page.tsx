@@ -8,6 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { AuthGuard } from "@/components/AuthGuard";
 import { api, ApiError } from "@/lib/api";
 import { checkImageSafety } from "@/lib/nsfw";
+import { ImageCropModal } from "@/components/ImageCropModal";
 import {
   Landmark,
   ShieldAlert,
@@ -68,6 +69,11 @@ export default function RegisterClubPage() {
   const [error, setError] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  // Image Cropping States
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [cropType, setCropType] = useState<"logo" | "banner">("logo");
+
   // Auto-generate slug from name if slug not yet manually touched
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -82,8 +88,8 @@ export default function RegisterClubPage() {
     }
   };
 
-  // Logo selection & upload handler
-  const handleLogoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Logo selection -> Open crop modal
+  const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -97,40 +103,18 @@ export default function RegisterClubPage() {
       return;
     }
 
-    setUploadError(null);
-    setLogoUploading(true);
-
-    try {
-      // Step 1: Client-side explicit nudity scan
-      const safety = await checkImageSafety(file);
-      if (safety.isExplicit) {
-        setUploadError("Photo rejected: Adult or explicit content detected. Please choose another logo.");
-        setLogoUploading(false);
-        return;
-      }
-
-      // Step 2: Instant local preview
-      const localUrl = URL.createObjectURL(file);
-      setLogoPreview(localUrl);
-
-      // Step 3: Cloudinary upload
-      const res = await api.clubs.uploadImage(file, "logo");
-      setLogoUrl(res.url);
-    } catch (err) {
-      if (err instanceof ApiError) {
-        setUploadError(err.detail);
-      } else {
-        setUploadError("Failed to upload logo image. Please try again.");
-      }
-      setLogoPreview(null);
-      setLogoUrl("");
-    } finally {
-      setLogoUploading(false);
-    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropImageSrc(reader.result as string);
+      setCropType("logo");
+      setCropModalOpen(true);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
   };
 
-  // Banner selection & upload handler
-  const handleBannerSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Banner selection -> Open crop modal
+  const handleBannerSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -144,35 +128,64 @@ export default function RegisterClubPage() {
       return;
     }
 
-    setUploadError(null);
-    setBannerUploading(true);
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropImageSrc(reader.result as string);
+      setCropType("banner");
+      setCropModalOpen(true);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
 
-    try {
-      // Step 1: Client-side explicit nudity scan
-      const safety = await checkImageSafety(file);
-      if (safety.isExplicit) {
-        setUploadError("Photo rejected: Adult or explicit content detected. Please choose another banner.");
+  // When crop finishes -> NSFW safety check & upload
+  const handleCropDone = async (croppedFile: File, previewUrl: string) => {
+    if (cropType === "logo") {
+      setUploadError(null);
+      setLogoUploading(true);
+      try {
+        const safety = await checkImageSafety(croppedFile);
+        if (safety.isExplicit) {
+          setUploadError("Photo rejected: Adult or explicit content detected. Please choose another logo.");
+          return;
+        }
+        setLogoPreview(previewUrl);
+        const res = await api.clubs.uploadImage(croppedFile, "logo");
+        setLogoUrl(res.url);
+      } catch (err) {
+        if (err instanceof ApiError) {
+          setUploadError(err.detail);
+        } else {
+          setUploadError("Failed to upload cropped logo image. Please try again.");
+        }
+        setLogoPreview(null);
+        setLogoUrl("");
+      } finally {
+        setLogoUploading(false);
+      }
+    } else {
+      setUploadError(null);
+      setBannerUploading(true);
+      try {
+        const safety = await checkImageSafety(croppedFile);
+        if (safety.isExplicit) {
+          setUploadError("Photo rejected: Adult or explicit content detected. Please choose another banner.");
+          return;
+        }
+        setBannerPreview(previewUrl);
+        const res = await api.clubs.uploadImage(croppedFile, "banner");
+        setBannerUrl(res.url);
+      } catch (err) {
+        if (err instanceof ApiError) {
+          setUploadError(err.detail);
+        } else {
+          setUploadError("Failed to upload cropped cover banner. Please try again.");
+        }
+        setBannerPreview(null);
+        setBannerUrl("");
+      } finally {
         setBannerUploading(false);
-        return;
       }
-
-      // Step 2: Instant local preview
-      const localUrl = URL.createObjectURL(file);
-      setBannerPreview(localUrl);
-
-      // Step 3: Cloudinary upload
-      const res = await api.clubs.uploadImage(file, "banner");
-      setBannerUrl(res.url);
-    } catch (err) {
-      if (err instanceof ApiError) {
-        setUploadError(err.detail);
-      } else {
-        setUploadError("Failed to upload cover banner. Please try again.");
-      }
-      setBannerPreview(null);
-      setBannerUrl("");
-    } finally {
-      setBannerUploading(false);
     }
   };
 
@@ -696,6 +709,19 @@ export default function RegisterClubPage() {
             </form>
           </div>
         </div>
+
+        {/* Modal: Image Cropper */}
+        <ImageCropModal
+          isOpen={cropModalOpen}
+          imageSrc={cropImageSrc}
+          aspectRatio={cropType === "logo" ? "1:1" : "16:7"}
+          title={cropType === "logo" ? "Crop Society Logo (1:1)" : "Crop Cover Banner (Wide)"}
+          onClose={() => {
+            setCropModalOpen(false);
+            setCropImageSrc(null);
+          }}
+          onCropDone={handleCropDone}
+        />
       </div>
     </AuthGuard>
   );

@@ -6,7 +6,7 @@ from sqlalchemy import func, or_
 from app.database.session import get_db
 from app.auth.jwt import get_current_user
 from app.models.user import User
-from app.models.club import Club, ClubMember
+from app.models.club import Club, ClubMember, ClubReport
 from app.schemas.club import (
     ClubRegisterRequest,
     ClubUpdateRequest,
@@ -14,6 +14,8 @@ from app.schemas.club import (
     ClubResponse,
     ClubMemberResponse,
     PaginatedClubsResponse,
+    ClubReportCreate,
+    ClubManageableResponse,
 )
 from app.utils.moderation import assert_safe_content
 from app.utils.cloudinary import upload_media, ALLOWED_IMAGE_TYPES
@@ -71,6 +73,7 @@ def build_club_response(club: Club, current_user: User | None = None) -> ClubRes
         owner_id=club.owner_id,
         owner_name=club.owner.full_name if club.owner else "",
         owner_username=club.owner.username if club.owner else "",
+        owner_profile_picture=club.owner.profile_picture if club.owner else None,
         members_count=len(club.members),
         is_owner=is_owner,
         my_role=my_role,
@@ -262,6 +265,42 @@ def list_clubs(
     )
 
 
+@router.get("/my/manageable", response_model=list[ClubManageableResponse])
+def get_my_manageable_clubs(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Returns clubs that the current user owns or is a leadership/core member of,
+    allowing them to post on behalf of the society.
+    """
+    memberships = (
+        db.query(ClubMember)
+        .join(Club, Club.id == ClubMember.club_id)
+        .filter(
+            ClubMember.user_id == current_user.id,
+            Club.is_active == True,
+            ClubMember.role.in_(["PRESIDENT", "VICE_PRESIDENT", "LEAD", "CORE"]),
+        )
+        .all()
+    )
+    result = []
+    seen_club_ids = set()
+    for m in memberships:
+        if m.club_id not in seen_club_ids and m.club:
+            seen_club_ids.add(m.club_id)
+            result.append(
+                ClubManageableResponse(
+                    id=m.club.id,
+                    name=m.club.name,
+                    slug=m.club.slug,
+                    logo_url=m.club.logo_url,
+                    role=m.role,
+                )
+            )
+    return result
+
+
 @router.get("/{slug}", response_model=ClubResponse)
 def get_club(
     slug: str,
@@ -335,10 +374,10 @@ def update_club(
         if payload.description:
             assert_safe_content(payload.description, "Society Description")
         club.description = payload.description.strip() if payload.description else None
-    if payload.logo_url is not None:
-        club.logo_url = payload.logo_url
-    if payload.banner_url is not None:
-        club.banner_url = payload.banner_url
+    if "logo_url" in payload.model_fields_set:
+        club.logo_url = payload.logo_url.strip() if (payload.logo_url and payload.logo_url.strip()) else None
+    if "banner_url" in payload.model_fields_set:
+        club.banner_url = payload.banner_url.strip() if (payload.banner_url and payload.banner_url.strip()) else None
     if payload.instagram_url is not None:
         club.instagram_url = payload.instagram_url
     if payload.linkedin_url is not None:
@@ -440,3 +479,56 @@ def remove_club_member(
     db.commit()
     db.refresh(club)
     return build_club_response(club, current_user)
+
+
+@router.post("/{slug}/report", response_model=dict)
+def report_club(
+    slug: str,
+    payload: ClubReportCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Submit a report against a society or club (e.g. rogue registration, impersonation, offensive content).
+    Enforces student verification and prevents duplicate reports.
+    """
+    if not current_user.is_id_verified or not current_user.is_verified:
+        raise HTTPException(
+            status_code=403,
+            detail="Only verified students can submit reports against a society."
+        )
+
+    club = db.query(Club).filter(func.lower(Club.slug) == slug.strip().lower()).first()
+    if not club:
+        raise HTTPException(status_code=404, detail="Club or society not found.")
+
+    if club.owner_id == current_user.id:
+        raise HTTPException(status_code=400, detail="You cannot report your own registered society.")
+
+    # Check for existing report
+    existing = db.query(ClubReport).filter(
+        ClubReport.club_id == club.id,
+        ClubReport.reporter_id == current_user.id,
+    ).first()
+    if existing:
+        raise HTTPException(
+            status_code=409,
+            detail="You have already submitted a report for this society. Moderation is reviewing it."
+        )
+
+    clean_reason = payload.reason.strip()
+    assert_safe_content(clean_reason, "Report Reason")
+    clean_details = payload.details.strip() if payload.details else None
+    if clean_details:
+        assert_safe_content(clean_details, "Report Details")
+
+    report = ClubReport(
+        club_id=club.id,
+        reporter_id=current_user.id,
+        reason=clean_reason,
+        details=clean_details,
+    )
+    db.add(report)
+    db.commit()
+
+    return {"status": "success", "message": "Report submitted successfully for administrative review."}

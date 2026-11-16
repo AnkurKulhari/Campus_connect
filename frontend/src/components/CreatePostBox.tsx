@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import { Post } from "@/types";
+import { Post, ClubManageable } from "@/types";
 import { checkImageSafety } from "@/lib/nsfw";
 import { compressImage } from "@/lib/imageCompressor";
 import {
@@ -16,6 +16,8 @@ import {
   Check,
   AlertCircle,
   Tag,
+  Landmark,
+  ChevronDown,
 } from "lucide-react";
 
 const POPULAR_TAGS = [
@@ -39,9 +41,22 @@ export function CreatePostBox({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Club identity switcher states
+  const [manageableClubs, setManageableClubs] = useState<ClubManageable[]>([]);
+  const [selectedClub, setSelectedClub] = useState<ClubManageable | null>(null);
+  const [showIdentityMenu, setShowIdentityMenu] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const lastSubmitTimeRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (!user || !user.is_id_verified) return;
+    api.clubs
+      .getMyManageable()
+      .then((clubs) => setManageableClubs(clubs))
+      .catch(() => {});
+  }, [user]);
 
   if (!user) return null;
 
@@ -172,7 +187,8 @@ export function CreatePostBox({
     try {
       const newPost = await api.posts.create(
         content.trim() || null,
-        files
+        files,
+        selectedClub ? selectedClub.id : null
       );
       setContent("");
       setFiles([]);
@@ -189,9 +205,149 @@ export function CreatePostBox({
   return (
     <div className="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-[#131B2E] transition">
       <form onSubmit={handleSubmit}>
+        {/* Profile Switcher (When student manages one or more clubs/societies) */}
+        {manageableClubs.length > 0 && (
+          <div className="relative mb-3.5 pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                Publishing as:
+              </span>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowIdentityMenu(!showIdentityMenu)}
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition shadow-2xs cursor-pointer"
+                >
+                  <div className="relative flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[9px] text-white font-bold overflow-hidden">
+                    {selectedClub ? (
+                      selectedClub.logo_url ? (
+                        <Image
+                          src={selectedClub.logo_url}
+                          alt={selectedClub.name}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <Landmark className="h-2.5 w-2.5 text-white" />
+                      )
+                    ) : user.profile_picture ? (
+                      <Image
+                        src={user.profile_picture}
+                        alt={user.full_name}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      user.full_name.charAt(0).toUpperCase()
+                    )}
+                  </div>
+                  <span>
+                    {selectedClub ? selectedClub.name : `${user.full_name} (Personal)`}
+                  </span>
+                  <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                </button>
+
+                {showIdentityMenu && (
+                  <div className="absolute right-0 top-full mt-1.5 z-30 w-72 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#131B2E] p-1.5 shadow-xl animate-in fade-in duration-100">
+                    <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      Switch Author Identity
+                    </div>
+
+                    {/* Personal Profile Option */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedClub(null);
+                        setShowIdentityMenu(false);
+                      }}
+                      className={`w-full flex items-center justify-between gap-2.5 rounded-xl px-2.5 py-2 text-left text-xs transition cursor-pointer ${
+                        selectedClub === null
+                          ? "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 font-bold"
+                          : "text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <div className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[10px] text-white font-bold overflow-hidden">
+                          {user.profile_picture ? (
+                            <Image
+                              src={user.profile_picture}
+                              alt={user.full_name}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            user.full_name.charAt(0).toUpperCase()
+                          )}
+                        </div>
+                        <div className="truncate">
+                          <p className="truncate font-bold">{user.full_name}</p>
+                          <p className="text-[10px] text-slate-400 font-normal">Personal Student Profile</p>
+                        </div>
+                      </div>
+                      {selectedClub === null && <Check className="h-4 w-4 text-blue-600 shrink-0" />}
+                    </button>
+
+                    {/* Manageable Clubs */}
+                    {manageableClubs.map((c) => {
+                      const isSelected = selectedClub?.id === c.id;
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedClub(c);
+                            setShowIdentityMenu(false);
+                          }}
+                          className={`w-full flex items-center justify-between gap-2.5 rounded-xl px-2.5 py-2 text-left text-xs transition mt-0.5 cursor-pointer ${
+                            isSelected
+                              ? "bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 font-bold"
+                              : "text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 truncate">
+                            <div className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-violet-600 text-[10px] text-white font-bold overflow-hidden">
+                              {c.logo_url ? (
+                                <Image
+                                  src={c.logo_url}
+                                  alt={c.name}
+                                  fill
+                                  className="object-cover"
+                                />
+                              ) : (
+                                <Landmark className="h-3 w-3 text-white" />
+                              )}
+                            </div>
+                            <div className="truncate">
+                              <p className="truncate font-bold">{c.name}</p>
+                              <p className="text-[10px] text-slate-400 font-normal">@{c.slug} • {c.role.replace("_", " ")}</p>
+                            </div>
+                          </div>
+                          {isSelected && <Check className="h-4 w-4 text-violet-600 shrink-0" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex gap-3.5">
           <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-600 font-bold text-white overflow-hidden shadow-xs">
-            {user.profile_picture ? (
+            {selectedClub ? (
+              selectedClub.logo_url ? (
+                <Image
+                  src={selectedClub.logo_url}
+                  alt={selectedClub.name}
+                  fill
+                  sizes="44px"
+                  className="object-cover"
+                />
+              ) : (
+                <Landmark className="h-5 w-5 text-white" />
+              )
+            ) : user.profile_picture ? (
               <Image
                 src={user.profile_picture}
                 alt={user.full_name}
@@ -213,7 +369,11 @@ export function CreatePostBox({
                   setContent(e.target.value);
                   if (error) setError(null);
                 }}
-                placeholder="What's happening on campus? Share projects, ask seniors, or announce events..."
+                placeholder={
+                  selectedClub
+                    ? `Share updates, event announcements, or achievements for ${selectedClub.name}...`
+                    : "What's happening on campus? Share projects, ask seniors, or announce events..."
+                }
                 rows={3}
                 maxLength={1000}
                 className="w-full resize-none border-0 bg-transparent p-0 text-sm text-slate-900 placeholder-slate-400 focus:ring-0 focus:outline-none dark:text-white dark:placeholder-slate-500"
