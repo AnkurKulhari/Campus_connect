@@ -23,7 +23,6 @@ import {
   AlertCircle,
   School,
   CheckCircle2,
-  Mail,
   UserCheck,
   User as UserIcon,
   X,
@@ -331,12 +330,6 @@ export default function ClubDetailPage({ params }: ClubPageProps) {
                       <p className="text-xs font-bold text-slate-900 dark:text-white">
                         {club.faculty_coordinator_name}
                       </p>
-                      {club.faculty_coordinator_email && (
-                        <p className="text-[11px] text-slate-500 flex items-center gap-1.5">
-                          <Mail className="h-3 w-3" />
-                          <span>{club.faculty_coordinator_email}</span>
-                        </p>
-                      )}
                     </div>
                   ) : (
                     <p className="text-xs text-slate-400">Not specified</p>

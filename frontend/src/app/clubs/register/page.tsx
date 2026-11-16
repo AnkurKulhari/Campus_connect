@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { AuthGuard } from "@/components/AuthGuard";
 import { api, ApiError } from "@/lib/api";
+import { checkImageSafety } from "@/lib/nsfw";
 import {
   Landmark,
   ShieldAlert,
@@ -14,10 +16,10 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle2,
-  HelpCircle,
-  UploadCloud,
-  ExternalLink,
-  GraduationCap,
+  Upload,
+  Image as ImageIcon,
+  Trash2,
+  Camera,
 } from "lucide-react";
 
 const CATEGORIES = [
@@ -44,17 +46,27 @@ export default function RegisterClubPage() {
   const [category, setCategory] = useState("Technical");
   const [tagline, setTagline] = useState("");
   const [description, setDescription] = useState("");
-  const [logoUrl, setLogoUrl] = useState("");
-  const [bannerUrl, setBannerUrl] = useState("");
   const [instagramUrl, setInstagramUrl] = useState("");
   const [linkedinUrl, setLinkedinUrl] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [facultyCoordinatorName, setFacultyCoordinatorName] = useState("");
-  const [facultyCoordinatorEmail, setFacultyCoordinatorEmail] = useState("");
   const [declarationAccepted, setDeclarationAccepted] = useState(false);
+
+  // Logo upload state
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string>("");
+  const [logoUploading, setLogoUploading] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  // Banner upload state
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [bannerUrl, setBannerUrl] = useState<string>("");
+  const [bannerUploading, setBannerUploading] = useState(false);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Auto-generate slug from name if slug not yet manually touched
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,6 +80,112 @@ export default function RegisterClubPage() {
         .slice(0, 30);
       setSlug(generated);
     }
+  };
+
+  // Logo selection & upload handler
+  const handleLogoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setUploadError("Please upload an image file (PNG, JPG, WEBP).");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError("Logo image size must be under 10MB.");
+      return;
+    }
+
+    setUploadError(null);
+    setLogoUploading(true);
+
+    try {
+      // Step 1: Client-side explicit nudity scan
+      const safety = await checkImageSafety(file);
+      if (safety.isExplicit) {
+        setUploadError("Photo rejected: Adult or explicit content detected. Please choose another logo.");
+        setLogoUploading(false);
+        return;
+      }
+
+      // Step 2: Instant local preview
+      const localUrl = URL.createObjectURL(file);
+      setLogoPreview(localUrl);
+
+      // Step 3: Cloudinary upload
+      const res = await api.clubs.uploadImage(file, "logo");
+      setLogoUrl(res.url);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setUploadError(err.detail);
+      } else {
+        setUploadError("Failed to upload logo image. Please try again.");
+      }
+      setLogoPreview(null);
+      setLogoUrl("");
+    } finally {
+      setLogoUploading(false);
+    }
+  };
+
+  // Banner selection & upload handler
+  const handleBannerSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setUploadError("Please upload an image file (PNG, JPG, WEBP).");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError("Cover banner image size must be under 10MB.");
+      return;
+    }
+
+    setUploadError(null);
+    setBannerUploading(true);
+
+    try {
+      // Step 1: Client-side explicit nudity scan
+      const safety = await checkImageSafety(file);
+      if (safety.isExplicit) {
+        setUploadError("Photo rejected: Adult or explicit content detected. Please choose another banner.");
+        setBannerUploading(false);
+        return;
+      }
+
+      // Step 2: Instant local preview
+      const localUrl = URL.createObjectURL(file);
+      setBannerPreview(localUrl);
+
+      // Step 3: Cloudinary upload
+      const res = await api.clubs.uploadImage(file, "banner");
+      setBannerUrl(res.url);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setUploadError(err.detail);
+      } else {
+        setUploadError("Failed to upload cover banner. Please try again.");
+      }
+      setBannerPreview(null);
+      setBannerUrl("");
+    } finally {
+      setBannerUploading(false);
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    setLogoPreview(null);
+    setLogoUrl("");
+    if (logoInputRef.current) logoInputRef.current.value = "";
+  };
+
+  const handleRemoveBanner = () => {
+    setBannerPreview(null);
+    setBannerUrl("");
+    if (bannerInputRef.current) bannerInputRef.current.value = "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -91,6 +209,11 @@ export default function RegisterClubPage() {
       return;
     }
 
+    if (logoUploading || bannerUploading) {
+      setError("Please wait for media uploads to finish before submitting.");
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
 
@@ -101,13 +224,12 @@ export default function RegisterClubPage() {
         category,
         tagline: tagline.trim() || undefined,
         description: description.trim() || undefined,
-        logo_url: logoUrl.trim() || undefined,
-        banner_url: bannerUrl.trim() || undefined,
+        logo_url: logoUrl || undefined,
+        banner_url: bannerUrl || undefined,
         instagram_url: instagramUrl.trim() || undefined,
         linkedin_url: linkedinUrl.trim() || undefined,
         website_url: websiteUrl.trim() || undefined,
         faculty_coordinator_name: facultyCoordinatorName.trim() || undefined,
-        faculty_coordinator_email: facultyCoordinatorEmail.trim() || undefined,
         declaration_accepted: declarationAccepted,
       });
 
@@ -193,11 +315,11 @@ export default function RegisterClubPage() {
               </div>
             )}
 
-            {/* Error Message */}
-            {error && (
+            {/* General & Upload Error Messages */}
+            {(error || uploadError) && (
               <div className="mt-6 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 p-3.5 flex items-center gap-2.5 text-xs text-rose-700 dark:text-rose-300">
                 <AlertCircle className="h-4 w-4 shrink-0" />
-                <span>{error}</span>
+                <span>{error || uploadError}</span>
               </div>
             )}
 
@@ -297,35 +419,164 @@ export default function RegisterClubPage() {
                 />
               </div>
 
-              {/* Field 6: Logo URL & Banner URL */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Field 6: UPLOADABLE LOGO & COVER BANNER */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2 border-t border-slate-100 dark:border-slate-800">
+                {/* Logo Upload Box */}
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Logo Image URL
+                    Society Logo Photo
                   </label>
                   <input
-                    type="url"
-                    disabled={!isEligible || submitting}
-                    value={logoUrl}
-                    onChange={(e) => setLogoUrl(e.target.value)}
-                    placeholder="https://..."
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50"
+                    type="file"
+                    ref={logoInputRef}
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    disabled={!isEligible || submitting || logoUploading}
+                    onChange={handleLogoSelect}
+                    className="hidden"
                   />
-                  <p className="mt-1 text-[10px] text-slate-400">Square PNG or JPG recommended</p>
+
+                  {logoPreview ? (
+                    <div className="relative flex items-center gap-3.5 rounded-xl border border-slate-200 dark:border-slate-700 p-3 bg-slate-50/80 dark:bg-slate-900/40">
+                      <div className="relative h-14 w-14 shrink-0 rounded-xl overflow-hidden ring-1 ring-black/10 dark:ring-white/10 bg-slate-200 dark:bg-slate-800">
+                        <img
+                          src={logoPreview}
+                          alt="Logo Preview"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                          {logoUploading ? "Uploading to Cloud..." : "Logo Ready"}
+                        </p>
+                        <p className="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-0.5">
+                          {logoUploading ? (
+                            <Loader2 className="h-3 w-3 animate-spin text-violet-500" />
+                          ) : (
+                            <CheckCircle2 className="h-3 w-3" />
+                          )}
+                          <span>{logoUploading ? "Processing..." : "Cloud Verified"}</span>
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => logoInputRef.current?.click()}
+                          className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+                          title="Change Logo"
+                        >
+                          <Camera className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleRemoveLogo}
+                          className="rounded-lg p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
+                          title="Remove Logo"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={!isEligible || submitting || logoUploading}
+                      onClick={() => logoInputRef.current?.click()}
+                      className="w-full flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 hover:border-violet-500 dark:border-slate-700 dark:hover:border-violet-400 p-5 bg-slate-50/50 hover:bg-slate-100/60 dark:bg-slate-900/30 dark:hover:bg-slate-800/40 transition cursor-pointer disabled:opacity-50 group min-h-[110px]"
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 group-hover:scale-105 transition mb-2">
+                        {logoUploading ? (
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                        ) : (
+                          <Upload className="h-5 w-5" />
+                        )}
+                      </div>
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                        {logoUploading ? "Scanning & Uploading..." : "Upload Society Logo"}
+                      </span>
+                      <span className="text-[10px] text-slate-400 mt-0.5">
+                        PNG, JPG, or WEBP up to 10MB
+                      </span>
+                    </button>
+                  )}
                 </div>
 
+                {/* Banner Upload Box */}
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Cover Banner URL (Optional)
+                    Cover Banner Photo (Optional)
                   </label>
                   <input
-                    type="url"
-                    disabled={!isEligible || submitting}
-                    value={bannerUrl}
-                    onChange={(e) => setBannerUrl(e.target.value)}
-                    placeholder="https://..."
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50"
+                    type="file"
+                    ref={bannerInputRef}
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    disabled={!isEligible || submitting || bannerUploading}
+                    onChange={handleBannerSelect}
+                    className="hidden"
                   />
+
+                  {bannerPreview ? (
+                    <div className="relative flex items-center gap-3.5 rounded-xl border border-slate-200 dark:border-slate-700 p-3 bg-slate-50/80 dark:bg-slate-900/40">
+                      <div className="relative h-14 w-20 shrink-0 rounded-xl overflow-hidden ring-1 ring-black/10 dark:ring-white/10 bg-slate-200 dark:bg-slate-800">
+                        <img
+                          src={bannerPreview}
+                          alt="Banner Preview"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                          {bannerUploading ? "Uploading to Cloud..." : "Banner Ready"}
+                        </p>
+                        <p className="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-0.5">
+                          {bannerUploading ? (
+                            <Loader2 className="h-3 w-3 animate-spin text-violet-500" />
+                          ) : (
+                            <CheckCircle2 className="h-3 w-3" />
+                          )}
+                          <span>{bannerUploading ? "Processing..." : "Cloud Verified"}</span>
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => bannerInputRef.current?.click()}
+                          className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+                          title="Change Banner"
+                        >
+                          <Camera className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleRemoveBanner}
+                          className="rounded-lg p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
+                          title="Remove Banner"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={!isEligible || submitting || bannerUploading}
+                      onClick={() => bannerInputRef.current?.click()}
+                      className="w-full flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 hover:border-violet-500 dark:border-slate-700 dark:hover:border-violet-400 p-5 bg-slate-50/50 hover:bg-slate-100/60 dark:bg-slate-900/30 dark:hover:bg-slate-800/40 transition cursor-pointer disabled:opacity-50 group min-h-[110px]"
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 group-hover:scale-105 transition mb-2">
+                        {bannerUploading ? (
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                        ) : (
+                          <ImageIcon className="h-5 w-5" />
+                        )}
+                      </div>
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                        {bannerUploading ? "Scanning & Uploading..." : "Upload Cover Banner"}
+                      </span>
+                      <span className="text-[10px] text-slate-400 mt-0.5">
+                        Wide 16:9 banner up to 10MB
+                      </span>
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -379,39 +630,26 @@ export default function RegisterClubPage() {
                 </div>
               </div>
 
-              {/* Field 8: Faculty Coordinator Information */}
+              {/* Field 8: Faculty Coordinator Information (EMAIL REMOVED) */}
               <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
                   Faculty Mentor / Teacher-in-Charge
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                      Faculty Coordinator Name
-                    </label>
-                    <input
-                      type="text"
-                      disabled={!isEligible || submitting}
-                      value={facultyCoordinatorName}
-                      onChange={(e) => setFacultyCoordinatorName(e.target.value)}
-                      placeholder="Prof. / Dr. ..."
-                      className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                      Faculty College Email
-                    </label>
-                    <input
-                      type="email"
-                      disabled={!isEligible || submitting}
-                      value={facultyCoordinatorEmail}
-                      onChange={(e) => setFacultyCoordinatorEmail(e.target.value)}
-                      placeholder="faculty_name@ipec.org.in"
-                      className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Faculty Coordinator Name
+                  </label>
+                  <input
+                    type="text"
+                    disabled={!isEligible || submitting}
+                    value={facultyCoordinatorName}
+                    onChange={(e) => setFacultyCoordinatorName(e.target.value)}
+                    placeholder="Prof. / Dr. ..."
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50"
+                  />
+                  <p className="mt-1 text-[10px] text-slate-400">
+                    Faculty mentor or department teacher-in-charge overseeing this society.
+                  </p>
                 </div>
               </div>
 
@@ -439,7 +677,7 @@ export default function RegisterClubPage() {
               <div className="pt-2">
                 <button
                   type="submit"
-                  disabled={!isEligible || !declarationAccepted || submitting}
+                  disabled={!isEligible || !declarationAccepted || submitting || logoUploading || bannerUploading}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white py-3 px-4 text-xs font-bold shadow-sm transition disabled:opacity-50 cursor-pointer min-h-[44px]"
                 >
                   {submitting ? (

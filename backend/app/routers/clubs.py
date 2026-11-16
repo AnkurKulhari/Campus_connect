@@ -1,5 +1,5 @@
 import re
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 
@@ -16,6 +16,7 @@ from app.schemas.club import (
     PaginatedClubsResponse,
 )
 from app.utils.moderation import assert_safe_content
+from app.utils.cloudinary import upload_media, ALLOWED_IMAGE_TYPES
 
 router = APIRouter(prefix="/clubs", tags=["Clubs & Societies"])
 
@@ -75,6 +76,35 @@ def build_club_response(club: Club, current_user: User | None = None) -> ClubRes
         my_role=my_role,
         members=members_data,
     )
+
+
+@router.post("/upload-image", response_model=dict)
+def upload_club_image(
+    file: UploadFile = File(...),
+    folder_type: str = Query("logo", regex="^(logo|banner)$"),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Uploads a club logo or cover banner image to Cloudinary.
+    Restricted to verified 3rd/4th year students.
+    Enforces format (JPEG/PNG/WEBP), 10MB limit, and server-side NudeNet safety scanning.
+    """
+    if not current_user.is_id_verified or not current_user.is_verified:
+        raise HTTPException(
+            status_code=403,
+            detail="Only ID-verified students can upload club media."
+        )
+
+    user_year = (current_user.year or "").strip()
+    if user_year not in ["3rd Year", "4th Year"]:
+        raise HTTPException(
+            status_code=403,
+            detail="Only 3rd and 4th year student coordinators can upload club media."
+        )
+
+    folder = f"campusconnect/clubs/{folder_type}s"
+    uploaded = upload_media(file, folder=folder)
+    return {"url": uploaded["url"]}
 
 
 @router.post("", response_model=ClubResponse, status_code=201)

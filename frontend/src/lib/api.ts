@@ -524,6 +524,15 @@ export const api = {
     get: (slug: string) =>
       request<Club>(`/clubs/${encodeURIComponent(slug)}`),
 
+    uploadImage: (file: File, folderType: "logo" | "banner" = "logo") => {
+      const formData = new FormData();
+      formData.append("file", file);
+      return request<{ url: string }>(`/clubs/upload-image?folder_type=${folderType}`, {
+        method: "POST",
+        body: formData,
+      });
+    },
+
     register: (data: {
       name: string;
       slug: string;
