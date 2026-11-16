@@ -111,6 +111,16 @@ def is_explicit_text(text: str | None) -> tuple[bool, str | None]:
     # Step 4: Tokenize words by alphanumeric boundaries (handles underscores, spaces, hyphens, dots)
     tokens = set(re.findall(r"[a-z0-9]+", deobfuscated))
 
+    # Detect spaced single-letter obfuscation (e.g. 'c h u t', 'r_a_a_n_d', 'f - u - c - k')
+    spaced_blocks = re.findall(
+        r"(?:(?<=[^a-z0-9])|^)[a-z0-9](?:[\s\W_]+[a-z0-9])+(?:(?=[^a-z0-9])|$)",
+        deobfuscated
+    )
+    for block in spaced_blocks:
+        collapsed_block = re.sub(r"[\s\W_]+", "", block)
+        if len(collapsed_block) >= 3:
+            tokens.add(collapsed_block)
+
     for token in tokens:
         if token in ALL_EXPLICIT_WORDS:
             return True, token
@@ -118,12 +128,10 @@ def is_explicit_text(text: str | None) -> tuple[bool, str | None]:
         collapsed = re.sub(r"(.)\1{2,}", r"\1", token)
         if collapsed in ALL_EXPLICIT_WORDS:
             return True, collapsed
-
-    # Step 5: Check condensed text without spaces or separators (e.g. "chut_ka_saudagar", "ankurraand")
-    condensed = re.sub(r"[\s\-_.*+~#@/\\|]+", "", deobfuscated)
-    for stem in UNAMBIGUOUS_STEMS:
-        if stem in condensed:
-            return True, stem
+        # Check unambiguous stems within single compound tokens (e.g. "ankurraand", "chutkasaudagar", "motherfucker")
+        for stem in UNAMBIGUOUS_STEMS:
+            if stem in token:
+                return True, stem
 
     return False, None
 
