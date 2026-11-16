@@ -8,7 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import {
   Compass,
-  GraduationCap,
+  Landmark,
   MessageSquare,
   Bell,
   User as UserIcon,
@@ -77,10 +77,10 @@ function MobileBottomNavInner() {
       badge: 0,
     },
     {
-      label: "Alumni",
-      href: "/alumni",
-      icon: GraduationCap,
-      isActive: pathname.startsWith("/alumni"),
+      label: "Societies",
+      href: "/clubs",
+      icon: Landmark,
+      isActive: pathname.startsWith("/clubs"),
       badge: 0,
     },
     {
