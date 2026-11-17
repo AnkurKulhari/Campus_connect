@@ -562,6 +562,7 @@ export default function PostDetailPage({
             <div className="border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40 p-1">
               <CommentSection
                 postId={post.id}
+                postAuthorUsername={post.author.username}
                 onCommentCountChange={(count) => setCommentCount(count)}
               />
             </div>

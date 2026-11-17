@@ -500,6 +500,7 @@ export function PostCard({
       {showComments && (
         <CommentSection
           postId={post.id}
+          postAuthorUsername={post.author.username}
           onCommentCountChange={(count) => setCommentCount(count)}
         />
       )}
