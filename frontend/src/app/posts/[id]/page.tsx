@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect, useCallback, use } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -68,6 +68,10 @@ export default function PostDetailPage({
   const [deleting, setDeleting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+
+  const handleCommentCountChange = useCallback((count: number) => {
+    setCommentCount(count);
+  }, []);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -563,7 +567,7 @@ export default function PostDetailPage({
               <CommentSection
                 postId={post.id}
                 postAuthorUsername={post.author.username}
-                onCommentCountChange={(count) => setCommentCount(count)}
+                onCommentCountChange={handleCommentCountChange}
               />
             </div>
           </article>

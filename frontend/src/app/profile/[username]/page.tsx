@@ -164,12 +164,12 @@ export default function ProfilePage() {
     <AuthGuard>
       <div className="mx-auto max-w-4xl px-4 sm:px-6 py-6 sm:py-8 pb-24 lg:pb-8">
       {/* Profile Header Card */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <div className="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xs dark:border-slate-800 dark:bg-gradient-to-b dark:from-[#131B2E] dark:to-[#0f1626]">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
           {/* Avatar with Download & Drag Protection */}
           <div
             onContextMenu={(e) => e.preventDefault()}
-            className="relative flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-blue-600 text-3xl font-bold text-white overflow-hidden shadow-md ring-4 ring-slate-100 dark:ring-slate-800 select-none"
+            className="relative flex h-24 w-24 sm:h-28 sm:w-28 shrink-0 items-center justify-center rounded-full bg-blue-600 text-3xl sm:text-4xl font-extrabold text-white overflow-hidden shadow-lg ring-4 ring-slate-100 dark:ring-slate-800 select-none"
           >
             {profile.profile_picture ? (
               <>
@@ -179,7 +179,7 @@ export default function ProfilePage() {
                   fill
                   draggable={false}
                   onDragStart={(e) => e.preventDefault()}
-                  sizes="96px"
+                  sizes="(max-width: 640px) 96px, 112px"
                   className="object-cover pointer-events-none select-none"
                 />
                 <div
@@ -193,53 +193,59 @@ export default function ProfilePage() {
           </div>
 
           {/* Details */}
-          <div className="flex-1 text-center sm:text-left">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
+          <div className="flex-1 text-center sm:text-left min-w-0">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div className="min-w-0">
                 <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
-                  <h1 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">
+                  <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                     {profile.full_name}
                   </h1>
                   {profile.is_id_verified && (
                     <span
                       title="Verified Student ID"
-                      className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
+                      className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60"
                     >
-                      <ShieldCheck className="h-3 w-3" />
+                      <ShieldCheck className="h-3.5 w-3.5" />
                       <span>Verified Student</span>
                     </span>
                   )}
                 </div>
-                <div className="flex items-center justify-center sm:justify-start gap-1.5 flex-wrap">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">@{profile.username}</p>
+
+                <div className="flex items-center justify-center sm:justify-start gap-1.5 mt-0.5 flex-wrap">
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">@{profile.username}</p>
                   {profile.is_followed_by && !profile.is_self && (
-                    <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                    <span className="rounded-md bg-slate-100 dark:bg-slate-800/80 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700/80">
                       Follows you
                     </span>
                   )}
                 </div>
 
-                {/* Academic Badges */}
-                <div className="mt-2 flex items-center justify-center sm:justify-start gap-2 flex-wrap">
+                {/* Clean Academic Badges - modular tags without awkward wrapping */}
+                <div className="mt-3 flex items-center justify-center sm:justify-start gap-2 flex-wrap">
                   {profile.is_alumni || profile.year === "Alumni" ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50/80 px-2.5 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 border border-blue-200/60 dark:border-blue-900/60">
                       <GraduationCap className="h-3.5 w-3.5" />
                       <span>Alumni</span>
-                      {profile.branch && <span>• {profile.branch.replace(/\(.*?\)/g, "").trim()}</span>}
                     </span>
                   ) : profile.year ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-0.5 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50/80 px-2.5 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 border border-blue-200/60 dark:border-blue-900/60">
                       <GraduationCap className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                       <span>{profile.year}</span>
-                      {profile.course && <span>({profile.course})</span>}
-                      {profile.branch && <span>• {profile.branch.replace(/\(.*?\)/g, "").trim()}</span>}
                     </span>
                   ) : null}
+
+                  {(profile.course || profile.branch) && (
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-slate-800/80 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">
+                      {profile.course && <span className="font-semibold text-slate-900 dark:text-slate-200">{profile.course}</span>}
+                      {profile.course && profile.branch && <span className="text-slate-400 dark:text-slate-500">•</span>}
+                      {profile.branch && <span>{profile.branch.replace(/\(.*?\)/g, "").trim()}</span>}
+                    </span>
+                  )}
 
                   {profile.is_self && profile.is_year_back && (
                     <span
                       title="Only visible to you: Course duration extended"
-                      className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/50 dark:border-amber-800/50"
+                      className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60"
                     >
                       <AlertTriangle className="h-3 w-3" />
                       <span>Extended Course Active (Private)</span>
@@ -249,13 +255,13 @@ export default function ProfilePage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-center sm:justify-end gap-2 flex-wrap">
+              <div className="flex items-center justify-center sm:justify-end gap-2 flex-wrap shrink-0">
                 {profile.linkedin_url && (
                   <a
                     href={profile.linkedin_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-[#0077b5]/10 px-4 py-1.5 text-xs font-semibold text-[#0077b5] dark:bg-[#0077b5]/20 dark:text-blue-300 hover:bg-[#0077b5] hover:text-white shadow-2xs transition"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-[#0077b5]/30 bg-[#0077b5]/10 px-3.5 py-2 text-xs font-semibold text-[#0077b5] dark:bg-[#0077b5]/20 dark:text-blue-300 hover:bg-[#0077b5] hover:text-white dark:hover:bg-[#0077b5] dark:hover:text-white shadow-2xs transition cursor-pointer"
                   >
                     <LinkedinIcon className="h-3.5 w-3.5" />
                     <span>LinkedIn</span>
@@ -266,14 +272,14 @@ export default function ProfilePage() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setEditOpen(true)}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 shadow-2xs transition"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800/90 dark:text-slate-200 dark:hover:bg-slate-700/80 shadow-2xs transition cursor-pointer"
                     >
                       <Edit3 className="h-3.5 w-3.5" />
                       <span>Edit Profile</span>
                     </button>
                     <button
                       onClick={logout}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50/60 px-3.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-900/50 shadow-2xs transition"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-600 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 dark:border-slate-700 dark:bg-slate-800/90 dark:text-slate-300 dark:hover:border-rose-900/60 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 shadow-2xs transition cursor-pointer"
                       title="Log Out of CampusConnect"
                     >
                       <LogOut className="h-3.5 w-3.5" />
@@ -284,7 +290,7 @@ export default function ProfilePage() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <Link
                       href={`/messages?user=${profile.username}`}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 shadow-2xs transition"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800/90 dark:text-slate-200 dark:hover:bg-slate-700/80 shadow-2xs transition"
                     >
                       <MessageSquare className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                       <span>Message</span>
@@ -294,7 +300,7 @@ export default function ProfilePage() {
                       <button
                         type="button"
                         onClick={() => setConfirmRemoveFollower(true)}
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-rose-800 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 shadow-2xs transition cursor-pointer"
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-600 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 dark:border-slate-700 dark:bg-slate-800/90 dark:text-slate-300 dark:hover:border-rose-800 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 shadow-2xs transition cursor-pointer"
                         title={`Remove @${profile.username} from your followers`}
                       >
                         <UserMinus className="h-3.5 w-3.5" />
@@ -305,9 +311,9 @@ export default function ProfilePage() {
                     <button
                       onClick={handleToggleFollow}
                       disabled={isFollowLoading}
-                      className={`inline-flex items-center gap-1.5 rounded-xl px-5 py-1.5 text-xs font-semibold transition cursor-pointer ${
+                      className={`inline-flex items-center gap-1.5 rounded-xl px-5 py-2 text-xs font-semibold transition cursor-pointer ${
                         profile.is_following
-                          ? "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                          ? "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800/90 dark:text-slate-200"
                           : "bg-blue-600 text-white hover:bg-blue-700 shadow-2xs"
                       }`}
                     >
@@ -330,38 +336,46 @@ export default function ProfilePage() {
 
             {/* Bio */}
             {profile.bio && (
-              <p className="mt-3 text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed">
+              <p className="mt-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed">
                 {profile.bio}
               </p>
             )}
 
-            {/* Stats row */}
-            <div className="mt-5 flex items-center justify-center sm:justify-start gap-6 border-t border-slate-100 dark:border-slate-800 pt-4 text-xs">
-              <div>
-                <span className="font-extrabold text-slate-900 dark:text-slate-100">
+            {/* Interactive Stat Tiles */}
+            <div className="mt-6 flex items-center justify-center sm:justify-start gap-2.5 sm:gap-3.5 border-t border-slate-100 dark:border-slate-800/80 pt-5 flex-wrap">
+              <div className="flex items-center gap-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 px-3.5 py-1.5 border border-slate-200/60 dark:border-slate-700/60">
+                <span className="text-sm font-extrabold text-slate-900 dark:text-white">
                   {profile.posts_count}
-                </span>{" "}
-                <span className="text-slate-400">posts</span>
+                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  posts
+                </span>
               </div>
 
               <button
+                type="button"
                 onClick={() => setFollowModal("followers")}
-                className="hover:underline cursor-pointer"
+                className="flex items-center gap-2 rounded-xl bg-slate-50 hover:bg-slate-100/80 dark:bg-slate-800/50 dark:hover:bg-slate-800 px-3.5 py-1.5 border border-slate-200/60 dark:border-slate-700/60 transition cursor-pointer select-none"
               >
-                <span className="font-extrabold text-slate-900 dark:text-slate-100">
+                <span className="text-sm font-extrabold text-slate-900 dark:text-white">
                   {profile.followers_count}
-                </span>{" "}
-                <span className="text-slate-400">followers</span>
+                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  followers
+                </span>
               </button>
 
               <button
+                type="button"
                 onClick={() => setFollowModal("following")}
-                className="hover:underline cursor-pointer"
+                className="flex items-center gap-2 rounded-xl bg-slate-50 hover:bg-slate-100/80 dark:bg-slate-800/50 dark:hover:bg-slate-800 px-3.5 py-1.5 border border-slate-200/60 dark:border-slate-700/60 transition cursor-pointer select-none"
               >
-                <span className="font-extrabold text-slate-900 dark:text-slate-100">
+                <span className="text-sm font-extrabold text-slate-900 dark:text-white">
                   {profile.following_count}
-                </span>{" "}
-                <span className="text-slate-400">following</span>
+                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  following
+                </span>
               </button>
             </div>
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -21,7 +21,7 @@ import {
   Trash2,
   Flag,
   GraduationCap,
-  CheckCircle,
+  ShieldCheck,
   ChevronLeft,
   ChevronRight,
   Landmark,
@@ -49,6 +49,10 @@ export function PostCard({
   const [isReported, setIsReported] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
+
+  const handleCommentCountChange = useCallback((count: number) => {
+    setCommentCount(count);
+  }, []);
 
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -109,7 +113,8 @@ export function PostCard({
           <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
             <Link
               href={`/clubs/${post.club_slug}`}
-              className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-600 font-bold text-white overflow-hidden shadow-2xs border border-violet-200 dark:border-violet-800"
+              className="relative flex h-10 w-10 shrink-0 select-none items-center justify-center rounded-xl bg-violet-600 font-bold text-white overflow-hidden shadow-2xs border border-violet-200/80 dark:border-violet-800/80"
+              onContextMenu={(e) => e.preventDefault()}
             >
               {post.club_logo ? (
                 <Image
@@ -124,20 +129,25 @@ export function PostCard({
               )}
             </Link>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap min-w-0">
                 <Link
                   href={`/clubs/${post.club_slug}`}
-                  className="font-bold text-sm text-slate-900 hover:text-violet-600 dark:text-white dark:hover:text-violet-400 transition truncate"
+                  className="font-bold text-xs sm:text-sm text-slate-900 hover:text-violet-600 dark:text-slate-100 dark:hover:text-violet-400 transition truncate"
                 >
                   {post.club_name}
                 </Link>
 
                 <span
                   title="Official Campus Society"
-                  className="shrink-0 inline-flex items-center gap-0.5 rounded-md bg-violet-50 dark:bg-violet-950/60 px-1.5 py-0.5 text-[10px] font-bold text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800"
+                  className="shrink-0 inline-flex items-center gap-1 rounded-md bg-purple-50 dark:bg-purple-950/70 px-1.5 py-0.2 text-[10px] font-bold text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-purple-800/60"
                 >
                   <Landmark className="h-3 w-3" />
                   <span>Society</span>
+                </span>
+
+                <span className="text-slate-300 dark:text-slate-700 text-xs">•</span>
+                <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                  {formatTwitterTimestamp(post.created_at)}
                 </span>
               </div>
 
@@ -146,7 +156,7 @@ export function PostCard({
                 {post.club_slug && (
                   <Link
                     href={`/clubs/${post.club_slug}`}
-                    className="font-mono text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 shrink-0"
+                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 shrink-0 font-mono"
                   >
                     @{post.club_slug}
                   </Link>
@@ -163,10 +173,11 @@ export function PostCard({
             </div>
           </div>
         ) : (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
             <Link
               href={`/profile/${post.author.username}`}
-              className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-600 font-bold text-white overflow-hidden shadow-2xs"
+              className="relative flex h-10 w-10 shrink-0 select-none items-center justify-center rounded-full bg-blue-600 font-bold text-white overflow-hidden shadow-2xs ring-1 ring-slate-200/80 dark:ring-slate-700/80"
+              onContextMenu={(e) => e.preventDefault()}
             >
               {post.author.profile_picture ? (
                 <Image
@@ -180,27 +191,39 @@ export function PostCard({
                 post.author.full_name.charAt(0).toUpperCase()
               )}
             </Link>
-            <div>
-              <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 flex-wrap min-w-0">
                 <Link
                   href={`/profile/${post.author.username}`}
-                  className="font-bold text-sm text-slate-900 hover:text-blue-600 dark:text-white dark:hover:text-blue-400 transition"
+                  className="font-bold text-xs sm:text-sm text-slate-900 hover:text-blue-600 dark:text-slate-100 dark:hover:text-blue-400 transition truncate"
                 >
                   {post.author.full_name}
                 </Link>
-                <span className="text-xs text-slate-400">
-                  @{post.author.username}
-                </span>
 
                 {/* Verified Student Badge */}
                 {post.author.is_id_verified && (
                   <span
                     title="Verified Student ID"
-                    className="inline-flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400"
+                    className="inline-flex items-center text-emerald-600 dark:text-emerald-400"
                   >
-                    <CheckCircle className="h-3.5 w-3.5" />
+                    <ShieldCheck className="h-3.5 w-3.5" />
                   </span>
                 )}
+
+                <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                  @{post.author.username}
+                </span>
+
+                {/* Academic Badge */}
+                {post.author.is_alumni || post.author.year === "Alumni" ? (
+                  <span className="rounded-md bg-blue-50/70 dark:bg-blue-950/50 px-1.5 py-0.2 text-[9px] font-semibold text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/50">
+                    Alumni
+                  </span>
+                ) : post.author.year ? (
+                  <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 text-[9px] font-medium text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">
+                    {post.author.year}
+                  </span>
+                ) : null}
 
                 {/* LinkedIn Networking Link */}
                 {post.author.linkedin_url && (
@@ -214,35 +237,20 @@ export function PostCard({
                     <LinkedinIcon className="h-3.5 w-3.5" />
                   </a>
                 )}
+
+                <span className="text-slate-300 dark:text-slate-700 text-xs">•</span>
+                <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                  {formatTwitterTimestamp(post.created_at)}
+                </span>
               </div>
 
-              {/* Academic Badge moved directly under Name & Username */}
-              {post.author.is_alumni || post.author.year === "Alumni" ? (
+              {post.author.branch && (
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-50/80 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/50 dark:border-blue-900/50">
-                    <GraduationCap className="h-2.5 w-2.5" />
-                    <span>Alumni</span>
-                    {post.author.branch && (
-                      <span>• {post.author.branch.replace(/\(.*?\)/g, "").trim()}</span>
-                    )}
-                  </span>
-                </div>
-              ) : post.author.year ? (
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-50/80 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/50 dark:border-blue-900/50">
-                    <span>{post.author.year}</span>
-                    {post.author.branch && (
-                      <span>• {post.author.branch.replace(/\(.*?\)/g, "").trim()}</span>
-                    )}
-                  </span>
-                </div>
-              ) : post.author.branch ? (
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="text-[10px] text-slate-400 font-medium">
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
                     {post.author.branch.replace(/\(.*?\)/g, "").trim()}
                   </span>
                 </div>
-              ) : null}
+              )}
             </div>
           </div>
         )}
@@ -448,14 +456,15 @@ export function PostCard({
       )}
 
       {/* Footer / Action Counts & Twitter-style Timestamp */}
-      <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 dark:border-slate-800/80 text-xs text-slate-500">
-        <div className="flex items-center gap-5 sm:gap-6">
+      <div className="flex items-center justify-between px-4 py-2.5 border-t border-slate-100 dark:border-slate-800/80 text-xs text-slate-500">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
+            type="button"
             onClick={handleLike}
-            className={`flex items-center gap-1.5 font-semibold transition cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-semibold transition cursor-pointer select-none outline-hidden focus:outline-hidden ${
               liked
-                ? "text-rose-600 dark:text-rose-500"
-                : "hover:text-rose-600"
+                ? "text-rose-600 dark:text-rose-500 bg-rose-50/70 dark:bg-rose-950/40"
+                : "hover:bg-slate-100 hover:text-rose-600 dark:hover:bg-slate-800/60 dark:hover:text-rose-400"
             }`}
           >
             <Heart className={`h-4 w-4 ${liked ? "fill-current" : ""}`} />
@@ -463,19 +472,25 @@ export function PostCard({
           </button>
 
           <button
+            type="button"
             onClick={() => setShowComments(!showComments)}
-            className="flex items-center gap-1.5 font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer"
+            className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-semibold transition cursor-pointer select-none outline-hidden focus:outline-hidden ${
+              showComments
+                ? "bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400"
+                : "hover:bg-slate-100 hover:text-blue-600 dark:hover:bg-slate-800/60 dark:hover:text-blue-400"
+            }`}
           >
             <MessageCircle className="h-4 w-4" />
             <span>{commentCount}</span>
           </button>
 
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               setShowShareModal(true);
             }}
-            className="flex items-center gap-1.5 font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-semibold hover:bg-slate-100 hover:text-blue-600 dark:hover:bg-slate-800/60 dark:hover:text-blue-400 transition cursor-pointer select-none outline-hidden focus:outline-hidden"
             title="Share post"
           >
             <Share2 className="h-4 w-4" />
@@ -501,7 +516,7 @@ export function PostCard({
         <CommentSection
           postId={post.id}
           postAuthorUsername={post.author.username}
-          onCommentCountChange={(count) => setCommentCount(count)}
+          onCommentCountChange={handleCommentCountChange}
         />
       )}
 

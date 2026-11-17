@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import select, func
@@ -85,6 +86,18 @@ def update_comment(comment_id: int, comment_data: CommentUpdate, current_user: U
 
     if comment.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="You can only edit your own comments.")
+
+    # Comments cannot be edited after 2 minutes of posting
+    now_utc = datetime.now(timezone.utc)
+    comment_created_utc = comment.created_at
+    if comment_created_utc.tzinfo is None:
+        comment_created_utc = comment_created_utc.replace(tzinfo=timezone.utc)
+
+    if (now_utc - comment_created_utc).total_seconds() > 120:
+        raise HTTPException(
+            status_code=400,
+            detail="Comments cannot be edited after 2 minutes of posting."
+        )
 
     assert_safe_content(comment_data.content, "Comment")
     comment.content = comment_data.content

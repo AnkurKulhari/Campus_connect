@@ -48,19 +48,30 @@ export function CommentSection({
   const [deleting, setDeleting] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Keep latest onCommentCountChange in a ref so useEffect does not re-trigger on parent re-renders
+  const onCommentCountChangeRef = useRef(onCommentCountChange);
+  useEffect(() => {
+    onCommentCountChangeRef.current = onCommentCountChange;
+  });
+
   useEffect(() => {
     let isMounted = true;
     api.comments
       .list(postId, 1, 50)
       .then((data: PaginatedComments) => {
         if (isMounted) {
-          setComments(
-            data.comments.map((c) => ({
+          setComments((prev) => {
+            // Retain any pending optimistic comments so they don't disappear
+            const pending = prev.filter((c) => c.status === "posting");
+            const serverComments: OptimisticComment[] = data.comments.map((c) => ({
               ...c,
               status: "posted" as const,
-            }))
-          );
-          if (onCommentCountChange) onCommentCountChange(data.total);
+            }));
+            const serverIds = new Set(serverComments.map((sc) => sc.id));
+            const remainingPending = pending.filter((p) => !serverIds.has(p.id));
+            return [...serverComments, ...remainingPending];
+          });
+          onCommentCountChangeRef.current?.(data.total);
         }
       })
       .catch(() => {})
@@ -71,7 +82,16 @@ export function CommentSection({
     return () => {
       isMounted = false;
     };
-  }, [postId, onCommentCountChange]);
+  }, [postId]);
+
+  const canEditComment = (comment: OptimisticComment) => {
+    if (!user || user.username !== comment.author.username) return false;
+    if (comment.status === "posting" || comment.status === "failed") return false;
+    const createdTime = new Date(comment.created_at).getTime();
+    if (isNaN(createdTime)) return false;
+    const diffMs = Date.now() - createdTime;
+    return diffMs <= 2 * 60 * 1000; // Comments can only be edited within 2 minutes of posting
+  };
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -112,9 +132,7 @@ export function CommentSection({
 
     // 3. Immediately insert comment into state & update parent count
     setComments((prev) => [...prev, optimisticComment]);
-    if (onCommentCountChange) {
-      onCommentCountChange(comments.length + 1);
-    }
+    onCommentCountChangeRef.current?.(comments.length + 1);
 
     // 4. Send background API call
     try {
@@ -176,9 +194,7 @@ export function CommentSection({
 
   const handleDismissFailed = (tempId: string) => {
     setComments((prev) => prev.filter((c) => c.tempId !== tempId));
-    if (onCommentCountChange) {
-      onCommentCountChange(Math.max(0, comments.length - 1));
-    }
+    onCommentCountChangeRef.current?.(Math.max(0, comments.length - 1));
   };
 
   const handleDelete = async () => {
@@ -187,9 +203,7 @@ export function CommentSection({
     try {
       await api.comments.delete(deleteCommentId);
       setComments((prev) => prev.filter((c) => c.id !== deleteCommentId));
-      if (onCommentCountChange) {
-        onCommentCountChange(Math.max(0, comments.length - 1));
-      }
+      onCommentCountChangeRef.current?.(Math.max(0, comments.length - 1));
       setDeleteCommentId(null);
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "Failed to delete comment");
@@ -198,13 +212,18 @@ export function CommentSection({
     }
   };
 
-  const handleEditSave = async (commentId: number) => {
+  const handleEditSave = async (comment: OptimisticComment) => {
     if (!editText.trim()) return;
+    if (!canEditComment(comment)) {
+      alert("Comments cannot be edited after 2 minutes of posting.");
+      setEditingId(null);
+      return;
+    }
     try {
-      const updated = await api.comments.update(commentId, editText.trim());
+      const updated = await api.comments.update(comment.id, editText.trim());
       setComments((prev) =>
         prev.map((c) =>
-          c.id === commentId ? { ...updated, status: "posted" as const } : c
+          c.id === comment.id ? { ...updated, status: "posted" as const } : c
         )
       );
       setEditingId(null);
@@ -222,13 +241,12 @@ export function CommentSection({
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNewComment(e.target.value);
-    // Auto-expand textarea
     e.target.style.height = "auto";
     e.target.style.height = `${Math.min(e.target.scrollHeight, 180)}px`;
   };
 
   return (
-    <div className="border-t border-slate-100/90 bg-slate-50/70 p-4 sm:p-5 dark:border-slate-800/80 dark:bg-slate-950/40 rounded-b-2xl">
+    <div className="border-t border-slate-100/90 bg-slate-50/50 p-4 sm:p-5 dark:border-slate-800/80 dark:bg-slate-900/60 rounded-b-2xl">
       {/* Modern Floating Composer Box */}
       {user ? (
         <form onSubmit={handleSubmit} className="mb-5">
@@ -236,7 +254,7 @@ export function CommentSection({
             {/* User Avatar */}
             <div
               onContextMenu={(e) => e.preventDefault()}
-              className="relative flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 select-none items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-2xs ring-2 ring-slate-100 dark:ring-slate-800 overflow-hidden"
+              className="relative flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 select-none items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-2xs ring-1 ring-slate-200 dark:ring-slate-700 overflow-hidden"
             >
               {user.profile_picture ? (
                 <Image
@@ -252,20 +270,20 @@ export function CommentSection({
             </div>
 
             {/* Input card with expanding textarea */}
-            <div className="flex-1 rounded-2xl border border-slate-200/90 bg-white shadow-2xs transition-all focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/15 dark:border-slate-800 dark:bg-slate-900/90">
+            <div className="flex-1 rounded-2xl border border-slate-200/90 bg-white shadow-2xs transition-all focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/15 dark:border-slate-800 dark:bg-[#131B2E]">
               <textarea
                 ref={textareaRef}
                 value={newComment}
                 onChange={handleTextChange}
                 onKeyDown={handleKeyDown}
                 onFocus={() => setIsFocused(true)}
-                placeholder="Write a thoughtful comment... (Cmd+Enter to post)"
+                placeholder="Write a comment..."
                 maxLength={500}
                 rows={isFocused || newComment.length > 0 ? 2 : 1}
                 className="w-full resize-none bg-transparent px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-hidden dark:text-white dark:placeholder:text-slate-500 leading-relaxed"
               />
 
-              {/* Composer Toolbar (visible on focus or when typing) */}
+              {/* Composer Toolbar */}
               {(isFocused || newComment.length > 0) && (
                 <div className="flex items-center justify-between border-t border-slate-100 px-3.5 py-2 dark:border-slate-800/80">
                   <span
@@ -354,6 +372,7 @@ export function CommentSection({
             const isOwner = user && user.username === comment.author.username;
             const isPosting = comment.status === "posting";
             const isFailed = comment.status === "failed";
+            const editable = canEditComment(comment);
 
             return (
               <div
@@ -436,17 +455,19 @@ export function CommentSection({
                     {/* Action buttons (Edit & Delete) for Owner */}
                     {isOwner && !isPosting && editingId !== comment.id && (
                       <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingId(comment.id);
-                            setEditText(comment.content);
-                          }}
-                          className="rounded-lg p-1 text-slate-400 hover:bg-slate-200/60 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition cursor-pointer"
-                          title="Edit comment"
-                        >
-                          <Edit2 className="h-3 w-3" />
-                        </button>
+                        {editable && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingId(comment.id);
+                              setEditText(comment.content);
+                            }}
+                            className="rounded-lg p-1 text-slate-400 hover:bg-slate-200/60 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition cursor-pointer"
+                            title="Edit comment (available for 2 mins)"
+                          >
+                            <Edit2 className="h-3 w-3" />
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => setDeleteCommentId(comment.id)}
@@ -479,7 +500,7 @@ export function CommentSection({
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleEditSave(comment.id)}
+                          onClick={() => handleEditSave(comment)}
                           disabled={!editText.trim()}
                           className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50 transition cursor-pointer"
                         >
